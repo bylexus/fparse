@@ -41,8 +41,14 @@ var result = fObj.evaluate({x: 3}); // result = 8
 // or deliver multiple value objects to return multiple results:
 var results = fObj.evaluate([{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
-// You can also directly evaluate a value if you only need one result:
+// You can also directly evaluate a value if you only need a one-shot result:
 var result = Formula.calc('pow(2,x)',{x: 3}); // result = 8
+var results = fObj.calc('pow(2,x)',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+
+// Usage in NodeJS:
+var Formula = require('./fparser');
+var fObj = new Formula('pow(2,x)');
+// .... vice versa
 ```
 
 Advanced Usage
