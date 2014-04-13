@@ -1,0 +1,33 @@
+{
+  "name": "fparser",
+  "main": "index.html",
+  "version": "1.0.0",
+  "description": "A Formula Parser for Javascript",
+  "keywords": [
+    "javascript",
+    "formula",
+    "parser",
+    "formula",
+    "parser",
+    "mathematical",
+    "formula",
+    "parser"
+  ],
+  "authors": [
+    "Alexander Schenkel <alex@alexi.ch>"
+  ],
+  "license": "copyright",
+  "homepage": "http://fparse.alexi.ch",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.0",
+    "flot": "~0.8.2"
+  }
+}
