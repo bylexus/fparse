@@ -66,6 +66,13 @@ body,table {
 	margin: 5px;
 }
 
+pre {
+	background-color: #EEE;
+	border: 1px solid #888;
+	border-radius: 3px;
+	padding: 3px;
+}
+
 
 </style>
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
@@ -490,16 +497,23 @@ var result = fObj.evaluate({a:2,b:-1,c:3,x:3}); // result = 18
 </code></pre>
 
 Using user-defined functions:
-<pre><code>var fStr = 'sin(mInv(x))';
-var fObj = new Formula(fStr);
+<pre><code>var fObj = new Formula('sin(inverse(x))');
 
-// Just pass functions unknown to the Math object as function in the value object:
+//Define the function(s) on the Formula object, then use it multiple times:
+fObj.inverse = function(value){
+    return 1/value;
+};
+var results = fObj.evaluate({x: 1,x:2,x:3});
+
+// Or pass it in the value object, and OVERRIDE an existing function:
 var result = fObj.evaluate({
 	x: 2/Math.PI, 
-	mInv: function(value){
-		return 1/value;
+	inverse: function(value){
+		return -1*value;
 	}
 });
+
+If defined in the value object AND on the formula object, the Value object has the precedence
 
 // result = 1;
 </code></pre>

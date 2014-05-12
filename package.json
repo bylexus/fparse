@@ -1,0 +1,29 @@
+{
+  "name": "fparser",
+  "version": "1.0.0",
+  "description": "A Math Formula parser library for JavaScript",
+  "main": "fparser.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "formula",
+    "parser",
+    "formula",
+    "parser",
+    "mathematical",
+    "formula",
+    "parser"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bylexus/fparse.git"
+  },
+  "author": "Alex Schenkel <alex@alexi.ch>",
+  "license": "copyright 2013-2014 Alex Schenkel",
+  "bugs": {
+    "url": "https://github.com/bylexus/fparse/issues"
+  },
+  "homepage": "https://github.com/bylexus/fparse"
+}

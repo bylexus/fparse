@@ -347,7 +347,8 @@ Formula.prototype.getExpression = function() {
 Formula.prototype.createFunctionEvaluator = function(arg, fname) {
 	// Functions can have multiple params, comma separated.
 	// Split them:
-	var args = this.splitFunctionParams(arg);
+	var args = this.splitFunctionParams(arg),
+		me = this;
 	for (var i = 0; i < args.length; i++) {
 		args[i] = new Formula(args[i]);
 	}
@@ -360,10 +361,13 @@ Formula.prototype.createFunctionEvaluator = function(arg, fname) {
 		// If the valueObj itself has a function definition with
 		// the function name, call this one:
 		if (valueObj && typeof valueObj[fname] === 'function') {
-			return valueObj[fname].apply(this, innerValues);
+			return valueObj[fname].apply(me, innerValues);
+		} else if (typeof me[fname] === 'function') {
+			// perhaps the Formula object has the function? so call it:
+			return me[fname].apply(me,innerValues);
 		} else if (typeof Math[fname] === 'function') {
 			// Has the JS Math object a function as requested? Call it:
-			return Math[fname].apply(this, innerValues);
+			return Math[fname].apply(me, innerValues);
 		} else {
 			throw ("Function not found: " + fname);
 		}

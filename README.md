@@ -20,6 +20,7 @@ Parses a mathematical formula from a string. Known expressions:
 * all *JavaScript Math constants* like PI, E
 * the use of *own functions*
 * the use of *variables*
+* use it in Web pages and as Node module
 * Example:<br /> <code>-1*(sin(pow(2,x)/(PI*x))*cos(x))</code>
 
 
@@ -27,8 +28,13 @@ Usage
 ------
 
 ```html
-<!-- Load the fparse library: -->
+<!-- Within a web page: Load the fparse library: -->
 <script src="fparser.js"></script>
+```
+
+```javascript
+// As node module:
+var Formula = require('./fparser');
 ```
 
 ```javascript
@@ -64,14 +70,22 @@ var result = fObj.evaluate({a:2,b:-1,c:3,x:3}); // result = 18
 
 ### Using user-defined functions
 ```javascript
-var fObj = new Formula('sin(mInv(x))');
+var fObj = new Formula('sin(inverse(x))');
 
-// Just pass functions unknown to the Math object as function in the value object:
+//Define the function(s) on the Formula object, then use it multiple times:
+fObj.inverse = function(value){
+    return 1/value;
+};
+var results = fObj.evaluate({x: 1,x:2,x:3});
+
+// Or pass it in the value object, and OVERRIDE an existing function:
 var result = fObj.evaluate({
 	x: 2/Math.PI, 
-	mInv: function(value){
-		return 1/value;
+	inverse: function(value){
+		return -1*value;
 	}
 });
+
+If defined in the value object AND on the formula object, the Value object has the precedence
 ```
 
