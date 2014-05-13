@@ -14,14 +14,14 @@ Features
 Parses a mathematical formula from a string. Known expressions:
 
 * *Numbers* in the form [-]digits[.digits], e.g. "-133.2945"
-* *simple operators*: '+','-','*','/', expanded in correct order
+* *simple operators*: '+','-','*','/', '^' expanded in correct order
 * *parentheses* '(', ')' for grouping (e.g. "5*(3+2)")
 * all *JavaScript Math object functions* (e.g. "sin(3.14)")
 * all *JavaScript Math constants* like PI, E
 * the use of *own functions*
 * the use of *variables*
 * use it in Web pages and as Node module
-* Example:<br /> <code>-1*(sin(pow(2,x)/(PI*x))*cos(x))</code>
+* Example:<br /> <code>-1*(sin(2^x)/(PI*x))*cos(x))</code>
 
 
 Usage
@@ -39,7 +39,7 @@ var Formula = require('./fparser');
 
 ```javascript
 // 1. Create a Formula object instance by passing a formula string:
-var fObj = new Formula('pow(2,x)');
+var fObj = new Formula('2^x');
 
 // 2. evaluate the formula, delivering a value object for each unknown entity:
 var result = fObj.evaluate({x: 3}); // result = 8
@@ -48,21 +48,21 @@ var result = fObj.evaluate({x: 3}); // result = 8
 var results = fObj.evaluate([{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // You can also directly evaluate a value if you only need a one-shot result:
-var result = Formula.calc('pow(2,x)',{x: 3}); // result = 8
-var results = fObj.calc('pow(2,x)',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+var result = Formula.calc('2^x',{x: 3}); // result = 8
+var results = fObj.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // Usage in NodeJS:
 var Formula = require('./fparser');
-var fObj = new Formula('pow(2,x)');
+var fObj = new Formula('2^x)');
 // .... vice versa
 ```
 
 Advanced Usage
 --------------
 
-### Using multiple unknown variables
+### Using multiple variables
 ```javascript
-var fObj = new Formula('a*pow(x,2) + b*x + c');
+var fObj = new Formula('a*x^2 + b*x + c');
 
 // Just pass a value object containing a value for each unknown variable:
 var result = fObj.evaluate({a:2,b:-1,c:3,x:3}); // result = 18

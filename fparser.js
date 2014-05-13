@@ -124,7 +124,7 @@ Formula.prototype.parse = function(str) {
 					state = 'within-nr';
 					tmp = '';
 					act--;
-				} else if (char.match(/[\+\-\*\/]/)) {
+				} else if (char.match(/[\+\-\*\/\^]/)) {
 					// Simple operators. Note: '-' must be treaten specially,
 					// it could be part of a number.
 					// it MUST be part of a number if the last found expression
@@ -284,7 +284,28 @@ Formula.prototype.evaluate = function(valueObj) {
 			throw new Exception('Unknown object in Expressions array');
 		}
 	}
+
+	// Now we should have a number-only array, let's evaulate the '^' operator:
+	while (runAgain) {
+		runAgain = false;
+		for (i = 0; i < workArr.length; i++) {
+			item = workArr[i];
+			if (typeof item === 'string' && item === '^') {
+				if (i === 0 || i === workArr.length - 1) {
+					throw 'Wrong operator position!';
+				}
+				left = Number(workArr[i - 1]);
+				right = Number(workArr[i + 1]);
+				workArr[i - 1] = Math.pow(left,right);
+				workArr.splice(i, 2);
+				runAgain = true;
+				break;
+			}
+		}
+	}
+
 	// Now we should have a number-only array, let's evaulate the '*','/' operators:
+	runAgain = true;
 	while (runAgain) {
 		runAgain = false;
 		for (i = 0; i < workArr.length; i++) {
@@ -303,7 +324,7 @@ Formula.prototype.evaluate = function(valueObj) {
 		}
 	}
 
-	// Now we should have a number-only array, let's evaulate the '*','/' operators:
+	// Now we should have a number-only array, let's evaulate the '+','-' operators:
 	runAgain = true;
 	while (runAgain) {
 		runAgain = false;
