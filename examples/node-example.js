@@ -32,6 +32,7 @@ console.log(dist);
 
 // Override an existing function once in a value object:
 var f3 = new Formula('max(x,y)');
+
 var res3 = f3.evaluate([
 	{x: 1, y: 2	},
 	{x: 4, y: 3	}, {
@@ -41,3 +42,8 @@ var res3 = f3.evaluate([
 	}]
 );
 console.log(res3);
+
+
+// Get all used variables:
+var f4 = new Formula('x*sin(PI*y) + y / (2-x*a) + z');
+console.log(f4.getVariables());

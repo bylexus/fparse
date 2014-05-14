@@ -22,8 +22,10 @@
  * You can use this library for and within whatever you want,
  * but please put a reference to me in your project and drop me a message, thanks.
  */
-var Formula = function(fStr) {
+var Formula = function(fStr, topFormula) {
 	this.formulaExpression = null;
+	this.variables = [];
+	this.topFormula = topFormula || null;
 
 	this.formulaStr = fStr;
 	this.formulaExpression = this.parse(fStr);
@@ -153,6 +155,11 @@ Formula.prototype.parse = function(str) {
 					} else {
 						// Single variable found:
 						expressions.push(this.createVariableEvaluator(char));
+						if (this.topFormula instanceof Formula) {
+							this.topFormula.registerVariable(char);
+						} else {
+							this.registerVariable(char);
+						}
 						state = 0;
 						tmp = '';
 					}
@@ -201,7 +208,7 @@ Formula.prototype.parse = function(str) {
 						// Yes, we found the closing parenthesis, create new sub-expression:
 						if (state === 'within-parentheses') {
 
-							expressions.push(new Formula(tmp));
+							expressions.push(new Formula(tmp,this));
 						} else if (state === 'within-func-parentheses') {
 							// Function found: return a function that,
 							// when evaluated, evaluates first the sub-expression
@@ -229,6 +236,20 @@ Formula.prototype.parse = function(str) {
 		act++;
 	}
 	return expressions;
+};
+
+Formula.prototype.registerVariable = function(varName) {
+	if (this.variables.indexOf(varName) < 0) {
+		this.variables.push(varName);
+	}
+};
+
+Formula.prototype.getVariables = function() {
+	if (this.topFormula instanceof Formula) {
+		return this.topFormula.variables;
+	} else {
+		return this.variables;
+	}
 };
 
 
@@ -371,7 +392,7 @@ Formula.prototype.createFunctionEvaluator = function(arg, fname) {
 	var args = this.splitFunctionParams(arg),
 		me = this;
 	for (var i = 0; i < args.length; i++) {
-		args[i] = new Formula(args[i]);
+		args[i] = new Formula(args[i],me);
 	}
 	// Args now is an array of function expressions:
 	return function(valueObj) {
