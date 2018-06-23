@@ -20,7 +20,7 @@ Parses a mathematical formula from a string. Known expressions:
 * all *JavaScript Math constants* like PI, E
 * the use of *own functions*
 * the use of *variables*
-* use it in Web pages and as Node module
+* use it in Web pages, as ES6 module or as NodeJS module
 * Example:<br /> <code>-1*(sin(2^x)/(PI*x))*cos(x))</code>
 
 
@@ -34,7 +34,14 @@ Usage
 
 ```javascript
 // As node module:
+Install:
+$ npm install --save fparser
+
+Use:
 var Formula = require('./fparser');
+
+or:
+import Formula from 'fparser';
 ```
 
 ```javascript
@@ -80,7 +87,7 @@ var results = fObj.evaluate({x: 1,x:2,x:3});
 
 // Or pass it in the value object, and OVERRIDE an existing function:
 var result = fObj.evaluate({
-	x: 2/Math.PI, 
+	x: 2/Math.PI,
 	inverse: function(value){
 		return -1*value;
 	}

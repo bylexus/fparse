@@ -1,0 +1,5 @@
+/node_modules/
+/spec/
+bower.json
+karma.conf.js
+.babelrc
