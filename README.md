@@ -29,7 +29,7 @@ Usage
 
 ```html
 <!-- Within a web page: Load the fparse library: -->
-<script src="fparser.js"></script>
+<script src="dist/fparser.js"></script>
 ```
 
 ```javascript
@@ -101,3 +101,12 @@ If defined in the value object AND on the formula object, the Value object has t
 // Get all used variables in the order of their appereance:
 var f4 = new Formula('x*sin(PI*y) + y / (2-x*a) + z');
 console.log(f4.getVariables()); // ['x','y','a','z']
+
+Changelog
+-----------
+
+# 1.3.0
+  * modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
+  * Make sure you include dist/fparser.js if you are using it as a browser library.
+  * Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
+

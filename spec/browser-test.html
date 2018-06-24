@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Fparse test</title>
+        <script src="../dist/fparser.js"></script>
+    </head>
+    <body>
+        <div id="output"></div>
+
+        <script>
+            var out = document.getElementById('output');
+
+            var f1 = '3*x^2 * 2*x + 4';
+            var p1 = new Formula(f1);
+            var res1 = p1.evaluate({x:3});
+            out.innerHTML += f1 + ', for x = 3: '+res1;
+        </script>
+    </body>
+</html>
