@@ -1,9 +1,9 @@
-fparse
-======
+fparser
+=======
 
 > A JavaScript Formula Parser
 
-fparse provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
+fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.
 
 For an example application, see http://fparse.alexi.ch/.
@@ -28,7 +28,7 @@ Usage
 ------
 
 ```html
-<!-- Within a web page: Load the fparse library: -->
+<!-- Within a web page: Load the fparser library: -->
 <script src="dist/fparser.js"></script>
 ```
 

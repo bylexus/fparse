@@ -47,10 +47,10 @@
          */
         splitFunctionParams(toSplit) {
             // do not split on ',' within matching brackets.
-            var pCount = 0;
-            var paramStr = '';
-            var params = [];
-            for (var i = 0; i < toSplit.length; i++) {
+            let pCount = 0,
+                paramStr = '';
+            const params = [];
+            for (let i = 0; i < toSplit.length; i++) {
                 if (toSplit[i] === ',' && pCount === 0) {
                     // Found function param, save 'em
                     params.push(paramStr);
@@ -82,10 +82,10 @@
          * and replaces some known constants:
          */
         cleanupInputString(s) {
-            var constants = ['PI', 'E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'SQRT1_2', 'SQRT2'];
+            const constants = ['PI', 'E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'SQRT1_2', 'SQRT2'];
 
             s = s.replace(/[\s]+/, '');
-            constants.forEach(function(c) {
+            constants.forEach(c => {
                 s = s.replace(new RegExp('([^A-Za-z0-9_]+|^)' + c + '([^A-Za-z]+|$)'), '$1' + Math[c] + '$2');
             });
             return s;
@@ -109,14 +109,15 @@
             // Additionally, replace some constants:
             str = this.cleanupInputString(str);
 
-            var lastChar = str.length - 1;
-            var act = 0;
-            var state = 0;
-            var expressions = [];
-            var char = '';
-            var tmp = '';
-            var funcName = null;
-            var pCount = 0;
+            let lastChar = str.length - 1,
+                act = 0,
+                state = 0,
+                expressions = [],
+                char = '',
+                tmp = '',
+                funcName = null,
+                pCount = 0;
+
             while (act <= lastChar) {
                 switch (state) {
                     case 0:
@@ -127,7 +128,7 @@
                             state = 'within-nr';
                             tmp = '';
                             act--;
-                        } else if (char.match(/[\+\-\*\/\^]/)) {
+                        } else if (this.isOperator(char)) {
                             // Simple operators. Note: '-' must be treaten specially,
                             // it could be part of a number.
                             // it MUST be part of a number if the last found expression
@@ -145,8 +146,13 @@
                             }
 
                             // Found a simple operator, store as expression:
-                            expressions.push(char);
-                            state = 0;
+                            if (act === lastChar || this.isOperator(expressions[act - 1])) {
+                                state = -1; // invalid to end with an operator, or have 2 operators in conjunction
+                                break;
+                            } else {
+                                expressions.push(char);
+                                state = 0;
+                            }
                         } else if (char === '(') {
                             // left parenthes found, seems to be the beginning of a new sub-expression:
                             state = 'within-parentheses';
@@ -159,6 +165,13 @@
                                 state = 'within-func';
                             } else {
                                 // Single variable found:
+                                // We need to check some special considerations:
+                                // - If the last char was a number (e.g. 3x), we need to create a multiplication out of it (3*x)
+                                if (expressions.length > 0) {
+                                    if (typeof expressions[expressions.length - 1] === 'number') {
+                                        expressions.push('*');
+                                    }
+                                }
                                 expressions.push(this.createVariableEvaluator(char));
                                 if (this.topFormula instanceof Formula) {
                                     this.topFormula.registerVariable(char);
@@ -177,9 +190,14 @@
                             tmp += char;
                             if (act === lastChar) {
                                 expressions.push(Number(tmp));
+                                state = 0;
                             }
                         } else {
                             // Number finished on last round, so add as expression:
+                            if (tmp === '-') {
+                                // just a single '-' means: a variable could follow (e.g. like in 3*-x), we convert it to -1: (3*-1x)
+                                tmp = -1;
+                            }
                             expressions.push(Number(tmp));
                             tmp = '';
                             state = 0;
@@ -236,7 +254,16 @@
                 }
                 act++;
             }
+
+            if (state !== 0) {
+                throw new Error('Could not parse formula: Syntax error.');
+            }
+
             return expressions;
+        }
+
+        isOperator(char) {
+            return typeof char === 'string' && char.match(/[\+\-\*\/\^]/);
         }
 
         registerVariable(varName) {
@@ -264,12 +291,12 @@
          * Return that number, aka the result.
          */
         evaluate(valueObj) {
-            var i = 0;
-            var item = 0;
-            var left = null;
-            var right = null;
-            var runAgain = true;
-            var results = [];
+            let i = 0,
+                item = 0,
+                left = null,
+                right = null,
+                runAgain = true;
+            const results = [];
 
             if (valueObj instanceof Array) {
                 for (i = 0; i < valueObj.length; i++) {
@@ -279,7 +306,7 @@
             }
 
             // Step 0: do a working copy of the array:
-            var workArr = [];
+            const workArr = [];
             for (i = 0; i < this.getExpression().length; i++) {
                 workArr.push(this.getExpression()[i]);
             }
@@ -386,15 +413,15 @@
         createFunctionEvaluator(arg, fname) {
             // Functions can have multiple params, comma separated.
             // Split them:
-            var args = this.splitFunctionParams(arg),
+            let args = this.splitFunctionParams(arg),
                 me = this;
-            for (var i = 0; i < args.length; i++) {
+            for (let i = 0; i < args.length; i++) {
                 args[i] = new Formula(args[i], me);
             }
             // Args now is an array of function expressions:
             return function(valueObj) {
-                var innerValues = [];
-                for (var i = 0; i < args.length; i++) {
+                const innerValues = [];
+                for (let i = 0; i < args.length; i++) {
                     innerValues.push(args[i].evaluate(valueObj));
                 }
                 // If the valueObj itself has a function definition with
@@ -434,8 +461,7 @@
 
         static calc(formula, valueObj) {
             valueObj = valueObj || {};
-            var F = new Formula(formula);
-            return F.evaluate(valueObj);
+            return new Formula(formula).evaluate(valueObj);
         }
     }
 

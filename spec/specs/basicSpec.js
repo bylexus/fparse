@@ -32,6 +32,21 @@ describe('Basic tests', function() {
         expect(res).toEqual(9);
     });
 
+    it('throws a syntax error when parsing failed', function() {
+        expect(function() {
+            new Fparser('10+');
+        }).toThrowError(/Syntax error/);
+        expect(function() {
+            new Fparser('-3*4^');
+        }).toThrowError(/Syntax error/);
+        expect(function() {
+            new Fparser('4*5+++');
+        }).toThrowError(/Syntax error/);
+        expect(function() {
+            new Fparser('4***5');
+        }).toThrowError(/Syntax error/);
+    });
+
     it('parses parenthesis correctly', function() {
         var f = new Fparser('4*(2+8/(3.0+2.0))');
         expect(f.evaluate()).toEqual(4 * (2 + 8 / (3.0 + 2.0)));
