@@ -113,6 +113,7 @@ If defined in the value object AND on the formula object, the Value object has t
 // Get all used variables in the order of their appereance:
 var f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
 console.log(f4.getVariables()); // ['x','y','var1','var2']
+```
 
 Changelog
 -----------
