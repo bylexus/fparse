@@ -97,6 +97,7 @@
          *   - a number, e.g. '3.45'
          *   - an unknown variable, e.g. 'x'
          *   - a single char operator, such as '*','+' etc...
+         *   - a named variable, in [], e.g. [myvar]
          *   - a function, such as sin(x)
          *   - a parenthessed expression, containing other expressions
          *
@@ -158,6 +159,10 @@
                             state = 'within-parentheses';
                             tmp = '';
                             pCount = 0;
+                        } else if (char === '[') {
+                            // left named var separator char found, seems to be the beginning of a named var:
+                            state = 'within-named-var';
+                            tmp = '';
                         } else if (char.match(/[a-zA-Z]/)) {
                             // multiple chars means it may be a function, else its a var which counts as own expression:
                             if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z]/)) {
@@ -173,11 +178,7 @@
                                     }
                                 }
                                 expressions.push(this.createVariableEvaluator(char));
-                                if (this.topFormula instanceof Formula) {
-                                    this.topFormula.registerVariable(char);
-                                } else {
-                                    this.registerVariable(char);
-                                }
+                                this.registerVariable(char);
                                 state = 0;
                                 tmp = '';
                             }
@@ -215,9 +216,24 @@
                             pCount = 0;
                             state = 'within-func-parentheses';
                         } else {
-                            throw 'ERROR: Wrong character for function at position ' + act;
+                            throw new Error('Wrong character for function at position ' + act);
                         }
 
+                        break;
+
+                    case 'within-named-var':
+                        char = str.charAt(act);
+                        if (char === ']') {
+                            // end of named var, create expression:
+                            expressions.push(this.createVariableEvaluator(tmp));
+                            this.registerVariable(tmp);
+                            tmp = '';
+                            state = 0;
+                        } else if (char.match(/[a-zA-Z0-9_]/)) {
+                            tmp += char;
+                        } else {
+                            throw new Error('Character not allowed within named variable: ' + char);
+                        }
                         break;
 
                     case 'within-parentheses':
@@ -267,8 +283,12 @@
         }
 
         registerVariable(varName) {
-            if (this.variables.indexOf(varName) < 0) {
-                this.variables.push(varName);
+            if (this.topFormula instanceof Formula) {
+                this.topFormula.registerVariable(varName);
+            } else {
+                if (this.variables.indexOf(varName) < 0) {
+                    this.variables.push(varName);
+                }
             }
         }
 
