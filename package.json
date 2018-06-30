@@ -1,6 +1,6 @@
 {
     "name": "fparser",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "A Math Formula parser library for JavaScript",
     "main": "dist/fparser.js",
     "scripts": {
