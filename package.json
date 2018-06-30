@@ -1,100 +1,102 @@
 {
-  "name": "fparser",
-  "version": "1.3.0",
-  "description": "A Math Formula parser library for JavaScript",
-  "main": "dist/fparser.js",
-  "scripts": {
-    "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app node:6 bash",
-    "build": "babel src -d dist",
-    "test": "npm run build && jasmine && karma start"
-  },
-  "keywords": [
-    "javascript",
-    "formula",
-    "parser",
-    "formula",
-    "parser",
-    "mathematical",
-    "formula",
-    "parser"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/bylexus/fparse.git"
-  },
-  "author": "Alex Schenkel <alex@alexi.ch>",
-  "license": "copyright 2013-2014 Alex Schenkel",
-  "bugs": {
-    "url": "https://github.com/bylexus/fparse/issues"
-  },
-  "homepage": "https://github.com/bylexus/fparse",
-  "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
-    "eslint": "^5.0.0",
-    "eslint-config-prettier": "^2.9.0",
-    "eslint-plugin-prettier": "^2.6.1",
-    "jasmine": "^3.1.0",
-    "jasmine-core": "^3.1.0",
-    "karma": "^2.0.4",
-    "karma-jasmine": "^1.1.2",
-    "karma-phantomjs-launcher": "^1.0.4",
-    "prettier": "^1.13.5"
-  },
-  "eslintConfig": {
-    "root": true,
-    "extends": "prettier",
-    "parserOptions": {
-      "ecmaVersion": 6
+    "name": "fparser",
+    "version": "1.3.0",
+    "description": "A Math Formula parser library for JavaScript",
+    "main": "dist/fparser.js",
+    "scripts": {
+        "docker-image": "docker build --pull -t fparse docker/",
+        "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse bash",
+        "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
+        "build": "babel src -d dist",
+        "test": "npm run build && jasmine && karma start"
     },
-    "env": {
-      "browser": true,
-      "node": true
-    },
-    "plugins": [
-      "prettier"
+    "keywords": [
+        "javascript",
+        "formula",
+        "parser",
+        "formula",
+        "parser",
+        "mathematical",
+        "formula",
+        "parser"
     ],
-    "rules": {
-      "prettier/prettier": [
-        "error",
-        {
-          "singleQuote": true,
-          "tabWidth": 4,
-          "printWidth": 120
-        }
-      ],
-      "no-unused-vars": [
-        "error",
-        {
-          "vars": "all",
-          "args": "none"
-        }
-      ],
-      "semi": [
-        "error",
-        "always"
-      ],
-      "curly": "error",
-      "eqeqeq": "error",
-      "no-eval": "error",
-      "no-loop-func": "error",
-      "radix": "error",
-      "comma-dangle": "error",
-      "no-undef": "error"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bylexus/fparse.git"
     },
-    "globals": {
-      "describe": false,
-      "it": false,
-      "beforeEach": false,
-      "expect": false
+    "author": "Alex Schenkel <alex@alexi.ch>",
+    "license": "copyright 2013-2014 Alex Schenkel",
+    "bugs": {
+        "url": "https://github.com/bylexus/fparse/issues"
+    },
+    "homepage": "https://github.com/bylexus/fparse",
+    "devDependencies": {
+        "babel-cli": "^6.26.0",
+        "babel-preset-env": "^1.7.0",
+        "eslint": "^5.0.0",
+        "eslint-config-prettier": "^2.9.0",
+        "eslint-plugin-prettier": "^2.6.1",
+        "jasmine": "^3.1.0",
+        "jasmine-core": "^3.1.0",
+        "karma": "^2.0.4",
+        "karma-chrome-launcher": "^2.2.0",
+        "karma-jasmine": "^1.1.2",
+        "prettier": "^1.13.5"
+    },
+    "eslintConfig": {
+        "root": true,
+        "extends": "prettier",
+        "parserOptions": {
+            "ecmaVersion": 6
+        },
+        "env": {
+            "browser": true,
+            "node": true
+        },
+        "plugins": [
+            "prettier"
+        ],
+        "rules": {
+            "prettier/prettier": [
+                "error",
+                {
+                    "singleQuote": true,
+                    "tabWidth": 4,
+                    "printWidth": 120
+                }
+            ],
+            "no-unused-vars": [
+                "error",
+                {
+                    "vars": "all",
+                    "args": "none"
+                }
+            ],
+            "semi": [
+                "error",
+                "always"
+            ],
+            "curly": "error",
+            "eqeqeq": "error",
+            "no-eval": "error",
+            "no-loop-func": "error",
+            "radix": "error",
+            "comma-dangle": "error",
+            "no-undef": "error"
+        },
+        "globals": {
+            "describe": false,
+            "it": false,
+            "beforeEach": false,
+            "expect": false
+        }
+    },
+    "prettier": {
+        "printWidth": 120,
+        "tabWidth": 4,
+        "useTabs": false,
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "none"
     }
-  },
-  "prettier": {
-    "printWidth": 120,
-    "tabWidth": 4,
-    "useTabs": false,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "none"
-  }
 }

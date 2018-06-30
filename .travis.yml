@@ -1,5 +1,14 @@
+sudo: required
 language: node_js
+services:
+    - docker
 node_js:
     - "node"
     - "6"
+
+before_install:
+    npm run docker-image
+
+script:
+    npm run docker-test
 

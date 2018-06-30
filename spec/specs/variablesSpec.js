@@ -24,4 +24,7 @@ describe('Variable tests', function() {
     it('parses -3x^2 correctly', function() {
         expect(Fparser.calc('-3x^2', { x: 5 })).toEqual(-75);
     });
+    it('parses -3x^2 correctly', function() {
+        expect(Fparser.calc('-3x^2', { x: 5 })).toEqual(-75);
+    });
 });
