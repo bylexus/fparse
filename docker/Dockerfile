@@ -1,4 +1,4 @@
-FROM node:6
+FROM node:12
 
 VOLUME ["/usr/src/app"]
 

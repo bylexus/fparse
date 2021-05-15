@@ -3,12 +3,14 @@
     "version": "1.3.0",
     "description": "A Math Formula parser library for JavaScript",
     "main": "dist/fparser.js",
+    "module": "src/fparser.js",
     "scripts": {
         "docker-image": "docker build --pull -t fparse docker/",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse bash",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
-        "build": "babel src -d dist",
-        "test": "npm run build && jasmine && karma start"
+        "build-dev": "NODE_ENV=development webpack",
+        "build": "NODE_ENV=production webpack",
+        "test": "NODE_ENV=development npm run build-dev && jasmine && karma start"
     },
     "keywords": [
         "javascript",
@@ -25,28 +27,32 @@
         "url": "https://github.com/bylexus/fparse.git"
     },
     "author": "Alex Schenkel <alex@alexi.ch>",
-    "license": "copyright 2013-2014 Alex Schenkel",
+    "license": "MIT",
     "bugs": {
         "url": "https://github.com/bylexus/fparse/issues"
     },
     "homepage": "https://github.com/bylexus/fparse",
     "devDependencies": {
-        "babel-cli": "^6.26.0",
-        "babel-preset-env": "^1.7.0",
-        "eslint": "^5.0.0",
-        "eslint-config-prettier": "^2.9.0",
-        "eslint-plugin-prettier": "^2.6.1",
-        "jasmine": "^3.1.0",
-        "jasmine-core": "^3.1.0",
-        "karma": "^2.0.4",
-        "karma-chrome-launcher": "^2.2.0",
-        "karma-jasmine": "^1.1.2",
-        "prettier": "^1.13.5"
+        "@babel/core": "^7.14.2",
+        "@babel/preset-env": "^7.14.2",
+        "babel-loader": "^8.2.2",
+        "babel-plugin-add-module-exports": "^1.0.4",
+        "eslint": "^7.26.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-prettier": "^3.4.0",
+        "jasmine": "^3.7.0",
+        "karma": "^6.3.2",
+        "karma-chrome-launcher": "^3.1.0",
+        "karma-jasmine": "^4.0.1",
+        "prettier": "^2.3.0",
+        "webpack": "^5.37.0",
+        "webpack-cli": "^4.7.0"
     },
     "eslintConfig": {
         "root": true,
         "extends": "prettier",
         "parserOptions": {
+            "sourceType": "module",
             "ecmaVersion": 6
         },
         "env": {

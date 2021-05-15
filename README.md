@@ -7,7 +7,7 @@ fparser [![Build Status](https://travis-ci.com/bylexus/fparse.svg?branch=master)
 fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.
 
-For an example application, see http://fparse.alexi.ch/.
+For an example application, see https://fparse.alexi.ch/.
 
 Features
 ---------
@@ -40,7 +40,7 @@ Install:
 $ npm install --save fparser
 
 Use:
-var Formula = require('./fparser');
+const Formula = require('./fparser');
 
 or:
 import Formula from 'fparser';
@@ -48,21 +48,21 @@ import Formula from 'fparser';
 
 ```javascript
 // 1. Create a Formula object instance by passing a formula string:
-var fObj = new Formula('2^x');
+const fObj = new Formula('2^x');
 
 // 2. evaluate the formula, delivering a value object for each unknown entity:
-var result = fObj.evaluate({x: 3}); // result = 8
+let result = fObj.evaluate({x: 3}); // result = 8
 
 // or deliver multiple value objects to return multiple results:
-var results = fObj.evaluate([{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+let results = fObj.evaluate([{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // You can also directly evaluate a value if you only need a one-shot result:
-var result = Formula.calc('2^x',{x: 3}); // result = 8
-var results = fObj.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+let result = Formula.calc('2^x',{x: 3}); // result = 8
+let results = fObj.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // Usage in NodeJS:
-var Formula = require('./fparser');
-var fObj = new Formula('2^x)');
+const Formula = require('./fparser');
+const fObj = new Formula('2^x)');
 // .... vice versa
 ```
 
@@ -71,38 +71,34 @@ Advanced Usage
 
 ### Using multiple variables
 ```javascript
-var fObj = new Formula('a*x^2 + b*x + c');
+const fObj = new Formula('a*x^2 + b*x + c');
 
 // Just pass a value object containing a value for each unknown variable:
-var result = fObj.evaluate({a:2,b:-1,c:3,x:3}); // result = 18
+let result = fObj.evaluate({a:2,b:-1,c:3,x:3}); // result = 18
 ```
 
 ### Using named variables
 
 Instead of single-char variables (like `2x+y`), you can also use named variables in brackets:
 ```javascript
-var fObj = new Formula('2*[var1] + sin([var2]+PI)');
+const fObj = new Formula('2*[var1] + sin([var2]+PI)');
 
 // Just pass a value object containing a value for each named variable:
-var result = fObj.evaluate({var1: 5, var2: 0.7});
+let result = fObj.evaluate({var1: 5, var2: 0.7});
 ```
 
 ### Using user-defined functions
 ```javascript
-var fObj = new Formula('sin(inverse(x))');
+const fObj = new Formula('sin(inverse(x))');
 
 //Define the function(s) on the Formula object, then use it multiple times:
-fObj.inverse = function(value){
-    return 1/value;
-};
-var results = fObj.evaluate({x: 1,x:2,x:3});
+fObj.inverse = (value) => 1/value;
+let results = fObj.evaluate({x: 1,x:2,x:3});
 
 // Or pass it in the value object, and OVERRIDE an existing function:
-var result = fObj.evaluate({
+let result = fObj.evaluate({
 	x: 2/Math.PI,
-	inverse: function(value){
-		return -1*value;
-	}
+	inverse: (value) =>  (-1*value)
 });
 
 If defined in the value object AND on the formula object, the Value object has the precedence
@@ -111,7 +107,7 @@ If defined in the value object AND on the formula object, the Value object has t
 ### Get all used variables
 ```javascript
 // Get all used variables in the order of their appereance:
-var f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
+const f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
 console.log(f4.getVariables()); // ['x','y','var1','var2']
 
 Changelog
@@ -126,4 +122,9 @@ Changelog
   * modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
   * Make sure you include dist/fparser.js if you are using it as a browser library.
   * Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
+
+License
+----------
+
+Licensed under the MIT license, see LICENSE file.
 

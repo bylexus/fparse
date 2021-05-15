@@ -1,5 +1,5 @@
 describe('Basic tests', function() {
-    var Fparser;
+    let Fparser = null;
     beforeEach(function() {
         if (typeof require !== 'undefined') {
             Fparser = require('../../dist/fparser');
