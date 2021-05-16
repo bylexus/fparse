@@ -426,6 +426,10 @@ export default class Formula {
         return this.formulaExpression;
     }
 
+    getExpressionString() {
+        return this.formulaExpression ? this.formulaExpression.toString() : '';
+    }
+
     static calc(formula, valueObj, options = {}) {
         valueObj = valueObj || {};
         return new Formula(formula, options).evaluate(valueObj);
@@ -449,6 +453,26 @@ class Expression {
     evaluate(params = {}) {
         throw new Error('Must be defined in child classes');
     }
+
+    toString() {
+        return '';
+    }
+}
+
+class BracketExpression extends Expression {
+    constructor(expr) {
+        super();
+        this.innerExpression = expr;
+        if (!(this.innerExpression instanceof Expression)) {
+            throw new Error('No inner expression given for bracket expression');
+        }
+    }
+    evaluate(params = {}) {
+        return this.innerExpression.evaluate(params);
+    }
+    toString() {
+        return `(${this.innerExpression.toString()})`;
+    }
 }
 
 class ValueExpression extends Expression {
@@ -461,6 +485,9 @@ class ValueExpression extends Expression {
     }
     evaluate(params = {}) {
         return this.value;
+    }
+    toString() {
+        return String(this.value);
     }
 }
 
@@ -484,6 +511,13 @@ class PlusMinusExpression extends Expression {
         }
         throw new Error('Unknown operator for PlusMinus expression');
     }
+
+    toString() {
+        if (this.operator === '-' && this.right instanceof PlusMinusExpression) {
+            return `${this.left.toString()} ${this.operator} (${this.right.toString()})`;
+        }
+        return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
+    }
 }
 
 class MultDivExpression extends Expression {
@@ -506,6 +540,19 @@ class MultDivExpression extends Expression {
         }
         throw new Error('Unknown operator for MultDiv expression');
     }
+
+    toString() {
+        if (this.right instanceof PlusMinusExpression) {
+            return `${this.left.toString()} ${this.operator} (${this.right.toString()})`;
+        }
+        if (
+            this.operator === '/' &&
+            (this.right instanceof MultDivExpression || this.right instanceof PlusMinusExpression)
+        ) {
+            return `${this.left.toString()} ${this.operator} (${this.right.toString()})`;
+        }
+        return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
+    }
 }
 
 class PowerExpression extends Expression {
@@ -517,6 +564,17 @@ class PowerExpression extends Expression {
 
     evaluate(params = {}) {
         return Math.pow(this.base.evaluate(params), this.exponent.evaluate(params));
+    }
+
+    toString() {
+        if (
+            this.exponent instanceof MultDivExpression ||
+            this.exponent instanceof PlusMinusExpression ||
+            this.exponent instanceof PowerExpression
+        ) {
+            return `${this.base.toString()}^(${this.exponent.toString()})`;
+        }
+        return `${this.base.toString()}^${this.exponent.toString()}`;
     }
 }
 class FunctionExpression extends Expression {
@@ -549,6 +607,10 @@ class FunctionExpression extends Expression {
             throw new Error('Function not found: ' + this.fn);
         }
     }
+
+    toString() {
+        return `${this.fn}(${this.argumentExpressions.map(a => a.toString()).join(', ')})`;
+    }
 }
 
 class VariableExpression extends Expression {
@@ -567,9 +629,13 @@ class VariableExpression extends Expression {
             throw new Error('Cannot evaluate ' + this.varName + ': No value given');
         }
     }
+    toString() {
+        return `${this.varName}`;
+    }
 }
 
 Formula.Expression = Expression;
+Formula.BracketExpression = PowerExpression;
 Formula.PowerExpression = PowerExpression;
 Formula.MultDivExpression = MultDivExpression;
 Formula.PlusMinusExpression = PlusMinusExpression;
