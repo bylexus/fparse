@@ -102,7 +102,8 @@ export default class Formula {
     }
 
     /**
-     * Parses the given formula string by using a state machine.
+     * Parses the given formula string by using a state machine into a single Expression object,
+     * which represents an expression tree (aka AST).
      *
      * First, we split the string into 'expression': An expression can be:
      *   - a number, e.g. '3.45'
@@ -112,15 +113,6 @@ export default class Formula {
      *   - a function, such as sin(x)
      *   - a parenthessed expression, containing other expressions
      *
-     * An expression represents something that can be evaluated to numbers, or which represent an operation like '+'.
-     * Expressions in parentheses are instantiated as Sub-Formula objects, thus building
-     * an expression Formula tree (let's not call it 'AST' already...)
-     *
-     * In the end, we have an array with expressions (e.g. ['3', '+', '4']), which can be evaluated
-     * in the evaluate() function.
-     *
-     * REFACTORING
-     * -------------
      * We want to create an expression tree out of the string. This is done in 2 stages:
      * 1. form single expressions from the string: parse the string into known expression objects:
      *   - numbers/variables
@@ -145,10 +137,12 @@ export default class Formula {
      * ```
      *
      * In the end, we have a single root expression node, which then can be evaluated in the evaluate() function.
+     *
+     * @param {String} str The formula string, e.g. '3*sin(PI/x)'
+     * @returns {Expression} An expression object, representing the expression tree
      */
     parse(str) {
-        // First of all: Away with all we don't have a need for:
-        // Additionally, replace some constants:
+        // clean the input string first. spaces, math constant replacements etc.:
         str = this.cleanupInputString(str);
         // start recursive call to parse:
         return this._do_parse(str);

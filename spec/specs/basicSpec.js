@@ -18,6 +18,12 @@ describe('Basic tests', function() {
         expect(res).toEqual(10);
     });
 
+    it('can evaluate multiple inputs at once', function() {
+        var f = new Fparser('x^2');
+        var res = f.evaluate([{ x: 0 }, { x: 1 }, { x: 2 }]);
+        expect(res).toEqual([0, 1, 4]);
+    });
+
     it('parses a formula with variables, expects values for each', function() {
         var f = new Fparser('10 -x  *2 + y');
 
