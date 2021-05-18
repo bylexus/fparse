@@ -72,20 +72,24 @@ describe('Expression Tree tests', function() {
                             new Fparser.MultDivExpression(
                                 '*',
                                 new Fparser.ValueExpression(2),
-                                new Fparser.PlusMinusExpression(
-                                    '+',
-                                    new Fparser.ValueExpression(3),
-                                    new Fparser.ValueExpression(4)
+                                new Fparser.BracketExpression(
+                                    new Fparser.PlusMinusExpression(
+                                        '+',
+                                        new Fparser.ValueExpression(3),
+                                        new Fparser.ValueExpression(4)
+                                    )
                                 )
                             ),
                             new Fparser.ValueExpression(4)
                         ),
                         new Fparser.VariableExpression('x')
                     ),
-                    new Fparser.PlusMinusExpression(
-                        '-',
-                        new Fparser.ValueExpression(3),
-                        new Fparser.VariableExpression('y')
+                    new Fparser.BracketExpression(
+                        new Fparser.PlusMinusExpression(
+                            '-',
+                            new Fparser.ValueExpression(3),
+                            new Fparser.VariableExpression('y')
+                        )
                     )
                 )
             );

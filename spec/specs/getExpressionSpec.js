@@ -16,7 +16,13 @@ describe('Get Expression tests', function() {
                 new Fparser.MultDivExpression(
                     '*',
                     new Fparser.ValueExpression(3),
-                    new Fparser.MultDivExpression('*', new Fparser.ValueExpression(4), new Fparser.ValueExpression(2))
+                    new Fparser.BracketExpression(
+                        new Fparser.MultDivExpression(
+                            '*',
+                            new Fparser.ValueExpression(4),
+                            new Fparser.ValueExpression(2)
+                        )
+                    )
                 )
             );
         });
@@ -29,157 +35,45 @@ describe('Get Expression tests', function() {
         });
     });
 
+    describe('BracketExpression::toString', () => {
+        it('returns the expression as expression string', () => {
+            let inst = new Fparser.BracketExpression(
+                new Fparser.FunctionExpression('sin', [new Fparser.ValueExpression(2)])
+            );
+            expect(inst.toString()).toEqual('(sin(2))');
+        });
+    });
+
     describe('PlusMinusExpression::toString', () => {
         it('returns the expression as expression string', () => {
-            let inst = new Fparser.PlusMinusExpression(
-                '+',
-                new Fparser.ValueExpression(-3),
-                new Fparser.ValueExpression(-18.5)
-            );
-            expect(inst.toString()).toEqual('-3 + -18.5');
+            let f = new Fparser('-3       +-18.5');
+            expect(f.getExpression().toString()).toEqual('-3 + -18.5');
         });
-        it('uses brackets if right side is lower/equal prio expression', () => {
-            let inst = new Fparser.PlusMinusExpression(
-                '-',
-                new Fparser.ValueExpression(-3),
-                new Fparser.PlusMinusExpression('+', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 - (3 + 4)');
-        });
-        it('uses NO brackets if operator is "+"', () => {
-            let inst = new Fparser.PlusMinusExpression(
-                '+',
-                new Fparser.ValueExpression(-3),
-                new Fparser.PlusMinusExpression('+', new Fparser.ValueExpression(-3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 + -3 + 4');
-        });
-        it('uses NO brackets if right side is higher prio', () => {
-            let inst = new Fparser.PlusMinusExpression(
-                '-',
-                new Fparser.ValueExpression(-3),
-                new Fparser.MultDivExpression('/', new Fparser.ValueExpression(-3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 - -3 / 4');
-
-            inst = new Fparser.PlusMinusExpression(
-                '-',
-                new Fparser.ValueExpression(-3),
-                new Fparser.PowerExpression(new Fparser.ValueExpression(-3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 - -3^4');
-
-            inst = new Fparser.PlusMinusExpression(
-                '-',
-                new Fparser.ValueExpression(-3),
-                new Fparser.FunctionExpression('sin', [new Fparser.ValueExpression(3)])
-            );
-            expect(inst.toString()).toEqual('-3 - sin(3)');
-            inst = new Fparser.PlusMinusExpression(
-                '-',
-                new Fparser.ValueExpression(-3),
-                new Fparser.VariableExpression('foo')
-            );
-            expect(inst.toString()).toEqual('-3 - foo');
+        it('returns the expression as expression string for more complex formulas', () => {
+            let f = new Fparser('(-3-(2+8) )^ (sin   (x)-3)');
+            expect(f.getExpression().toString()).toEqual('(-3 - (2 + 8))^(sin(x) - 3)');
         });
     });
 
     describe('MultDivExpression::toString', () => {
         it('returns the expression as expression string', () => {
-            let inst = new Fparser.MultDivExpression(
-                '/',
-                new Fparser.ValueExpression(-3),
-                new Fparser.ValueExpression(-18.5)
-            );
-            expect(inst.toString()).toEqual('-3 / -18.5');
+            let f = new Fparser('-3       /-18.5');
+            expect(f.getExpression().toString()).toEqual('-3 / -18.5');
         });
-        it('uses brackets if right side is lower/equal prio expression', () => {
-            let inst = new Fparser.MultDivExpression(
-                '/',
-                new Fparser.ValueExpression(-3),
-                new Fparser.PlusMinusExpression('+', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 / (3 + 4)');
-
-            inst = new Fparser.MultDivExpression(
-                '*',
-                new Fparser.ValueExpression(-3),
-                new Fparser.PlusMinusExpression('+', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 * (3 + 4)');
-
-            inst = new Fparser.MultDivExpression(
-                '/',
-                new Fparser.ValueExpression(-3),
-                new Fparser.MultDivExpression('*', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 / (3 * 4)');
-        });
-
-        it('uses NO brackets if operator is "*"', () => {
-            let inst = new Fparser.MultDivExpression(
-                '*',
-                new Fparser.ValueExpression(-3),
-                new Fparser.MultDivExpression('/', new Fparser.ValueExpression(-3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 * -3 / 4');
-        });
-        it('uses NO brackets if right side is higher prio', () => {
-            let inst = new Fparser.MultDivExpression(
-                '/',
-                new Fparser.ValueExpression(-3),
-                new Fparser.PowerExpression(new Fparser.ValueExpression(-3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3 / -3^4');
-
-            inst = new Fparser.MultDivExpression(
-                '/',
-                new Fparser.ValueExpression(-3),
-                new Fparser.FunctionExpression('sin', [new Fparser.ValueExpression(3)])
-            );
-            expect(inst.toString()).toEqual('-3 / sin(3)');
-            inst = new Fparser.MultDivExpression(
-                '/',
-                new Fparser.ValueExpression(-3),
-                new Fparser.VariableExpression('foo')
-            );
-            expect(inst.toString()).toEqual('-3 / foo');
+        it('returns the expression as expression string for more complex formulas', () => {
+            let f = new Fparser('(-3/(2*8) )^ (sin   (x)*3)');
+            expect(f.getExpression().toString()).toEqual('(-3 / (2 * 8))^(sin(x) * 3)');
         });
     });
 
     describe('PowerExpression::toString', () => {
         it('returns the expression as expression string', () => {
-            let inst = new Fparser.PowerExpression(new Fparser.ValueExpression(-3), new Fparser.ValueExpression(7));
-            expect(inst.toString()).toEqual('-3^7');
+            let f = new Fparser('-3       ^-18.5');
+            expect(f.getExpression().toString()).toEqual('-3^-18.5');
         });
-        it('uses brackets if right side is lower/equal prio expression', () => {
-            let inst = new Fparser.PowerExpression(
-                new Fparser.ValueExpression(-3),
-                new Fparser.PlusMinusExpression('+', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3^(3 + 4)');
-
-            inst = new Fparser.PowerExpression(
-                new Fparser.ValueExpression(-3),
-                new Fparser.MultDivExpression('/', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3^(3 / 4)');
-
-            inst = new Fparser.PowerExpression(
-                new Fparser.ValueExpression(-3),
-                new Fparser.PowerExpression(new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
-            );
-            expect(inst.toString()).toEqual('-3^(3^4)');
-        });
-        it('uses NO brackets if right side is higher prio', () => {
-            let inst = new Fparser.PowerExpression(
-                new Fparser.ValueExpression(-3),
-                new Fparser.FunctionExpression('sin', [new Fparser.ValueExpression(3)])
-            );
-            expect(inst.toString()).toEqual('-3^sin(3)');
-
-            inst = new Fparser.PowerExpression(new Fparser.ValueExpression(-3), new Fparser.VariableExpression('foo'));
-            expect(inst.toString()).toEqual('-3^foo');
+        it('returns the expression as expression string for more complex formulas', () => {
+            let f = new Fparser('(-3^(2^8) )^ (sin   (x)^3)');
+            expect(f.getExpression().toString()).toEqual('(-3^(2^8))^(sin(x)^3)');
         });
     });
 

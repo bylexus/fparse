@@ -175,7 +175,7 @@ export default class Formula {
                         }
 
                         // Found a simple operator, store as expression:
-                        if (act === lastChar || this.isOperator(expressions[act - 1])) {
+                        if (act === lastChar || this.isOperatorExpr(expressions[act - 1])) {
                             state = -1; // invalid to end with an operator, or have 2 operators in conjunction
                             break;
                         } else {
@@ -273,7 +273,7 @@ export default class Formula {
                         if (pCount <= 0) {
                             // Yes, we found the closing parenthesis, create new sub-expression:
                             if (state === 'within-parentheses') {
-                                expressions.push(this.parse(tmp));
+                                expressions.push(new BracketExpression(this.parse(tmp)));
                             } else if (state === 'within-func-parentheses') {
                                 // Function found: create expressions from the inner argument
                                 // string, and create a function expression with it:
@@ -513,9 +513,6 @@ class PlusMinusExpression extends Expression {
     }
 
     toString() {
-        if (this.operator === '-' && this.right instanceof PlusMinusExpression) {
-            return `${this.left.toString()} ${this.operator} (${this.right.toString()})`;
-        }
         return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
     }
 }
@@ -542,15 +539,6 @@ class MultDivExpression extends Expression {
     }
 
     toString() {
-        if (this.right instanceof PlusMinusExpression) {
-            return `${this.left.toString()} ${this.operator} (${this.right.toString()})`;
-        }
-        if (
-            this.operator === '/' &&
-            (this.right instanceof MultDivExpression || this.right instanceof PlusMinusExpression)
-        ) {
-            return `${this.left.toString()} ${this.operator} (${this.right.toString()})`;
-        }
         return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
     }
 }
@@ -567,13 +555,6 @@ class PowerExpression extends Expression {
     }
 
     toString() {
-        if (
-            this.exponent instanceof MultDivExpression ||
-            this.exponent instanceof PlusMinusExpression ||
-            this.exponent instanceof PowerExpression
-        ) {
-            return `${this.base.toString()}^(${this.exponent.toString()})`;
-        }
         return `${this.base.toString()}^${this.exponent.toString()}`;
     }
 }
@@ -635,7 +616,7 @@ class VariableExpression extends Expression {
 }
 
 Formula.Expression = Expression;
-Formula.BracketExpression = PowerExpression;
+Formula.BracketExpression = BracketExpression;
 Formula.PowerExpression = PowerExpression;
 Formula.MultDivExpression = MultDivExpression;
 Formula.PlusMinusExpression = PlusMinusExpression;
