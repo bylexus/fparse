@@ -94,8 +94,9 @@ export default class Formula {
      */
     cleanupInputString(s) {
         s = s.replace(/[\s]+/g, '');
+        // surround known math constants with [], to parse them as named variables [xxx]:
         Object.keys(MATH_CONSTANTS).forEach(c => {
-            s = s.replace(new RegExp(`\\b${c}\\b`), `[${c}]`);
+            s = s.replace(new RegExp(`\\b${c}\\b`, 'g'), `[${c}]`);
         });
         return s;
     }

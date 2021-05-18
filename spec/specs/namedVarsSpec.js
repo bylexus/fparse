@@ -44,4 +44,12 @@ describe('Named Variable tests', function() {
         expect(f.getExpressionString()).toEqual('PI * foo + 4 * E');
         expect(f.evaluate({ foo: 3 })).toEqual(Math.PI * 3 + 4 * Math.E);
     });
+
+    it('replaces multiple occurences of math constants correctly', function() {
+        var f = new Fparser('PI+E+PI+E');
+        var variables = f.getVariables();
+        expect(variables).toEqual(['PI', 'E']);
+        expect(f.getExpressionString()).toEqual('PI + E + PI + E');
+        expect(f.evaluate()).toEqual(Math.PI + Math.E + Math.PI + Math.E);
+    });
 });
