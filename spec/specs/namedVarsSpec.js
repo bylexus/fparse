@@ -36,4 +36,12 @@ describe('Named Variable tests', function() {
         var variables = f.getVariables();
         expect(variables).toEqual(['x', 'var1', 'var2']);
     });
+
+    it('can evaluate named vars and Math constants correctly', function() {
+        var f = new Fparser('PI*[foo]+4E');
+        var variables = f.getVariables();
+        expect(variables).toEqual(['PI', 'foo', 'E']);
+        expect(f.getExpressionString()).toEqual('PI * foo + 4 * E');
+        expect(f.evaluate({ foo: 3 })).toEqual(Math.PI * 3 + 4 * Math.E);
+    });
 });

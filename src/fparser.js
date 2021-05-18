@@ -20,6 +20,16 @@
  * -------------
  * MIT license, see LICENSE file
  */
+const MATH_CONSTANTS = {
+    PI: Math.PI,
+    E: Math.E,
+    LN2: Math.LN2,
+    LN10: Math.LN10,
+    LOG2E: Math.LOG2E,
+    LOG10E: Math.LOG10E,
+    SQRT1_2: Math.SQRT1_2,
+    SQRT2: Math.SQRT2
+};
 export default class Formula {
     /**
      * Creates a new Formula instance
@@ -83,11 +93,9 @@ export default class Formula {
      * and replaces some known constants:
      */
     cleanupInputString(s) {
-        const constants = ['PI', 'E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'SQRT1_2', 'SQRT2'];
-
-        s = s.replace(/[\s]+/, '');
-        constants.forEach(c => {
-            s = s.replace(new RegExp('([^A-Za-z0-9_]+|^)' + c + '([^A-Za-z]+|$)'), '$1' + Math[c] + '$2');
+        s = s.replace(/[\s]+/g, '');
+        Object.keys(MATH_CONSTANTS).forEach(c => {
+            s = s.replace(new RegExp(`\\b${c}\\b`), `[${c}]`);
         });
         return s;
     }
@@ -141,7 +149,16 @@ export default class Formula {
         // First of all: Away with all we don't have a need for:
         // Additionally, replace some constants:
         str = this.cleanupInputString(str);
+        // start recursive call to parse:
+        return this._do_parse(str);
+    }
 
+    /**
+     * @see parse(): this is the recursive parse function, without the clean string part.
+     * @param {String} str
+     * @returns {Expression} An expression object, representing the expression tree
+     */
+    _do_parse(str) {
         let lastChar = str.length - 1,
             act = 0,
             state = 0,
@@ -193,7 +210,7 @@ export default class Formula {
                         tmp = '';
                     } else if (char.match(/[a-zA-Z]/)) {
                         // multiple chars means it may be a function, else its a var which counts as own expression:
-                        if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z]/)) {
+                        if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z0-9_]/)) {
                             tmp = char;
                             state = 'within-func';
                         } else {
@@ -237,7 +254,7 @@ export default class Formula {
 
                 case 'within-func':
                     char = str.charAt(act);
-                    if (char.match(/[a-zA-Z]/)) {
+                    if (char.match(/[a-zA-Z0-9_]/)) {
                         tmp += char;
                     } else if (char === '(') {
                         funcName = tmp;
@@ -273,11 +290,11 @@ export default class Formula {
                         if (pCount <= 0) {
                             // Yes, we found the closing parenthesis, create new sub-expression:
                             if (state === 'within-parentheses') {
-                                expressions.push(new BracketExpression(this.parse(tmp)));
+                                expressions.push(new BracketExpression(this._do_parse(tmp)));
                             } else if (state === 'within-func-parentheses') {
                                 // Function found: create expressions from the inner argument
                                 // string, and create a function expression with it:
-                                let args = this.splitFunctionParams(tmp).map(a => this.parse(a));
+                                let args = this.splitFunctionParams(tmp).map(a => this._do_parse(a));
                                 expressions.push(new FunctionExpression(funcName, args, this));
                                 funcName = null;
                             }
@@ -419,7 +436,7 @@ export default class Formula {
         if (!(expr instanceof Expression)) {
             throw new Error('No expression set: Did you init the object with a Formula?');
         }
-        return expr.evaluate(valueObj);
+        return expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
     }
 
     getExpression() {

@@ -61,6 +61,28 @@ describe('Basic tests', function() {
         expect(f.evaluate()).toEqual(4 * (2 + 8 / (3.0 + 2.0)));
     });
 
+    it('parses function names correctly', function() {
+        var f = new Fparser('sin(3)');
+        var exp = new Fparser.FunctionExpression('sin', [new Fparser.ValueExpression(3)]);
+        exp.formulaObject = f;
+        expect(f.getExpression()).toEqual(exp);
+
+        f = new Fparser('sin_2(3)');
+        exp = new Fparser.FunctionExpression('sin_2', [new Fparser.ValueExpression(3)]);
+        exp.formulaObject = f;
+        expect(f.getExpression()).toEqual(exp);
+
+        f = new Fparser('Foo9(3)');
+        exp = new Fparser.FunctionExpression('Foo9', [new Fparser.ValueExpression(3)]);
+        exp.formulaObject = f;
+        expect(f.getExpression()).toEqual(exp);
+
+        f = new Fparser('F_o_O_0_3_(3)');
+        exp = new Fparser.FunctionExpression('F_o_O_0_3_', [new Fparser.ValueExpression(3)]);
+        exp.formulaObject = f;
+        expect(f.getExpression()).toEqual(exp);
+    });
+
     it('knows the Math constants and can parse them within a formula', function() {
         var constants = ['PI', 'E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'SQRT1_2', 'SQRT2'];
 

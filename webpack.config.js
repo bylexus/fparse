@@ -4,6 +4,7 @@ const env = process.env.NODE_ENV || 'production';
 module.exports = {
     mode: env === 'development' ? 'development' : 'production',
     entry: './src/fparser.js',
+    devtool: 'source-map',
     output: {
         filename: 'fparser.js',
         path: path.resolve(__dirname, 'dist'),
