@@ -1,5 +1,4 @@
-fparser [![Build Status](https://travis-ci.com/bylexus/fparse.svg?branch=master)](https://travis-ci.com/bylexus/fparse)
-=======
+# fparser
 
 > A JavaScript Formula Parser
 
@@ -9,8 +8,7 @@ One can then provide values for all unknown variables / functions and evaluate a
 
 For an example application, see https://fparse.alexi.ch/.
 
-Features
----------
+## Features
 
 Parses a mathematical formula from a string. Known expressions:
 
@@ -26,8 +24,7 @@ Parses a mathematical formula from a string. Known expressions:
 * Example:<br /> <code>-1*(sin(2^x)/(PI*x))*cos(x))</code>
 
 
-Usage
-------
+## Usage
 
 ```html
 <!-- Within a web page: Load the fparser library: -->
@@ -66,8 +63,7 @@ const fObj = new Formula('2^x)');
 // .... vice versa
 ```
 
-Advanced Usage
---------------
+## Advanced Usage
 
 ### Using multiple variables
 ```javascript
@@ -104,24 +100,58 @@ let result = fObj.evaluate({
 If defined in the value object AND on the formula object, the Value object has the precedence
 ```
 
+### Re-use a Formula object
+
+You can instantiate a Formula object without formula, and set it later, and even re-use the existing object:
+
+```javascript
+const fObj = new Formula();
+// ...
+fObj.setFormula('2*x^2 + 5*x + 3');
+let res = fObj.evaluate({x:3});
+// ...
+fObj.setFormula('x*y');
+res = fObj.evaluate({x:2, y:4});
+```
+
 ### Get all used variables
 ```javascript
 // Get all used variables in the order of their appereance:
 const f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
 console.log(f4.getVariables()); // ['x','y','var1','var2']
+```
 
-Changelog
------------
+### Get the parsed formula string
+
+After parsing, get the formula string as parsed:
+
+```javascript
+// Get all used variables in the order of their appereance:
+const f = new Formula('x      * (  y  +    9 )');
+console.log(f.getExpressionString()); // 'x * (y + 9)'
+```
+
+## Changelog
+
+### 1.5.0
+
+* Switched to MIT license
+* complete refactoring of the parsing and evaluating part: The parser now creates an Expression Tree (AST) that saves extra time while evaluating - Evaluation now only traverses the AST, which is much faster.
+* added `getExpressionString()` function to get a formatted string from the formula
+* Switched bundler to webpack
+* fixed some parser bugs
+
 
 ### 1.4.0
 
-  * Adding support for named variables (`2x + [var1]`)
-  * switched testing to chromium runner instead of PhantomJS
+* Adding support for named variables (`2x + [var1]`)
+* switched testing to chromium runner instead of PhantomJS
 
 ### 1.3.0
-  * modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
-  * Make sure you include dist/fparser.js if you are using it as a browser library.
-  * Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
+
+* modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
+* Make sure you include dist/fparser.js if you are using it as a browser library.
+* Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
 
 License
 ----------

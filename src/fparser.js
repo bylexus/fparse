@@ -42,13 +42,25 @@ export default class Formula {
         this.formulaExpression = null;
         this.variables = [];
         this.options = Object.assign({}, options);
-
-        if (fStr) {
-            this.formulaStr = fStr;
-            this.formulaExpression = this.parse(fStr);
-        }
-
+        this.setFormula(fStr);
         return this;
+    }
+
+    /**
+     * Re-sets the given String and parses it to a formula expression. Can be used after initialization,
+     * to re-use the Formula object.
+     *
+     * @param {String} formulaString The formula string to set/parse
+     * @return {Expression} The Formula expression
+     */
+    setFormula(formulaString) {
+        if (formulaString) {
+            this.formulaExpression = null;
+            this.variables = [];
+            this.formulaStr = formulaString;
+            this.formulaExpression = this.parse(formulaString);
+        }
+        return this.formulaExpression;
     }
 
     /**

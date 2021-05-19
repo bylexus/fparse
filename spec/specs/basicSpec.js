@@ -98,4 +98,12 @@ describe('Basic tests', function() {
             expect(f.evaluate()).toEqual(3 * Math[c] + 5);
         });
     });
+
+    it('can re-use the object with setFormula()', function() {
+        var f = new Fparser('x+3');
+        let res = f.evaluate({ x: 2 });
+        f.setFormula('y+[foo]');
+        res = f.evaluate({ y: 3, foo: 4 });
+        expect(res).toEqual(7);
+    });
 });
