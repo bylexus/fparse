@@ -20,6 +20,7 @@ Parses a mathematical formula from a string. Known expressions:
 * the use of *own functions*
 * the use of single-char *variables* (like '2x')
 * the use of named variables (like '2*[myVar]')
+* *memoization*: store already evaluated results for faster re-calcs
 * use it in Web pages, as ES6 module or as NodeJS module
 * Example:<br /> <code>-1*(sin(2^x)/(PI*x))*cos(x))</code>
 
@@ -63,7 +64,7 @@ const fObj = new Formula('2^x)');
 // .... vice versa
 ```
 
-## Advanced Usage
+## More options
 
 ### Using multiple variables
 ```javascript
@@ -114,6 +115,28 @@ fObj.setFormula('x*y');
 res = fObj.evaluate({x:2, y:4});
 ```
 
+### Memoization
+
+To avoid re-calculation of already evaluated results, the formula parser object supports **memoization**:
+it stores already evaluated results for given expression parameters.
+
+Example:
+
+```javascript
+const fObj = new Formula('x * y', {memoization: true});
+let res1 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
+let res2 = fObj.evaluate({x:2, y:3}); // 6, from memory
+```
+
+You can enable / disable memoization on the object:
+```javascript
+const fObj = new Formula('x * y');
+let res1 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
+fObj.enableMemoization();
+let res2 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
+let res3 = fObj.evaluate({x:2, y:3}); // 6, from memory
+```
+
 ### Get all used variables
 ```javascript
 // Get all used variables in the order of their appereance:
@@ -138,6 +161,7 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 * Switched to MIT license
 * complete refactoring of the parsing and evaluating part: The parser now creates an Expression Tree (AST) that saves extra time while evaluating - Evaluation now only traverses the AST, which is much faster.
 * added `getExpressionString()` function to get a formatted string from the formula
+* adding support for memoization: store already evaluated results
 * Switched bundler to webpack
 * fixed some parser bugs
 

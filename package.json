@@ -94,7 +94,8 @@
             "describe": false,
             "it": false,
             "beforeEach": false,
-            "expect": false
+            "expect": false,
+            "spyOn": false
         }
     },
     "prettier": {

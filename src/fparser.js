@@ -34,14 +34,25 @@ export default class Formula {
     /**
      * Creates a new Formula instance
      *
+     * Optional configuration can be set in the options object:
+     *
+     * - memoization (bool): If true, results are stored and re-used when evaluate() is called with the same parameters
+     *
      * @param {String} fStr The formula string, e.g. 'sin(x)/cos(y)'
-     * @param {Object} options An options object (TODO)
+     * @param {Object} options An options object. Supported options:
+     *    - memoization (bool): If true, results are stored and re-used when evaluate() is called with the same parameters
      * @param {Formula} parentFormula Internally used to build a Formula AST
      */
     constructor(fStr, options = {}) {
         this.formulaExpression = null;
-        this.variables = [];
-        this.options = Object.assign({}, options);
+        this.options = Object.assign(
+            {
+                memoization: false
+            },
+            options
+        );
+        this._variables = [];
+        this._memory = {};
         this.setFormula(fStr);
         return this;
     }
@@ -56,11 +67,28 @@ export default class Formula {
     setFormula(formulaString) {
         if (formulaString) {
             this.formulaExpression = null;
-            this.variables = [];
+            this._variables = [];
+            this._memory = {};
             this.formulaStr = formulaString;
             this.formulaExpression = this.parse(formulaString);
         }
         return this.formulaExpression;
+    }
+
+    /**
+     * Enable memoization: An expression is only evaluated once for the same input.
+     * Further evaluations with the same input will return the in-memory stored result.
+     */
+    enableMemoization() {
+        this.options.memoization = true;
+    }
+
+    /**
+     * Disable in-memory memoization: each call to evaluate() is executed from scratch.
+     */
+    disableMemoization() {
+        this.options.memoization = false;
+        this._memory = {};
     }
 
     /**
@@ -414,13 +442,13 @@ export default class Formula {
     }
 
     registerVariable(varName) {
-        if (this.variables.indexOf(varName) < 0) {
-            this.variables.push(varName);
+        if (this._variables.indexOf(varName) < 0) {
+            this._variables.push(varName);
         }
     }
 
     getVariables() {
-        return this.variables;
+        return this._variables;
     }
 
     /**
@@ -443,7 +471,35 @@ export default class Formula {
         if (!(expr instanceof Expression)) {
             throw new Error('No expression set: Did you init the object with a Formula?');
         }
+        if (this.options.memoization) {
+            let res = this.resultFromMemory(valueObj);
+            if (res !== null) {
+                return res;
+            } else {
+                res = expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
+                this.storeInMemory(valueObj, res);
+                return res;
+            }
+        }
         return expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
+    }
+
+    hashValues(valueObj) {
+        return JSON.stringify(valueObj);
+    }
+
+    resultFromMemory(valueObj) {
+        let key = this.hashValues(valueObj);
+        let res = this._memory[key];
+        if (res !== undefined) {
+            return res;
+        } else {
+            return null;
+        }
+    }
+
+    storeInMemory(valueObj, value) {
+        this._memory[this.hashValues(valueObj)] = value;
     }
 
     getExpression() {
