@@ -5,7 +5,7 @@
     "main": "dist/fparser.js",
     "module": "src/fparser.js",
     "scripts": {
-        "docker-image": "docker build --pull -t fparse docker/",
+        "docker-image": "docker build --pull --target develop -t fparse .",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse bash",
         "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparse npm run serve",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",

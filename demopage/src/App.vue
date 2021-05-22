@@ -13,7 +13,7 @@
             <p>
                 <a href="https://github.com/bylexus/fparse">@see the github page</a> for a more detailed usage
                 documentation.<br />
-                The source code of this page can be found <a href="">here</a>.
+                The source code of this page can be found <a href="https://github.com/bylexus/fparse/blob/develop/demopage/src/App.vue">here</a>.
             </p>
 
             <p>
