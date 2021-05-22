@@ -158,7 +158,10 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ## Changelog
 
-### 1.5.0
+### 2.0.0
+
+This release is a complete re-vamp, see below. it **should** be completely backward compatible to the 1.x versions, but I did not test all
+edge cases.
 
 * Switched to MIT license
 * complete refactoring of the parsing and evaluating part: The parser now creates an Expression Tree (AST) that saves extra time while evaluating - Evaluation now only traverses the AST, which is much faster.
