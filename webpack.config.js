@@ -6,7 +6,7 @@ module.exports = {
     entry: './src/fparser.js',
     devtool: 'source-map',
     output: {
-        filename: 'fparser.js',
+        filename: env === 'development' ? 'fparser-dev.js' : 'fparser.js',
         path: path.resolve(__dirname, 'dist'),
         // needed if lib type = umd:
         globalObject: 'this',

@@ -2,7 +2,7 @@ describe('Named Variable tests', function() {
     var Fparser;
     beforeEach(function() {
         if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser');
+            Fparser = require('../../dist/fparser-dev');
         } else {
             Fparser = window.Formula;
         }

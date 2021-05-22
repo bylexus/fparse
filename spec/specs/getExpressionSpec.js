@@ -3,7 +3,7 @@ describe('Get Expression tests', function() {
 
     beforeEach(function() {
         if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser.js');
+            Fparser = require('../../dist/fparser-dev');
         } else {
             Fparser = window.Formula;
         }

@@ -62,7 +62,7 @@ export default class Formula {
      * to re-use the Formula object.
      *
      * @param {String} formulaString The formula string to set/parse
-     * @return {Expression} The Formula expression
+     * @return {this} The Formula object (this)
      */
     setFormula(formulaString) {
         if (formulaString) {
@@ -72,7 +72,7 @@ export default class Formula {
             this.formulaStr = formulaString;
             this.formulaExpression = this.parse(formulaString);
         }
-        return this.formulaExpression;
+        return this;
     }
 
     /**
@@ -135,7 +135,7 @@ export default class Formula {
     cleanupInputString(s) {
         s = s.replace(/[\s]+/g, '');
         // surround known math constants with [], to parse them as named variables [xxx]:
-        Object.keys(MATH_CONSTANTS).forEach(c => {
+        Object.keys(MATH_CONSTANTS).forEach((c) => {
             s = s.replace(new RegExp(`\\b${c}\\b`, 'g'), `[${c}]`);
         });
         return s;
@@ -329,7 +329,7 @@ export default class Formula {
                             } else if (state === 'within-func-parentheses') {
                                 // Function found: create expressions from the inner argument
                                 // string, and create a function expression with it:
-                                let args = this.splitFunctionParams(tmp).map(a => this._do_parse(a));
+                                let args = this.splitFunctionParams(tmp).map((a) => this._do_parse(a));
                                 expressions.push(new FunctionExpression(funcName, args, this));
                                 funcName = null;
                             }
@@ -465,7 +465,7 @@ export default class Formula {
     evaluate(valueObj) {
         // resolve multiple value objects recursively:
         if (valueObj instanceof Array) {
-            return valueObj.map(v => this.evaluate(v));
+            return valueObj.map((v) => this.evaluate(v));
         }
         let expr = this.getExpression();
         if (!(expr instanceof Expression)) {
@@ -648,7 +648,7 @@ class FunctionExpression extends Expression {
 
     evaluate(params = {}) {
         params = params || {};
-        const paramValues = this.argumentExpressions.map(a => a.evaluate(params));
+        const paramValues = this.argumentExpressions.map((a) => a.evaluate(params));
 
         // If the params object itself has a function definition with
         // the function name, call this one:
@@ -670,7 +670,7 @@ class FunctionExpression extends Expression {
     }
 
     toString() {
-        return `${this.fn}(${this.argumentExpressions.map(a => a.toString()).join(', ')})`;
+        return `${this.fn}(${this.argumentExpressions.map((a) => a.toString()).join(', ')})`;
     }
 }
 
@@ -685,7 +685,7 @@ class VariableExpression extends Expression {
         // a varname found in the params, return the value.
         // eg: params = {x: 5,y:3}, varname = x, return 5
         if (params[this.varName] !== undefined) {
-            return params[this.varName];
+            return Number(params[this.varName]);
         } else {
             throw new Error('Cannot evaluate ' + this.varName + ': No value given');
         }
@@ -703,3 +703,4 @@ Formula.PlusMinusExpression = PlusMinusExpression;
 Formula.ValueExpression = ValueExpression;
 Formula.VariableExpression = VariableExpression;
 Formula.FunctionExpression = FunctionExpression;
+Formula.MATH_CONSTANTS = MATH_CONSTANTS;

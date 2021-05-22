@@ -7,6 +7,7 @@
     "scripts": {
         "docker-image": "docker build --pull -t fparse docker/",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse bash",
+        "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparse npm run serve",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
         "build-dev": "NODE_ENV=development webpack",
         "build": "NODE_ENV=production webpack",
@@ -35,6 +36,7 @@
     "devDependencies": {
         "@babel/core": "^7.14.2",
         "@babel/preset-env": "^7.14.2",
+        "@vue/cli": "^4.5.13",
         "babel-loader": "^8.2.2",
         "babel-plugin-add-module-exports": "^1.0.4",
         "eslint": "^7.26.0",

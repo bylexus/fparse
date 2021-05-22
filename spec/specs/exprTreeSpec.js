@@ -3,7 +3,7 @@ describe('Expression Tree tests', function() {
     let Expression = null;
     beforeEach(function() {
         if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser.js');
+            Fparser = require('../../dist/fparser-dev');
             Expression = Fparser.Expression;
         } else {
             Fparser = window.Formula;

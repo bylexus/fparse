@@ -1,3 +1,4 @@
 /node_modules/
-/dist/
+/demopage/node_modules/
+/dist/fparser-dev.*
 /test.js

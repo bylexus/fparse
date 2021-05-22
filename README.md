@@ -2,6 +2,8 @@
 
 > A JavaScript Formula Parser
 
+![Master Build](https://github.com/bylexus/fparse/actions/workflows/develop-build.yml/badge.svg)
+![Develop Build](https://github.com/bylexus/fparse/actions/workflows/develop-build.yml/badge.svg?branch=develop)
 
 fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.

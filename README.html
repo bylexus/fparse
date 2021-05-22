@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>fparser</title>
+        <style>
+</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+        
+    </head>
+    <body class="vscode-body vscode-light">
+        <h1 id="fparser">fparser</h1>
+<blockquote>
+<p>A JavaScript Formula Parser</p>
+</blockquote>
+<p><img src="https://github.com/bylexus/fparse/actions/workflows/develop-build.yml/badge.svg" alt="Master Build">
+<img src="https://github.com/bylexus/fparse/actions/workflows/develop-build.yml/badge.svg?branch=develop" alt="Develop Build"></p>
+<p>fparser provides a Formula class that parses strings containing mathematical formulas (e.g. <code>x*sin(PI*x/2)</code>) into an evaluationable object.
+One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.</p>
+<p>For an example application, see <a href="https://fparse.alexi.ch/">https://fparse.alexi.ch/</a>.</p>
+<h2 id="features">Features</h2>
+<p>Parses a mathematical formula from a string. Known expressions:</p>
+<ul>
+<li><em>Numbers</em> in the form [-]digits[.digits], e.g. &quot;-133.2945&quot;</li>
+<li><em>simple operators</em>: '+','-','*','/', '^' expanded in correct order</li>
+<li><em>parentheses</em> '(', ')' for grouping (e.g. &quot;5*(3+2)&quot;)</li>
+<li>all <em>JavaScript Math object functions</em> (e.g. &quot;sin(3.14)&quot;)</li>
+<li>all <em>JavaScript Math constants</em> like PI, E</li>
+<li>the use of <em>own functions</em></li>
+<li>the use of single-char <em>variables</em> (like '2x')</li>
+<li>the use of named variables (like '2*[myVar]')</li>
+<li><em>memoization</em>: store already evaluated results for faster re-calcs</li>
+<li>use it in Web pages, as ES6 module or as NodeJS module</li>
+<li>Example:<br /> <code>-1*(sin(2^x)/(PI*x))*cos(x))</code></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<pre><code class="language-html"><div><span class="hljs-comment">&lt;!-- Within a web page: Load the fparser library: --&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;dist/fparser.js&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+</div></code></pre>
+<pre><code class="language-javascript"><div><span class="hljs-comment">// As node module:</span>
+<span class="hljs-attr">Install</span>:
+$ npm install --save fparser
+
+<span class="hljs-attr">Use</span>:
+<span class="hljs-keyword">const</span> Formula = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;./fparser&#x27;</span>);
+
+or:
+<span class="hljs-keyword">import</span> Formula <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;fparser&#x27;</span>;
+</div></code></pre>
+<pre><code class="language-javascript"><div><span class="hljs-comment">// 1. Create a Formula object instance by passing a formula string:</span>
+<span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;2^x&#x27;</span>);
+
+<span class="hljs-comment">// 2. evaluate the formula, delivering a value object for each unknown entity:</span>
+<span class="hljs-keyword">let</span> result = fObj.evaluate({<span class="hljs-attr">x</span>: <span class="hljs-number">3</span>}); <span class="hljs-comment">// result = 8</span>
+
+<span class="hljs-comment">// or deliver multiple value objects to return multiple results:</span>
+<span class="hljs-keyword">let</span> results = fObj.evaluate([{<span class="hljs-attr">x</span>: <span class="hljs-number">2</span>},{<span class="hljs-attr">x</span>: <span class="hljs-number">4</span>},{<span class="hljs-attr">x</span>: <span class="hljs-number">8</span>}]); <span class="hljs-comment">// results = [4,16,256]</span>
+
+<span class="hljs-comment">// You can also directly evaluate a value if you only need a one-shot result:</span>
+<span class="hljs-keyword">let</span> result = Formula.calc(<span class="hljs-string">&#x27;2^x&#x27;</span>,{<span class="hljs-attr">x</span>: <span class="hljs-number">3</span>}); <span class="hljs-comment">// result = 8</span>
+<span class="hljs-keyword">let</span> results = fObj.calc(<span class="hljs-string">&#x27;2^x&#x27;</span>,[{<span class="hljs-attr">x</span>: <span class="hljs-number">2</span>},{<span class="hljs-attr">x</span>: <span class="hljs-number">4</span>},{<span class="hljs-attr">x</span>: <span class="hljs-number">8</span>}]); <span class="hljs-comment">// results = [4,16,256]</span>
+
+<span class="hljs-comment">// Usage in NodeJS:</span>
+<span class="hljs-keyword">const</span> Formula = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;./fparser&#x27;</span>);
+<span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;2^x)&#x27;</span>);
+<span class="hljs-comment">// .... vice versa</span>
+</div></code></pre>
+<h2 id="more-options">More options</h2>
+<h3 id="using-multiple-variables">Using multiple variables</h3>
+<pre><code class="language-javascript"><div><span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;a*x^2 + b*x + c&#x27;</span>);
+
+<span class="hljs-comment">// Just pass a value object containing a value for each unknown variable:</span>
+<span class="hljs-keyword">let</span> result = fObj.evaluate({<span class="hljs-attr">a</span>:<span class="hljs-number">2</span>,<span class="hljs-attr">b</span>:<span class="hljs-number">-1</span>,<span class="hljs-attr">c</span>:<span class="hljs-number">3</span>,<span class="hljs-attr">x</span>:<span class="hljs-number">3</span>}); <span class="hljs-comment">// result = 18</span>
+</div></code></pre>
+<h3 id="using-named-variables">Using named variables</h3>
+<p>Instead of single-char variables (like <code>2x+y</code>), you can also use named variables in brackets:</p>
+<pre><code class="language-javascript"><div><span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;2*[var1] + sin([var2]+PI)&#x27;</span>);
+
+<span class="hljs-comment">// Just pass a value object containing a value for each named variable:</span>
+<span class="hljs-keyword">let</span> result = fObj.evaluate({<span class="hljs-attr">var1</span>: <span class="hljs-number">5</span>, <span class="hljs-attr">var2</span>: <span class="hljs-number">0.7</span>});
+</div></code></pre>
+<h3 id="using-user-defined-functions">Using user-defined functions</h3>
+<pre><code class="language-javascript"><div><span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;sin(inverse(x))&#x27;</span>);
+
+<span class="hljs-comment">//Define the function(s) on the Formula object, then use it multiple times:</span>
+fObj.inverse = <span class="hljs-function">(<span class="hljs-params">value</span>) =&gt;</span> <span class="hljs-number">1</span>/value;
+<span class="hljs-keyword">let</span> results = fObj.evaluate({<span class="hljs-attr">x</span>: <span class="hljs-number">1</span>,<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>,<span class="hljs-attr">x</span>:<span class="hljs-number">3</span>});
+
+<span class="hljs-comment">// Or pass it in the value object, and OVERRIDE an existing function:</span>
+<span class="hljs-keyword">let</span> result = fObj.evaluate({
+	<span class="hljs-attr">x</span>: <span class="hljs-number">2</span>/<span class="hljs-built_in">Math</span>.PI,
+	<span class="hljs-attr">inverse</span>: <span class="hljs-function">(<span class="hljs-params">value</span>) =&gt;</span>  (<span class="hljs-number">-1</span>*value)
+});
+
+If defined <span class="hljs-keyword">in</span> the value object AND on the formula object, the Value object has the precedence
+</div></code></pre>
+<h3 id="re-use-a-formula-object">Re-use a Formula object</h3>
+<p>You can instantiate a Formula object without formula, and set it later, and even re-use the existing object:</p>
+<pre><code class="language-javascript"><div><span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula();
+<span class="hljs-comment">// ...</span>
+fObj.setFormula(<span class="hljs-string">&#x27;2*x^2 + 5*x + 3&#x27;</span>);
+<span class="hljs-keyword">let</span> res = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">3</span>});
+<span class="hljs-comment">// ...</span>
+fObj.setFormula(<span class="hljs-string">&#x27;x*y&#x27;</span>);
+res = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>, <span class="hljs-attr">y</span>:<span class="hljs-number">4</span>});
+</div></code></pre>
+<h3 id="memoization">Memoization</h3>
+<p>To avoid re-calculation of already evaluated results, the formula parser object supports <strong>memoization</strong>:
+it stores already evaluated results for given expression parameters.</p>
+<p>Example:</p>
+<pre><code class="language-javascript"><div><span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;x * y&#x27;</span>, {<span class="hljs-attr">memoization</span>: <span class="hljs-literal">true</span>});
+<span class="hljs-keyword">let</span> res1 = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>, <span class="hljs-attr">y</span>:<span class="hljs-number">3</span>}); <span class="hljs-comment">// 6, evaluated by calculating x*y</span>
+<span class="hljs-keyword">let</span> res2 = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>, <span class="hljs-attr">y</span>:<span class="hljs-number">3</span>}); <span class="hljs-comment">// 6, from memory</span>
+</div></code></pre>
+<p>You can enable / disable memoization on the object:</p>
+<pre><code class="language-javascript"><div><span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;x * y&#x27;</span>);
+<span class="hljs-keyword">let</span> res1 = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>, <span class="hljs-attr">y</span>:<span class="hljs-number">3</span>}); <span class="hljs-comment">// 6, evaluated by calculating x*y</span>
+fObj.enableMemoization();
+<span class="hljs-keyword">let</span> res2 = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>, <span class="hljs-attr">y</span>:<span class="hljs-number">3</span>}); <span class="hljs-comment">// 6, evaluated by calculating x*y</span>
+<span class="hljs-keyword">let</span> res3 = fObj.evaluate({<span class="hljs-attr">x</span>:<span class="hljs-number">2</span>, <span class="hljs-attr">y</span>:<span class="hljs-number">3</span>}); <span class="hljs-comment">// 6, from memory</span>
+</div></code></pre>
+<h3 id="get-all-used-variables">Get all used variables</h3>
+<pre><code class="language-javascript"><div><span class="hljs-comment">// Get all used variables in the order of their appereance:</span>
+<span class="hljs-keyword">const</span> f4 = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;x*sin(PI*y) + y / (2-x*[var1]) + [var2]&#x27;</span>);
+<span class="hljs-built_in">console</span>.log(f4.getVariables()); <span class="hljs-comment">// [&#x27;x&#x27;,&#x27;y&#x27;,&#x27;var1&#x27;,&#x27;var2&#x27;]</span>
+</div></code></pre>
+<h3 id="get-the-parsed-formula-string">Get the parsed formula string</h3>
+<p>After parsing, get the formula string as parsed:</p>
+<pre><code class="language-javascript"><div><span class="hljs-comment">// Get all used variables in the order of their appereance:</span>
+<span class="hljs-keyword">const</span> f = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;x      * (  y  +    9 )&#x27;</span>);
+<span class="hljs-built_in">console</span>.log(f.getExpressionString()); <span class="hljs-comment">// &#x27;x * (y + 9)&#x27;</span>
+</div></code></pre>
+<h2 id="changelog">Changelog</h2>
+<h3 id="150">1.5.0</h3>
+<ul>
+<li>Switched to MIT license</li>
+<li>complete refactoring of the parsing and evaluating part: The parser now creates an Expression Tree (AST) that saves extra time while evaluating - Evaluation now only traverses the AST, which is much faster.</li>
+<li>added <code>getExpressionString()</code> function to get a formatted string from the formula</li>
+<li>adding support for memoization: store already evaluated results</li>
+<li>Switched bundler to webpack</li>
+<li>fixed some parser bugs</li>
+</ul>
+<h3 id="140">1.4.0</h3>
+<ul>
+<li>Adding support for named variables (<code>2x + [var1]</code>)</li>
+<li>switched testing to chromium runner instead of PhantomJS</li>
+</ul>
+<h3 id="130">1.3.0</h3>
+<ul>
+<li>modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.</li>
+<li>Make sure you include dist/fparser.js if you are using it as a browser library.</li>
+<li>Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays</li>
+</ul>
+<h2 id="license">License</h2>
+<p>Licensed under the MIT license, see LICENSE file.</p>
+
+    </body>
+    </html>
