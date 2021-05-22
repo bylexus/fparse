@@ -8,7 +8,7 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -20,8 +20,6 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install chromium for web-based tests
-      run: sudo apt-get update && sudo apt-get install -y chromium
     - run: npm ci
     - run: npm run build
     - run: npm test
