@@ -2,7 +2,7 @@ describe('Named Variable tests', function() {
     var Fparser;
     beforeEach(function() {
         if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser');
+            Fparser = require('../../dist/fparser-dev');
         } else {
             Fparser = window.Formula;
         }
@@ -35,5 +35,21 @@ describe('Named Variable tests', function() {
         var f = new Fparser('x*2+[var1]*[var2]');
         var variables = f.getVariables();
         expect(variables).toEqual(['x', 'var1', 'var2']);
+    });
+
+    it('can evaluate named vars and Math constants correctly', function() {
+        var f = new Fparser('PI*[foo]+4E');
+        var variables = f.getVariables();
+        expect(variables).toEqual(['PI', 'foo', 'E']);
+        expect(f.getExpressionString()).toEqual('PI * foo + 4 * E');
+        expect(f.evaluate({ foo: 3 })).toEqual(Math.PI * 3 + 4 * Math.E);
+    });
+
+    it('replaces multiple occurences of math constants correctly', function() {
+        var f = new Fparser('PI+E+PI+E');
+        var variables = f.getVariables();
+        expect(variables).toEqual(['PI', 'E']);
+        expect(f.getExpressionString()).toEqual('PI + E + PI + E');
+        expect(f.evaluate()).toEqual(Math.PI + Math.E + Math.PI + Math.E);
     });
 });

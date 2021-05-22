@@ -1,5 +1,7 @@
 /node_modules/
 /spec/
+/docker/
+/demopage/
 bower.json
 karma.conf.js
 .babelrc
