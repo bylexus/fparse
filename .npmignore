@@ -1,3 +1,6 @@
+/Dockerfile
+/.github/
+/test.js
 /node_modules/
 /spec/
 /docker/
