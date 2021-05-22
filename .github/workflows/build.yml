@@ -1,16 +1,9 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Develp Build CI
+name: Build CI
 
-on:
-  push:
-    branches: [ develop ]
-  pull_request:
-    branches: [ develop ]
-  workflow_dispatch:
-    branches: [ develop ]
-
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
@@ -27,6 +20,8 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Install chromium for web-based tests
+      run: sudo apt-get update && sudo apt-get install -y chromium
     - run: npm ci
     - run: npm run build
     - run: npm test
