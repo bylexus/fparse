@@ -5,11 +5,12 @@
     "main": "dist/fparser.js",
     "module": "src/fparser.js",
     "scripts": {
-        "docker-image": "docker build --pull --target develop -t fparse .",
-        "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse bash",
-        "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparse npm run serve",
+        "docker-image": "docker build --pull --target develop -t fparser .",
+        "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparser bash",
+        "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparser npm run serve",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
         "build-dev": "NODE_ENV=development webpack",
+        "build-demopage-image": "docker build --pull -t fparser-demopage .",
         "build": "NODE_ENV=production webpack",
         "test": "NODE_ENV=development npm run build-dev && jasmine && karma start"
     },

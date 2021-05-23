@@ -170,7 +170,7 @@
 $ npm install --save fparser
 
 <span class="hljs-attr">Use</span>:
-<span class="hljs-keyword">const</span> Formula = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;./fparser&#x27;</span>);
+<span class="hljs-keyword">const</span> Formula = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;fparser&#x27;</span>);
 
 or:
 <span class="hljs-keyword">import</span> Formula <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;fparser&#x27;</span>;
@@ -189,7 +189,7 @@ or:
 <span class="hljs-keyword">let</span> results = fObj.calc(<span class="hljs-string">&#x27;2^x&#x27;</span>,[{<span class="hljs-attr">x</span>: <span class="hljs-number">2</span>},{<span class="hljs-attr">x</span>: <span class="hljs-number">4</span>},{<span class="hljs-attr">x</span>: <span class="hljs-number">8</span>}]); <span class="hljs-comment">// results = [4,16,256]</span>
 
 <span class="hljs-comment">// Usage in NodeJS:</span>
-<span class="hljs-keyword">const</span> Formula = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;./fparser&#x27;</span>);
+<span class="hljs-keyword">const</span> Formula = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;fparser&#x27;</span>);
 <span class="hljs-keyword">const</span> fObj = <span class="hljs-keyword">new</span> Formula(<span class="hljs-string">&#x27;2^x)&#x27;</span>);
 <span class="hljs-comment">// .... vice versa</span>
 </div></code></pre>

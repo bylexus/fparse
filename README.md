@@ -40,7 +40,7 @@ Install:
 $ npm install --save fparser
 
 Use:
-const Formula = require('./fparser');
+const Formula = require('fparser');
 
 or:
 import Formula from 'fparser';
@@ -61,7 +61,7 @@ let result = Formula.calc('2^x',{x: 3}); // result = 8
 let results = fObj.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // Usage in NodeJS:
-const Formula = require('./fparser');
+const Formula = require('fparser');
 const fObj = new Formula('2^x)');
 // .... vice versa
 ```
