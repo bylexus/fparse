@@ -8,7 +8,7 @@
 fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.
 
-For an example application, see https://fparse.alexi.ch/.
+For an example application, see https://fparser.alexi.ch/.
 
 ## Features
 
@@ -58,7 +58,7 @@ let results = fObj.evaluate([{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // You can also directly evaluate a value if you only need a one-shot result:
 let result = Formula.calc('2^x',{x: 3}); // result = 8
-let results = fObj.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+let results = Formula.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
 
 // Usage in NodeJS:
 const Formula = require('fparser');

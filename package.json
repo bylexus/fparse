@@ -33,7 +33,7 @@
     "bugs": {
         "url": "https://github.com/bylexus/fparse/issues"
     },
-    "homepage": "https://fparse.alexi.ch/",
+    "homepage": "https://fparser.alexi.ch/",
     "devDependencies": {
         "@babel/core": "^7.14.2",
         "@babel/preset-env": "^7.14.2",

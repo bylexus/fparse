@@ -348,11 +348,11 @@ export default {
             try {
                 let fparser = new Fparser();
 
-                let maxX = fparser.setFormula(this.maxX).evaluate();
-                let minX = fparser.setFormula(this.minX).evaluate();
-                let maxY = fparser.setFormula(this.maxY).evaluate();
-                let minY = fparser.setFormula(this.minY).evaluate();
-                let xInc = fparser.setFormula(this.xInc).evaluate();
+                let maxX = Fparser.calc(this.maxX);
+                let minX = Fparser.calc(this.minX);
+                let maxY = Fparser.calc(this.maxY);
+                let minY = Fparser.calc(this.minY);
+                let xInc = Fparser.calc(this.xInc);
 
                 chart.options.scales['x'].min = minX;
                 chart.options.scales['x'].max = maxX;
@@ -395,8 +395,7 @@ export default {
         calcSingleValue() {
             this.singleError = null;
             try {
-                let f = new Fparser(this.manualFormula);
-                let res = f.evaluate(this.singleVar);
+                let res = Fparser.calc(this.manualFormula, this.singleVar);
                 this.result = res;
             } catch (e) {
                 this.singleError = String(e);
