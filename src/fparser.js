@@ -227,7 +227,7 @@ export default class Formula {
                         }
 
                         // Found a simple operator, store as expression:
-                        if (act === lastChar || this.isOperatorExpr(expressions[act - 1])) {
+                        if (act === lastChar || this.isOperatorExpr(expressions[expressions.length - 1])) {
                             state = -1; // invalid to end with an operator, or have 2 operators in conjunction
                             break;
                         } else {
