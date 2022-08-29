@@ -20,6 +20,10 @@
  * -------------
  * MIT license, see LICENSE file
  */
+
+/**
+ * Map of valid mathematical constants and their values.
+ */
 const MATH_CONSTANTS = {
     PI: Math.PI,
     E: Math.E,
@@ -41,7 +45,6 @@ export default class Formula {
      * @param {String} fStr The formula string, e.g. 'sin(x)/cos(y)'
      * @param {Object} options An options object. Supported options:
      *    - memoization (bool): If true, results are stored and re-used when evaluate() is called with the same parameters
-     * @param {Formula} parentFormula Internally used to build a Formula AST
      */
     constructor(fStr, options = {}) {
         this.formulaExpression = null;
@@ -95,6 +98,9 @@ export default class Formula {
      * Splits the given string by ',', makes sure the ',' is not within
      * a sub-expression
      * e.g.: str = "x,pow(3,4)" returns 2 elements: x and pow(3,4).
+     * 
+     * @param {String} toSplit The string to split
+     * @return {Array.<String>} The split parts of the input string
      */
     splitFunctionParams(toSplit) {
         // do not split on ',' within matching brackets.
@@ -364,7 +370,7 @@ export default class Formula {
      *
      * Note that the given expression objects are modified and linked.
      *
-     * @param {*} expressions
+     * @param {Array.<Expression>} expressions
      * @return {Expression} The root Expression of the built expression tree
      */
     buildExpressionTree(expressions) {
@@ -431,22 +437,44 @@ export default class Formula {
         return exprCopy[0];
     }
 
+    /**
+     * Check if the given character is an operator.
+     *
+     * @param {String} char The character
+     * @return {Boolean} Weather or not the chracter is an operator
+     */
     isOperator(char) {
-        return typeof char === 'string' && char.match(/[\+\-\*\/\^]/);
+        return typeof char === 'string' && !!char.match(/[\+\-\*\/\^]/);
     }
 
+    /**
+     * Check if the expression is an operator expression.
+     *
+     * @param {Expression} expr The expression
+     * @return {Boolean} Whether or not the expression is an operator expression
+     */
     isOperatorExpr(expr) {
         return (
             expr instanceof PlusMinusExpression || expr instanceof MultDivExpression || expr instanceof PowerExpression
         );
     }
 
+    /**
+     * Adds a variable to the list of variables.
+     *
+     * @param {Expression} expr The name of the variable
+     */
     registerVariable(varName) {
         if (this._variables.indexOf(varName) < 0) {
             this._variables.push(varName);
         }
     }
 
+    /**
+     * Returns the list of variables.
+     *
+     * @return {Array.<String>} Array containing the list of known variables
+     */
     getVariables() {
         return this._variables;
     }
@@ -457,10 +485,10 @@ export default class Formula {
      *
      * evaluate({x:2}) --> Result: 20
      *
-     * @param {Object|Array} valueObj An object containing values for variables and (unknown) functions,
-     *   or an array of such objects: If an array is given, all objects are evaluated and the results
-     *   also returned as array.
-     * @return {Number|Array} The evaluated result, or an array with results
+     * @param {Object|Array.<Object>=} valueObj An object
+     *   containing values for variables and (unknown) functions, or an array of such objects: If an array
+     *   is given, all objects are evaluated and the results also returned as array.
+     * @return {Number|Array.<Number>} The evaluated result, or an array with results
      */
     evaluate(valueObj) {
         // resolve multiple value objects recursively:
@@ -484,10 +512,22 @@ export default class Formula {
         return expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
     }
 
+    /**
+     * Converts the given object to an hash.
+     *
+     * @param {Object} valueObj The value object to get the hash of
+     * @return {String} The hash of the value object
+     */
     hashValues(valueObj) {
         return JSON.stringify(valueObj);
     }
 
+    /**
+     * Returns the result for the given value object if it's in memory.
+     *
+     * @param {Object} valueObject The value object to look up in memory
+     * @return {Number|null} The expression for the given value object if it's found
+     */
     resultFromMemory(valueObj) {
         let key = this.hashValues(valueObj);
         let res = this._memory[key];
@@ -498,25 +538,63 @@ export default class Formula {
         }
     }
 
+    /**
+     * Store the result for a given value object in memory
+     * 
+     * @param {Object} valueObj The value object associated with the result
+     * @param {Number} value The result 
+     */
     storeInMemory(valueObj, value) {
         this._memory[this.hashValues(valueObj)] = value;
     }
 
+    /**
+     * Returns the expression for this formula.
+     * 
+     * @return {Expression} The expression.
+     */
     getExpression() {
         return this.formulaExpression;
     }
 
+    /**
+     * Returns the string representation of the expression for this formula.
+     * 
+     * This effectively returns a cleaned-up version of the formula.
+     * 
+     * @return {String} The string representation of the expression
+     */
     getExpressionString() {
         return this.formulaExpression ? this.formulaExpression.toString() : '';
     }
 
+    /**
+     * Calculates the given formula using the given value object if provided.
+     * 
+     * This effectively returns a cleaned-up version of the formula.
+     * 
+     * @param {string} formula The formula string, e.g. 'sin(x)/cos(y)' 
+     * @param {Object|Array.<Object>=} valueObj An object
+     *   containing values for variables and (unknown) functions, or an array of such objects: If an array
+     *   is given, all objects are evaluated and the results also returned as array.
+     * @param {Object} options An options object. Supported options:
+     *    - memoization (bool): If true, results are stored and re-used when evaluate() is called with the same parameters
+     * @return {Number|Array.<Number>} The evaluated result, or an array with results
+     */
     static calc(formula, valueObj, options = {}) {
-        valueObj = valueObj || {};
         return new Formula(formula, options).evaluate(valueObj);
     }
 }
 
 class Expression {
+    /**
+     * Create an operator expression for the given operator
+     * 
+     * @param {String} operator The operator
+     * @param {Number} left The expression to the left of the operator 
+     * @param {Number} right The expressiion to the right of the operator 
+     * @returns {Expression} The expression for the given operator
+     */
     static createOperatorExpression(operator, left = null, right = null) {
         if (operator === '^') {
             return new PowerExpression(operator, left, right);
@@ -530,10 +608,21 @@ class Expression {
         throw new Error(`Unknown operator: ${operator}`);
     }
 
+    /**
+     * Evaluates the expression with the given value object
+     * 
+     * @param {Object} params The value object
+     * @return {Number} The result
+     */
     evaluate(params = {}) {
         throw new Error('Must be defined in child classes');
     }
 
+    /**
+     * Returns the string representation of the expression
+     * 
+     * @return {String} The string representation
+     */
     toString() {
         return '';
     }
