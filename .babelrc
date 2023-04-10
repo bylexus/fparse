@@ -5,10 +5,9 @@
             {
                 "modules": "umd",
                 "targets": {
-                    "node": "12",
+                    "node": "14",
                     "browsers": [
-                        "last 2 versions",
-                        "ie > 11"
+                        "last 2 versions"
                     ]
                 }
             }
