@@ -205,6 +205,10 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 * [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
 
+### 2.0.2
+
+* Fixing Issue #22: If the formula started with a single negate variable (e.g. `-z*t`), the parser got confused.
+
 ### 2.0.0
 
 This release is a complete re-vamp, see below. it **should** be completely backward compatible to the 1.x versions, but I did not test all

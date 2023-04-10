@@ -3,3 +3,5 @@
 /dist/fparser-dev.*
 /test.js
 .DS_Store
+/.vscode/
+/.nvmrc
