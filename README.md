@@ -139,6 +139,49 @@ let res2 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
 let res3 = fObj.evaluate({x:2, y:3}); // 6, from memory
 ```
 
+### Blacklisted functions
+
+The `Formula` class blacklists its internal functions like `evaluate`, `parse` etc. You cannot create a formula that calls an internal `Formula`
+function:
+
+```javascript
+// Internal functions cannot be used in formulas:
+const fObj = new Formula('evaluate(x)');
+fObj.evaluate({x: 5}); // throws an Error
+
+// This also counts for function aliases / references to internal functions:
+const fObj = new Formula('ex(x)');
+fObj.ex = fObj.evaluate;
+fObj.evaluate({x: 5}); // still throws an Error: ex is an alias of evaluate
+```
+
+The `Formula` object keeps a function reference of all blacklisted functions in the `Formula.functionBlacklist` array.
+
+You can get a list of all blacklisted functions:
+
+```javascript
+let blacklistNames = Formula.functionBlacklist.map((f) => f.name));
+```
+
+Or you can check if a specific function is in the blacklist:
+
+```javascript
+fObj = new Formula('x * y');
+// fObj.evaluate is a Function pointer to an internal, blacklisted function:
+Formula.functionBlacklist.includes(fObj.evaluate);
+```
+
+If you want to provide your own function for a blacklisted internal function,
+provide it with the `evaluate` function:
+
+```javascript
+fObj = new Formula('evaluate(x * y)');
+fObj.evaluate({x: 1, y: 2, evaluate: (x, y) => x+y});
+```
+
+Now, `evaluate` in your formula uses your own version of this function.
+
+
 ### Get all used variables
 ```javascript
 // Get all used variables in the order of their appereance:
@@ -157,6 +200,10 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 ```
 
 ## Changelog
+
+### develop
+
+* [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
 
 ### 2.0.0
 

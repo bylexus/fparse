@@ -2,3 +2,4 @@
 /demopage/node_modules/
 /dist/fparser-dev.*
 /test.js
+.DS_Store

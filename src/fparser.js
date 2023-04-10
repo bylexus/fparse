@@ -644,6 +644,7 @@ class FunctionExpression extends Expression {
         this.fn = fn;
         this.argumentExpressions = argumentExpressions || [];
         this.formulaObject = formulaObject;
+        this.blacklisted = undefined;
     }
 
     evaluate(params = {}) {
@@ -657,6 +658,10 @@ class FunctionExpression extends Expression {
         }
         // perhaps the Formula object has the function? so call it:
         else if (this.formulaObject && this.formulaObject[this.fn] instanceof Function) {
+            // Don't, if it is blacklisted:
+            if (this.isBlacklisted()) {
+                throw new Error('Blacklisted function called: ' + this.fn);
+            }
             return this.formulaObject[this.fn].apply(this.formulaObject, paramValues);
         }
         // Has the JS Math object a function as requested? Call it:
@@ -671,6 +676,16 @@ class FunctionExpression extends Expression {
 
     toString() {
         return `${this.fn}(${this.argumentExpressions.map((a) => a.toString()).join(', ')})`;
+    }
+
+    isBlacklisted() {
+        // cache evaluation of blacklisted function, to save call time:
+        if (this.blacklisted === undefined) {
+            this.blacklisted = Formula.functionBlacklist.includes(
+                this.formulaObject ? this.formulaObject[this.fn] : null
+            );
+        }
+        return this.blacklisted;
     }
 }
 
@@ -704,3 +719,8 @@ Formula.ValueExpression = ValueExpression;
 Formula.VariableExpression = VariableExpression;
 Formula.FunctionExpression = FunctionExpression;
 Formula.MATH_CONSTANTS = MATH_CONSTANTS;
+
+// Create a function blacklist:
+Formula.functionBlacklist = Object.getOwnPropertyNames(Formula.prototype)
+    .filter((prop) => Formula.prototype[prop] instanceof Function)
+    .map((prop) => Formula.prototype[prop]);

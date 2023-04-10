@@ -8,3 +8,4 @@
 bower.json
 karma.conf.js
 .babelrc
+.DS_Store
