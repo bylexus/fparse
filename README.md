@@ -99,6 +99,14 @@ const fObj = new Formula('2*[var1.propertyA] + 3*[var2.propertyB.propertyC]');
 let result = fObj.evaluate({ var1: { propertyA: 3 }, var2: { propertyB: { propertyC: 9 } } });
 ```
 
+This even works for array values: Instead of the property name, use an index in an array:
+
+```javascript
+// var2.propertyB is an array, so we can use an index for the 3rd entry of propertyB:
+const fObj = new Formula('2*[var1.propertyA] + 3*[var2.propertyB.2]');
+let result = fObj.evaluate({ var1: { propertyA: 3 }, var2: { propertyB: [2, 4, 6] } });
+```
+
 ### Using user-defined functions
 
 ```javascript
@@ -218,7 +226,8 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ### develop
 
--   [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
+- [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
+- [Feature]: Supporting object paths as variable values (e.g. `3*[obj1.property1.innerProperty]`), thanks to [SamStonehouse](https://github.com/SamStonehouse)
 
 ### 2.0.2
 

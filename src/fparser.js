@@ -717,6 +717,9 @@ class VariableExpression extends Expression {
         // params contain variable / value pairs: If this object's variable matches
         // a varname found in the params, return the value.
         // eg: params = {x: 5,y:3}, varname = x, return 5
+        // Objects and arrays are also supported:
+        // e.g. params = {x: {y: 5}}, varname = x.y, return 5
+        //  or  params = {x: [2,4,6]}, varname = x.2, return 6
         return Number(getProperty(params, this.varPath, this.fullPath));
     }
     toString() {
