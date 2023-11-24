@@ -14,18 +14,18 @@ For an example application, see https://fparser.alexi.ch/.
 
 Parses a mathematical formula from a string. Known expressions:
 
-* *Numbers* in the form [-]digits[.digits], e.g. "-133.2945"
-* *simple operators*: '+','-','*','/', '^' expanded in correct order
-* *parentheses* '(', ')' for grouping (e.g. "5*(3+2)")
-* all *JavaScript Math object functions* (e.g. "sin(3.14)")
-* all *JavaScript Math constants* like PI, E
-* the use of *own functions*
-* the use of single-char *variables* (like '2x')
-* the use of named variables (like '2*[myVar]')
-* *memoization*: store already evaluated results for faster re-calcs
-* use it in Web pages, as ES6 module or as NodeJS module
-* Example:<br /> <code>-1*(sin(2^x)/(PI*x))*cos(x))</code>
-
+-   _Numbers_ in the form [-]digits[.digits], e.g. "-133.2945"
+-   _simple operators_: '+','-','\*','/', '^' expanded in correct order
+-   _parentheses_ '(', ')' for grouping (e.g. "5\*(3+2)")
+-   all _JavaScript Math object functions_ (e.g. "sin(3.14)")
+-   all _JavaScript Math constants_ like PI, E
+-   the use of _own functions_
+-   the use of single-char _variables_ (like '2x')
+-   the use of named variables (like '2\*[myVar]')
+-   the use of path named variables (like '2\*[myVar.property.innerProperty]')
+-   _memoization_: store already evaluated results for faster re-calcs
+-   use it in Web pages, as ES6 module or as NodeJS module
+-   Example:<br /> <code>-1*(sin(2^x)/(PI*x))\*cos(x))</code>
 
 ## Usage
 
@@ -51,14 +51,14 @@ import Formula from 'fparser';
 const fObj = new Formula('2^x');
 
 // 2. evaluate the formula, delivering a value object for each unknown entity:
-let result = fObj.evaluate({x: 3}); // result = 8
+let result = fObj.evaluate({ x: 3 }); // result = 8
 
 // or deliver multiple value objects to return multiple results:
-let results = fObj.evaluate([{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+let results = fObj.evaluate([{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
 
 // You can also directly evaluate a value if you only need a one-shot result:
-let result = Formula.calc('2^x',{x: 3}); // result = 8
-let results = Formula.calc('2^x',[{x: 2},{x: 4},{x: 8}]); // results = [4,16,256]
+let result = Formula.calc('2^x', { x: 3 }); // result = 8
+let results = Formula.calc('2^x', [{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
 
 // Usage in NodeJS:
 const Formula = require('fparser');
@@ -69,24 +69,38 @@ const fObj = new Formula('2^x)');
 ## More options
 
 ### Using multiple variables
+
 ```javascript
 const fObj = new Formula('a*x^2 + b*x + c');
 
 // Just pass a value object containing a value for each unknown variable:
-let result = fObj.evaluate({a:2,b:-1,c:3,x:3}); // result = 18
+let result = fObj.evaluate({ a: 2, b: -1, c: 3, x: 3 }); // result = 18
 ```
 
 ### Using named variables
 
 Instead of single-char variables (like `2x+y`), you can also use named variables in brackets:
+
 ```javascript
 const fObj = new Formula('2*[var1] + sin([var2]+PI)');
 
 // Just pass a value object containing a value for each named variable:
-let result = fObj.evaluate({var1: 5, var2: 0.7});
+let result = fObj.evaluate({ var1: 5, var2: 0.7 });
+```
+
+### Using named path variables
+
+Named variables in brackets can also describe an object property path:
+
+```javascript
+const fObj = new Formula('2*[var1.propertyA] + 3*[var2.propertyB.propertyC]');
+
+// Just pass a value object containing a value for each named variable:
+let result = fObj.evaluate({ var1: { propertyA: 3 }, var2: { propertyB: { propertyC: 9 } } });
 ```
 
 ### Using user-defined functions
+
 ```javascript
 const fObj = new Formula('sin(inverse(x))');
 
@@ -111,10 +125,10 @@ You can instantiate a Formula object without formula, and set it later, and even
 const fObj = new Formula();
 // ...
 fObj.setFormula('2*x^2 + 5*x + 3');
-let res = fObj.evaluate({x:3});
+let res = fObj.evaluate({ x: 3 });
 // ...
 fObj.setFormula('x*y');
-res = fObj.evaluate({x:2, y:4});
+res = fObj.evaluate({ x: 2, y: 4 });
 ```
 
 ### Memoization
@@ -125,18 +139,19 @@ it stores already evaluated results for given expression parameters.
 Example:
 
 ```javascript
-const fObj = new Formula('x * y', {memoization: true});
-let res1 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
-let res2 = fObj.evaluate({x:2, y:3}); // 6, from memory
+const fObj = new Formula('x * y', { memoization: true });
+let res1 = fObj.evaluate({ x: 2, y: 3 }); // 6, evaluated by calculating x*y
+let res2 = fObj.evaluate({ x: 2, y: 3 }); // 6, from memory
 ```
 
 You can enable / disable memoization on the object:
+
 ```javascript
 const fObj = new Formula('x * y');
-let res1 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
+let res1 = fObj.evaluate({ x: 2, y: 3 }); // 6, evaluated by calculating x*y
 fObj.enableMemoization();
-let res2 = fObj.evaluate({x:2, y:3}); // 6, evaluated by calculating x*y
-let res3 = fObj.evaluate({x:2, y:3}); // 6, from memory
+let res2 = fObj.evaluate({ x: 2, y: 3 }); // 6, evaluated by calculating x*y
+let res3 = fObj.evaluate({ x: 2, y: 3 }); // 6, from memory
 ```
 
 ### Blacklisted functions
@@ -147,12 +162,12 @@ function:
 ```javascript
 // Internal functions cannot be used in formulas:
 const fObj = new Formula('evaluate(x)');
-fObj.evaluate({x: 5}); // throws an Error
+fObj.evaluate({ x: 5 }); // throws an Error
 
 // This also counts for function aliases / references to internal functions:
 const fObj = new Formula('ex(x)');
 fObj.ex = fObj.evaluate;
-fObj.evaluate({x: 5}); // still throws an Error: ex is an alias of evaluate
+fObj.evaluate({ x: 5 }); // still throws an Error: ex is an alias of evaluate
 ```
 
 The `Formula` object keeps a function reference of all blacklisted functions in the `Formula.functionBlacklist` array.
@@ -176,13 +191,13 @@ provide it with the `evaluate` function:
 
 ```javascript
 fObj = new Formula('evaluate(x * y)');
-fObj.evaluate({x: 1, y: 2, evaluate: (x, y) => x+y});
+fObj.evaluate({ x: 1, y: 2, evaluate: (x, y) => x + y });
 ```
 
 Now, `evaluate` in your formula uses your own version of this function.
 
-
 ### Get all used variables
+
 ```javascript
 // Get all used variables in the order of their appereance:
 const f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
@@ -203,38 +218,35 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ### develop
 
-* [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
+-   [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
 
 ### 2.0.2
 
-* Fixing Issue #22: If the formula started with a single negate variable (e.g. `-z*t`), the parser got confused.
+-   Fixing Issue #22: If the formula started with a single negate variable (e.g. `-z*t`), the parser got confused.
 
 ### 2.0.0
 
 This release is a complete re-vamp, see below. it **should** be completely backward compatible to the 1.x versions, but I did not test all
 edge cases.
 
-* Switched to MIT license
-* complete refactoring of the parsing and evaluating part: The parser now creates an Expression Tree (AST) that saves extra time while evaluating - Evaluation now only traverses the AST, which is much faster.
-* added `getExpressionString()` function to get a formatted string from the formula
-* adding support for memoization: store already evaluated results
-* Switched bundler to webpack
-* fixed some parser bugs
-
+-   Switched to MIT license
+-   complete refactoring of the parsing and evaluating part: The parser now creates an Expression Tree (AST) that saves extra time while evaluating - Evaluation now only traverses the AST, which is much faster.
+-   added `getExpressionString()` function to get a formatted string from the formula
+-   adding support for memoization: store already evaluated results
+-   Switched bundler to webpack
+-   fixed some parser bugs
 
 ### 1.4.0
 
-* Adding support for named variables (`2x + [var1]`)
-* switched testing to chromium runner instead of PhantomJS
+-   Adding support for named variables (`2x + [var1]`)
+-   switched testing to chromium runner instead of PhantomJS
 
 ### 1.3.0
 
-* modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
-* Make sure you include dist/fparser.js if you are using it as a browser library.
-* Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
+-   modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
+-   Make sure you include dist/fparser.js if you are using it as a browser library.
+-   Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
 
-License
-----------
+## License
 
 Licensed under the MIT license, see LICENSE file.
-

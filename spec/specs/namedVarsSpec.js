@@ -52,4 +52,14 @@ describe('Named Variable tests', function() {
         expect(f.getExpressionString()).toEqual('PI + E + PI + E');
         expect(f.evaluate()).toEqual(Math.PI + Math.E + Math.PI + Math.E);
     });
+
+    it('replaces path variables correctly', function() {
+        var f = new Fparser('[a.b] + [a.c]');
+        expect(f.evaluate({ a: { b: 1, c: 2 } })).toEqual(3);
+    });
+
+    it('replaces path array variables correctly', function() {
+        var f = new Fparser('[a.b.0] + [a.c.d.3]');
+        expect(f.evaluate({ a: { b: [1, 2, 3], c: { d: [7, 8, 9, 10] } } })).toEqual(11);
+    });
 });

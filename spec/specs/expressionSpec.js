@@ -192,13 +192,21 @@ describe('Expression tests', function() {
         it('is instantiated correctly', () => {
             let inst = null;
             inst = new Fparser.VariableExpression('zzz');
-            expect(inst.varName).toEqual('zzz');
+            expect(inst.varPath).toEqual(['zzz']);
         });
         it('evaluates correctly', () => {
             let inst = null;
 
             inst = new Fparser.VariableExpression('xxx');
             expect(inst.evaluate({ xxx: 5 })).toEqual(5);
+
+            // Path var
+            inst = new Fparser.VariableExpression('a.b');
+            expect(inst.evaluate({ a: { b: 8 } })).toEqual(8);
+
+            // Array property var
+            inst = new Fparser.VariableExpression('a.b.1');
+            expect(inst.evaluate({ a: { b: [3, 4, 5] } })).toEqual(4);
 
             // throw error if no fn found:
             inst = new Fparser.VariableExpression('foo');
