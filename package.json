@@ -7,7 +7,7 @@
     "scripts": {
         "docker-image": "docker build --pull --target develop -t fparser .",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparser bash",
-        "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparser npm run serve",
+        "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparser npm run dev",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
         "build-dev": "NODE_ENV=development webpack",
         "build-demopage-image": "docker build --pull -t fparser-demopage .",

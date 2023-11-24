@@ -1,30 +1,28 @@
 {
-  "name": "demopage",
-  "version": "0.1.0",
+  "name": "fparser-demopage",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "dependencies": {
+    "vue": "^3.3.4",
     "bootstrap": "^5.2.3",
-    "chart.js": "^4.2.1",
-    "core-js": "^3.30.0",
-    "vue": "^3.2.47"
+    "chart.js": "^4.2.1"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.21.3",
-    "@vue/cli-plugin-babel": "^5.0.8",
-    "@vue/cli-plugin-eslint": "^5.0.8",
-    "@vue/cli-service": "^5.0.8",
-    "@vue/compiler-sfc": "^3.2.47",
-    "@vue/eslint-config-prettier": "^7.1.0",
-    "eslint": "^8.38.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-vue": "^9.10.0",
-    "prettier": "^2.8.7",
-    "sass": "^1.61.0",
-    "sass-loader": "^13.2.2"
+    "@rushstack/eslint-patch": "^1.3.3",
+    "@vitejs/plugin-vue": "^4.4.0",
+    "@vitejs/plugin-vue-jsx": "^3.0.2",
+    "@vue/eslint-config-prettier": "^8.0.0",
+    "eslint": "^8.49.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "^3.0.3",
+    "sass": "^1.69.5",
+    "vite": "^4.4.11"
   }
 }

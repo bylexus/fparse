@@ -1,7 +1,7 @@
 /**
  * JS Formula Parser
  * -------------------
- * (c) 2012-2021 Alexander Schenkel, alex@alexi.ch
+ * (c) 2012-2023 Alexander Schenkel, alex@alexi.ch
  *
  * JS Formula Parser takes a string, parses its mathmatical formula
  * and creates an evaluatable Formula object of it.
@@ -45,16 +45,10 @@ export default class Formula {
      */
     constructor(fStr, options = {}) {
         this.formulaExpression = null;
-        this.options = Object.assign(
-            {
-                memoization: false
-            },
-            options
-        );
+        this.options = {...{memoization: false}, ...options};
         this._variables = [];
         this._memory = {};
         this.setFormula(fStr);
-        return this;
     }
 
     /**
@@ -133,7 +127,7 @@ export default class Formula {
      * and replaces some known constants:
      */
     cleanupInputString(s) {
-        s = s.replace(/[\s]+/g, '');
+        s = s.replace(/\s+/g, '');
         // surround known math constants with [], to parse them as named variables [xxx]:
         Object.keys(MATH_CONSTANTS).forEach((c) => {
             s = s.replace(new RegExp(`\\b${c}\\b`, 'g'), `[${c}]`);
@@ -432,7 +426,7 @@ export default class Formula {
     }
 
     isOperator(char) {
-        return typeof char === 'string' && char.match(/[\+\-\*\/\^]/);
+        return typeof char === 'string' && char.match(/[+\-*/^]/);
     }
 
     isOperatorExpr(expr) {
