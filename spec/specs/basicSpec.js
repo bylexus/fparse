@@ -112,4 +112,9 @@ describe('Basic tests', function () {
         let res = f.setFormula('y+[foo]');
         expect(res === f).toBeTrue();
     });
+
+    it('can use nested properties in a variable expression', () => {
+        var f = new Fparser('[a] + [b.c] + [b.e.3]'); // 10 + 20 + 4
+        expect(f.evaluate({ a: 10, b: { c: 20, d: 0, e: [1, 2, 3, 4] } })).toEqual(34);
+    });
 });

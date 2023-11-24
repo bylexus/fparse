@@ -310,7 +310,7 @@ export default class Formula {
                         this.registerVariable(tmp);
                         tmp = '';
                         state = 0;
-                    } else if (char.match(/[a-zA-Z0-9_]/)) {
+                    } else if (char.match(/[a-zA-Z0-9_.]/)) {
                         tmp += char;
                     } else {
                         throw new Error('Character not allowed within named variable: ' + char);
@@ -689,24 +689,38 @@ class FunctionExpression extends Expression {
     }
 }
 
+function getProperty(object, path, fullPath) {
+    let curr = object;
+    for (let i = 0; i < path.length; i++) {
+        if (curr[path[i]] === undefined) {
+            throw new Error(`Cannot evaluate ${path[i]}, property not found (from path ${fullPath})`);
+        }
+
+        curr = curr[path[i]];
+    }
+
+    if (typeof curr === 'object') {
+        throw new Error('Invalid value');
+    }
+
+    return curr;
+}
+
 class VariableExpression extends Expression {
-    constructor(varName) {
+    constructor(fullPath) {
         super();
-        this.varName = varName || '';
+        this.fullPath = fullPath;
+        this.varPath = fullPath.split('.');
     }
 
     evaluate(params = {}) {
         // params contain variable / value pairs: If this object's variable matches
         // a varname found in the params, return the value.
         // eg: params = {x: 5,y:3}, varname = x, return 5
-        if (params[this.varName] !== undefined) {
-            return Number(params[this.varName]);
-        } else {
-            throw new Error('Cannot evaluate ' + this.varName + ': No value given');
-        }
+        return Number(getProperty(params, this.varPath, this.fullPath));
     }
     toString() {
-        return `${this.varName}`;
+        return `${this.varPath.join('.')}`;
     }
 }
 
