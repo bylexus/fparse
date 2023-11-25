@@ -224,10 +224,11 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ## Changelog
 
-### develop
+### 2.1.0
 
 - [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
 - [Feature]: Supporting object paths as variable values (e.g. `3*[obj1.property1.innerProperty]`), thanks to [SamStonehouse](https://github.com/SamStonehouse)
+- [Change]: Updated build infrastructure: upped versions of build tools
 
 ### 2.0.2
 
