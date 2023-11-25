@@ -1,14 +1,8 @@
-describe('Expression Tree tests', function() {
-    let Fparser = null;
+import Fparser from '../../dist/fparser.js';
+describe('Expression Tree tests', function () {
     let Expression = null;
-    beforeEach(function() {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-            Expression = Fparser.Expression;
-        } else {
-            Fparser = window.Formula;
-            Expression = Fparser.Expression;
-        }
+    beforeEach(function () {
+        Expression = Fparser.Expression;
     });
 
     describe('parse()', () => {

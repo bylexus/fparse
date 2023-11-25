@@ -29,22 +29,34 @@ Parses a mathematical formula from a string. Known expressions:
 
 ## Usage
 
+Include directly in your web page:
+
 ```html
 <!-- Within a web page: Load the fparser library: -->
 <script src="dist/fparser.js"></script>
+<script>const f = new Formula('x+3');</script>
 ```
+
+Install it from npmjs.org:
+
+```shell
+# Install it using npm:
+$ npm install --save fparser
+```
+
+Then use as ES6 module (recommended):
 
 ```javascript
-// As node module:
-Install:
-$ npm install --save fparser
-
-Use:
-const Formula = require('fparser');
-
-or:
 import Formula from 'fparser';
 ```
+
+or use it as UMD module:
+
+```javascript
+const Formula = require('fparser');
+```
+
+... and finally use it:
 
 ```javascript
 // 1. Create a Formula object instance by passing a formula string:
@@ -59,11 +71,6 @@ let results = fObj.evaluate([{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,
 // You can also directly evaluate a value if you only need a one-shot result:
 let result = Formula.calc('2^x', { x: 3 }); // result = 8
 let results = Formula.calc('2^x', [{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
-
-// Usage in NodeJS:
-const Formula = require('fparser');
-const fObj = new Formula('2^x)');
-// .... vice versa
 ```
 
 ## More options
@@ -223,6 +230,13 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 ```
 
 ## Changelog
+
+### dev
+
+- [Breaking]: new build system (vitejs)
+- [Breaking]: UMD module version available as `dist/fparser.umd.js` instead of `dist/fparser.js`
+- [Breaking]: An empty formula now throws an Error when parsed.
+- [Change]: Migrating source code to TypeScript
 
 ### 2.1.0
 

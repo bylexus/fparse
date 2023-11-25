@@ -1,13 +1,5 @@
+import Fparser from '../../dist/fparser.js';
 describe('Variable tests', function () {
-    var Fparser;
-    beforeEach(function () {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-        } else {
-            Fparser = window.Formula;
-        }
-    });
-
     it('supports user-defined functions on the object', function () {
         let fObj = new Fparser('lessThan(x+y, z)'); // representing x + y < z
         fObj.lessThan = (a, b) => (a < b ? 1 : 0);

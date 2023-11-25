@@ -3,15 +3,16 @@
     "version": "2.1.0",
     "description": "A Math Formula parser library for JavaScript",
     "main": "dist/fparser.js",
-    "module": "src/fparser.js",
+    "type": "module",
+    "module": "src/fparser.ts",
     "scripts": {
         "docker-image": "docker build --pull --target develop -t fparser .",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparser bash",
         "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparser npm run dev",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
-        "build-dev": "NODE_ENV=development webpack",
+        "build-dev": "NODE_ENV=development tsc --noEmit && vite build --mode=development && tsc --emitDeclarationOnly --declaration",
+        "build": "NODE_ENV=production tsc --noEmit && vite build --minify --mode=production && tsc --emitDeclarationOnly --declaration",
         "build-demopage-image": "docker build --pull -t fparser-demopage .",
-        "build": "NODE_ENV=production webpack",
         "test": "NODE_ENV=development npm run build-dev && jasmine && karma start"
     },
     "keywords": [
@@ -35,10 +36,8 @@
     },
     "homepage": "https://fparser.alexi.ch/",
     "devDependencies": {
-        "@babel/core": "^7.23.3",
-        "@babel/preset-env": "^7.23.3",
-        "babel-loader": "^9.1.3",
-        "babel-plugin-add-module-exports": "^1.0.4",
+        "typescript": "^5.2.2",
+        "vite": "^5.0.0",
         "eslint": "^8.54.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.1",
@@ -46,9 +45,7 @@
         "karma": "^6.4.2",
         "karma-chrome-launcher": "^3.2.0",
         "karma-jasmine": "^5.1.0",
-        "prettier": "^3.1.0",
-        "webpack": "^5.89.0",
-        "webpack-cli": "^5.1.4"
+        "prettier": "^3.1.0"
     },
     "eslintConfig": {
         "root": true,

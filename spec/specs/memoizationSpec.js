@@ -1,14 +1,6 @@
-describe('Memoization', function() {
-    let Fparser = null;
-    beforeEach(function() {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-        } else {
-            Fparser = window.Formula;
-        }
-    });
-
-    it('can be enabled by options', function() {
+import Fparser from '../../dist/fparser.js';
+describe('Memoization', function () {
+    it('can be enabled by options', function () {
         let f = new Fparser('x');
         expect(f.options.memoization).toBeFalse();
 
@@ -19,7 +11,7 @@ describe('Memoization', function() {
         expect(f.options.memoization).toBeFalse();
     });
 
-    it('can be enabled / disabled by function', function() {
+    it('can be enabled / disabled by function', function () {
         const f = new Fparser();
         expect(f.options.memoization).toBeFalse();
         f.enableMemoization();
@@ -39,7 +31,7 @@ describe('Memoization', function() {
         expect(res).toEqual(null);
     });
 
-    it('gets results from memory, if enabled', function() {
+    it('gets results from memory, if enabled', function () {
         const f = new Fparser('x+2', { memoization: true });
         spyOn(f.formulaExpression, 'evaluate').and.callThrough();
         spyOn(f, 'resultFromMemory').and.callThrough();
@@ -57,7 +49,7 @@ describe('Memoization', function() {
         expect(f.storeInMemory).toHaveBeenCalledTimes(2);
     });
 
-    it('resets the memory when a new formula is set', function() {
+    it('resets the memory when a new formula is set', function () {
         const f = new Fparser('x+2', { memoization: true });
         let res1 = f.evaluate({ x: 5 });
         let res2 = f.evaluate({ x: 5 });
@@ -68,7 +60,7 @@ describe('Memoization', function() {
         expect(f._memory).toEqual({});
     });
 
-    it('stores the different results per input', function() {
+    it('stores the different results per input', function () {
         const f = new Fparser('x+2', { memoization: true });
         f.evaluate({ x: 5 });
         f.evaluate({ x: 6 });

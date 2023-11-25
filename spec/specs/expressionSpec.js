@@ -1,18 +1,10 @@
-describe('Expression tests', function() {
-    let Fparser = null;
+import Fparser from '../../dist/fparser.js';
 
-    beforeEach(function() {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-        } else {
-            Fparser = window.Formula;
-        }
-    });
-
+describe('Expression tests', function () {
     describe('Expression', () => {
         it('evaluate() cannot be called on Expression', () => {
             let inst = new Fparser.Expression();
-            expect(() => inst.evaluate({})).toThrowError('Must be defined in child classes');
+            expect(() => inst.evaluate({})).toThrowError('Empty Expression - Must be defined in child classes');
         });
         describe('createOperatorExpression', () => {
             it('returns the correct Expression instance for a given operator', () => {
@@ -53,7 +45,7 @@ describe('Expression tests', function() {
                 [undefined, NaN, true]
             ];
 
-            tests.forEach(item => {
+            tests.forEach((item) => {
                 if (item.length < 3) {
                     inst = new Fparser.ValueExpression(item[0]);
                     res = inst.evaluate(params);

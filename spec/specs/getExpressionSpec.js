@@ -1,14 +1,6 @@
-describe('Get Expression tests', function() {
-    let Fparser = null;
+import Fparser from '../../dist/fparser.js';
 
-    beforeEach(function() {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-        } else {
-            Fparser = window.Formula;
-        }
-    });
-
+describe('Get Expression tests', function () {
     describe('getExpression', () => {
         it('returns the root node', () => {
             let inst = new Fparser('3*(4*2)');

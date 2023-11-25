@@ -1,13 +1,5 @@
+import Fparser from '../../dist/fparser.js';
 describe('Function blacklisting spec', function () {
-    let Fparser = null;
-    beforeEach(function () {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-        } else {
-            Fparser = window.Formula;
-        }
-    });
-
     describe('FunctionExpression', function () {
         it('allows blacklisted functions during parsing time', function () {
             let expr = new Fparser('evaluate(x)');
