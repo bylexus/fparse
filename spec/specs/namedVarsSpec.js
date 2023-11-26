@@ -54,4 +54,55 @@ describe('Named Variable tests', function () {
         const f = new Fparser('[a.b.0] + [a.c.d.3]');
         expect(f.evaluate({ a: { b: [1, 2, 3], c: { d: [7, 8, 9, 10] } } })).toEqual(11);
     });
+
+    it('finds variables in both value param and the Formula object', function () {
+        // standard variable, as evaluate parameter:
+        let f = new Fparser('[xa] + [yb]');
+        expect(f.evaluate({ xa: 1, yb: 20 })).toEqual(21);
+
+        // standard variable, as object parameter:
+        f = new Fparser('[xa] + [yb]');
+        f.xa = 1;
+        f.yb = 20;
+        expect(f.evaluate()).toEqual(21);
+
+        // variable in object, as evaluate parameter:
+        f = new Fparser('[obj.xa] + [obj.yb]');
+        expect(f.evaluate({ obj: { xa: 1, yb: 20 } })).toEqual(21);
+
+        // variable in object, as formula object parameter:
+        f = new Fparser('[obj.xa] + [obj.yb]');
+        f.obj = { xa: 1, yb: 20 };
+        expect(f.evaluate()).toEqual(21);
+    });
+
+    it('Values throw an exception when used as functions', function () {
+        const f = new Fparser('[a] + b');
+        expect(function () {
+            f.evaluate({ a: 1, b: () => 2 });
+        }).toThrowError('');
+    });
+
+    it('Complex example with all types of variables mixed', function () {
+        const f = new Fparser('3x^2+4*[xx] - 2*[obj.x] - 3*[obj.yy]');
+        expect(
+            f.evaluate({
+                x: 1,
+                xx: 2,
+                obj: {
+                    x: 3,
+                    yy: 4
+                }
+            })
+        ).toEqual(-7);
+
+        const f2 = new Fparser('3x^2+4*[xx] - 2*[obj.x] - 3*[obj.yy]');
+        f2.x = 1;
+        f2.xx = 2;
+        f2.obj = {
+            x: 3,
+            yy: 4
+        };
+        expect(f2.evaluate()).toEqual(-7);
+    });
 });

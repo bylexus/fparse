@@ -76,13 +76,13 @@ describe('Expression Tree tests', function () {
                             ),
                             new Fparser.ValueExpression(4)
                         ),
-                        new Fparser.VariableExpression('x')
+                        new Fparser.VariableExpression('x', f)
                     ),
                     new Fparser.BracketExpression(
                         new Fparser.PlusMinusExpression(
                             '-',
                             new Fparser.ValueExpression(3),
-                            new Fparser.VariableExpression('y')
+                            new Fparser.VariableExpression('y', f)
                         )
                     )
                 )

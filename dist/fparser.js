@@ -137,31 +137,46 @@ class FunctionExpression extends Expression {
   constructor(fn, argumentExpressions, formulaObject = null) {
     super();
     __publicField(this, "fn");
+    __publicField(this, "varPath");
     __publicField(this, "argumentExpressions");
     __publicField(this, "formulaObject");
     __publicField(this, "blacklisted");
     this.fn = fn != null ? fn : "";
+    this.varPath = this.fn.split(".");
     this.argumentExpressions = argumentExpressions || [];
     this.formulaObject = formulaObject;
     this.blacklisted = void 0;
   }
   evaluate(params = {}) {
+    var _a;
     params = params || {};
     const paramValues = this.argumentExpressions.map((a) => a.evaluate(params));
-    let fn = params[this.fn];
-    if (fn instanceof Function) {
-      return fn.apply(this, paramValues);
-    } else if (this.formulaObject && this.formulaObject[this.fn] instanceof Function) {
+    try {
+      let fn = getProperty(params, this.varPath, this.fn);
+      if (fn instanceof Function) {
+        return fn.apply(this, paramValues);
+      }
+    } catch (e) {
+    }
+    let objFn;
+    try {
+      objFn = getProperty((_a = this.formulaObject) != null ? _a : {}, this.varPath, this.fn);
+    } catch (e) {
+    }
+    if (this.formulaObject && objFn instanceof Function) {
       if (this.isBlacklisted()) {
         throw new Error("Blacklisted function called: " + this.fn);
       }
-      return this.formulaObject[this.fn].apply(this.formulaObject, paramValues);
-    } else if (Math[this.fn] instanceof Function) {
-      const fn2 = Math[this.fn];
-      return fn2.apply(this, paramValues);
-    } else {
-      throw new Error("Function not found: " + this.fn);
+      return objFn.apply(this.formulaObject, paramValues);
     }
+    try {
+      const mathFn = getProperty(Math, this.varPath, this.fn);
+      if (mathFn instanceof Function) {
+        return mathFn.apply(this, paramValues);
+      }
+    } catch (e) {
+    }
+    throw new Error("Function not found: " + this.fn);
   }
   toString() {
     return `${this.fn}(${this.argumentExpressions.map((a) => a.toString()).join(", ")})`;
@@ -192,15 +207,29 @@ function getProperty(object, path, fullPath) {
   return curr;
 }
 class VariableExpression extends Expression {
-  constructor(fullPath) {
+  constructor(fullPath, formulaObj = null) {
     super();
     __publicField(this, "fullPath");
     __publicField(this, "varPath");
+    __publicField(this, "formulaObject");
+    this.formulaObject = formulaObj;
     this.fullPath = fullPath;
     this.varPath = fullPath.split(".");
   }
   evaluate(params = {}) {
-    return Number(getProperty(params, this.varPath, this.fullPath));
+    var _a;
+    let value = void 0;
+    try {
+      value = getProperty(params, this.varPath, this.fullPath);
+    } catch (e) {
+    }
+    if (value === void 0) {
+      value = getProperty((_a = this.formulaObject) != null ? _a : {}, this.varPath, this.fullPath);
+    }
+    if (typeof value === "function" || typeof value === "object") {
+      throw new Error(`Cannot use ${this.fullPath} as value: It contains a non-numerical value.`);
+    }
+    return Number(value);
   }
   toString() {
     return `${this.varPath.join(".")}`;
@@ -391,7 +420,7 @@ const _Formula = class _Formula {
             state = "within-named-var";
             tmp = "";
           } else if (char.match(/[a-zA-Z]/)) {
-            if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z0-9_]/)) {
+            if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z0-9_.]/)) {
               tmp = char;
               state = "within-func";
             } else {
@@ -400,7 +429,7 @@ const _Formula = class _Formula {
                   Expression.createOperatorExpression("*", new Expression(), new Expression())
                 );
               }
-              expressions.push(new VariableExpression(char));
+              expressions.push(new VariableExpression(char, this));
               this.registerVariable(char);
               state = "initial";
               tmp = "";
@@ -427,7 +456,7 @@ const _Formula = class _Formula {
           break;
         case "within-func":
           char = str.charAt(act);
-          if (char.match(/[a-zA-Z0-9_]/)) {
+          if (char.match(/[a-zA-Z0-9_.]/)) {
             tmp += char;
           } else if (char === "(") {
             funcName = tmp;
@@ -441,7 +470,7 @@ const _Formula = class _Formula {
         case "within-named-var":
           char = str.charAt(act);
           if (char === "]") {
-            expressions.push(new VariableExpression(tmp));
+            expressions.push(new VariableExpression(tmp, this));
             this.registerVariable(tmp);
             tmp = "";
             state = "initial";

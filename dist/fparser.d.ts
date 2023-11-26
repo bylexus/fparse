@@ -51,6 +51,7 @@ declare class PowerExpression extends Expression {
 }
 declare class FunctionExpression extends Expression {
     fn: string;
+    varPath: string[];
     argumentExpressions: Expression[];
     formulaObject: Formula | null;
     blacklisted: boolean | undefined;
@@ -62,7 +63,8 @@ declare class FunctionExpression extends Expression {
 declare class VariableExpression extends Expression {
     fullPath: string;
     varPath: string[];
-    constructor(fullPath: string);
+    formulaObject: Formula | null;
+    constructor(fullPath: string, formulaObj?: Formula | null);
     evaluate(params?: {}): number;
     toString(): string;
 }

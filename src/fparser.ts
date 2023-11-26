@@ -184,6 +184,7 @@ class PowerExpression extends Expression {
 }
 class FunctionExpression extends Expression {
     fn: string;
+    varPath: string[];
     argumentExpressions: Expression[];
     formulaObject: Formula | null;
     blacklisted: boolean | undefined;
@@ -191,6 +192,7 @@ class FunctionExpression extends Expression {
     constructor(fn: string | null, argumentExpressions: Expression[], formulaObject: Formula | null = null) {
         super();
         this.fn = fn ?? '';
+        this.varPath = this.fn.split('.');
         this.argumentExpressions = argumentExpressions || [];
         this.formulaObject = formulaObject;
         this.blacklisted = undefined;
@@ -202,27 +204,45 @@ class FunctionExpression extends Expression {
 
         // If the params object itself has a function definition with
         // the function name, call this one:
-        let fn = params[this.fn];
-        if (fn instanceof Function) {
-            return fn.apply(this, paramValues);
+        // let fn = params[this.fn];
+        try {
+            let fn = getProperty(params, this.varPath, this.fn);
+            if (fn instanceof Function) {
+                return fn.apply(this, paramValues);
+            }
+        } catch (e) {
+            // pass: getProperty has found nothing, which throws an error, but
+            // we need to continue
         }
-        // perhaps the Formula object has the function? so call it:
-        else if (this.formulaObject && this.formulaObject[this.fn] instanceof Function) {
+
+        let objFn;
+        try {
+            // perhaps the Formula object has the function? so call it:
+            objFn = getProperty(this.formulaObject ?? {}, this.varPath, this.fn);
+        } catch (e) {
+            // pass: getProperty has found nothing, which throws an error, but
+            // we need to continue
+        }
+        if (this.formulaObject && objFn instanceof Function) {
             // Don't, if it is blacklisted:
             if (this.isBlacklisted()) {
                 throw new Error('Blacklisted function called: ' + this.fn);
             }
-            return this.formulaObject[this.fn].apply(this.formulaObject, paramValues);
+            return objFn.apply(this.formulaObject, paramValues);
         }
-        // Has the JS Math object a function as requested? Call it:
-        else if (Math[this.fn] instanceof Function) {
-            const fn: Function = Math[this.fn] as Function;
-            return fn.apply(this, paramValues);
+
+        try {
+            // Has the JS Math object a function as requested? Call it:
+            const mathFn = getProperty(Math, this.varPath, this.fn);
+            if (mathFn instanceof Function) {
+                return mathFn.apply(this, paramValues);
+            }
+        } catch (e) {
+            // pass: getProperty has found nothing, which throws an error, but
+            // we need to continue
         }
         // No more options left: sorry!
-        else {
-            throw new Error('Function not found: ' + this.fn);
-        }
+        throw new Error('Function not found: ' + this.fn);
     }
 
     toString() {
@@ -262,9 +282,11 @@ function getProperty(object: ValueObject, path: string[], fullPath: string) {
 class VariableExpression extends Expression {
     fullPath: string;
     varPath: string[];
+    formulaObject: Formula | null;
 
-    constructor(fullPath: string) {
+    constructor(fullPath: string, formulaObj: Formula | null = null) {
         super();
+        this.formulaObject = formulaObj;
         this.fullPath = fullPath;
         this.varPath = fullPath.split('.');
     }
@@ -276,7 +298,25 @@ class VariableExpression extends Expression {
         // Objects and arrays are also supported:
         // e.g. params = {x: {y: 5}}, varname = x.y, return 5
         //  or  params = {x: [2,4,6]}, varname = x.2, return 6
-        return Number(getProperty(params, this.varPath, this.fullPath));
+
+        // Let's look in the value object first:
+        let value = undefined;
+        try {
+            value = getProperty(params, this.varPath, this.fullPath);
+        } catch (e) {
+            // pass: getProperty has found nothing, which throws an error, but
+            // we need to continue
+        }
+        if (value === undefined) {
+            // Now have a look at the formula object:
+            // This will throw an error if the property is not found:
+            value = getProperty(this.formulaObject ?? {}, this.varPath, this.fullPath);
+        }
+        if (typeof value === 'function' || typeof value === 'object') {
+            throw new Error(`Cannot use ${this.fullPath} as value: It contains a non-numerical value.`);
+        }
+
+        return Number(value);
     }
     toString() {
         return `${this.varPath.join('.')}`;
@@ -526,7 +566,7 @@ export default class Formula {
                         tmp = '';
                     } else if (char.match(/[a-zA-Z]/)) {
                         // multiple chars means it may be a function, else its a var which counts as own expression:
-                        if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z0-9_]/)) {
+                        if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z0-9_.]/)) {
                             tmp = char;
                             state = 'within-func';
                         } else {
@@ -541,7 +581,7 @@ export default class Formula {
                                     Expression.createOperatorExpression('*', new Expression(), new Expression())
                                 );
                             }
-                            expressions.push(new VariableExpression(char));
+                            expressions.push(new VariableExpression(char, this));
                             this.registerVariable(char);
                             state = 'initial';
                             tmp = '';
@@ -572,7 +612,7 @@ export default class Formula {
 
                 case 'within-func':
                     char = str.charAt(act);
-                    if (char.match(/[a-zA-Z0-9_]/)) {
+                    if (char.match(/[a-zA-Z0-9_.]/)) {
                         tmp += char;
                     } else if (char === '(') {
                         funcName = tmp;
@@ -589,7 +629,7 @@ export default class Formula {
                     char = str.charAt(act);
                     if (char === ']') {
                         // end of named var, create expression:
-                        expressions.push(new VariableExpression(tmp));
+                        expressions.push(new VariableExpression(tmp, this));
                         this.registerVariable(tmp);
                         tmp = '';
                         state = 'initial';
