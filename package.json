@@ -5,6 +5,7 @@
     "main": "dist/fparser.js",
     "type": "module",
     "module": "src/fparser.ts",
+    "files": ["dist/"],
     "scripts": {
         "docker-image": "docker build --pull --target develop -t fparser .",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparser bash",

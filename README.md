@@ -249,13 +249,16 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ## Changelog
 
-### dev
+### 3.0.0
 
-- [Breaking]: new build system (vitejs)
-- [Breaking]: UMD module version available as `dist/fparser.umd.js` instead of `dist/fparser.js`
+This is a long-wanted "migrate to typescript and modernize build infrastrucure" release. 
+It introduces some *few* breaking changes, which hopefully are simple to adapt in existing code, or does not affect end users at all (I hope).
+
+- [Breaking]: new build system (vitejs instead of webpack)
+- [Breaking]: UMD module version available as `dist/fparser.umd.js` instead of `dist/fparser.js`: If you need the UMD version, use `dist/fparser.umd.js` instead of `dist/fparser.js`.
 - [Breaking]: An empty formula now throws an Error when parsed.
-- [Breaking]: `VariableExpression` class now needs Formula instance in constructor
-- [Change]: Migrating source code to TypeScript
+- [Breaking]: `VariableExpression` class now needs Formula instance in constructor. This should not affect any end-user, but I did not test all edge cases.
+- [Change]: Migrating source code to TypeScript. This should not affect end-users.
 - [Feature]: Variables and functions now both support object paths (e.g. `obj.fn(3*[obj.value])`)
 
 ### 2.1.0

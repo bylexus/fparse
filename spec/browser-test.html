@@ -2,13 +2,14 @@
 <html>
     <head>
         <title>Fparse test</title>
-        <script src="../dist/fparser.umd.cjs"></script>
+        <script type="module" src="../dist/fparser.js"></script>
     </head>
     <body>
         <div id="output"></div>
         <div id="vars"></div>
 
-        <script>
+        <script type="module">
+            import Formula from '../dist/fparser.js';
             var out = document.getElementById('output');
             var vars = document.getElementById('vars');
 
