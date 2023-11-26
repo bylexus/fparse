@@ -22,29 +22,41 @@ Parses a mathematical formula from a string. Known expressions:
 -   the use of _own functions_
 -   the use of single-char _variables_ (like '2x')
 -   the use of named variables (like '2\*[myVar]')
--   the use of path named variables (like '2\*[myVar.property.innerProperty]')
+-   the use of path named variables and functions (like '2\*[myVar.property.innerProperty]')
 -   _memoization_: store already evaluated results for faster re-calcs
 -   use it in Web pages, as ES6 module or as NodeJS module
 -   Example:<br /> <code>-1*(sin(2^x)/(PI*x))\*cos(x))</code>
 
 ## Usage
 
+Include directly in your web page:
+
 ```html
 <!-- Within a web page: Load the fparser library: -->
 <script src="dist/fparser.js"></script>
+<script>const f = new Formula('x+3');</script>
 ```
+
+Install it from npmjs.org:
+
+```shell
+# Install it using npm:
+$ npm install --save fparser
+```
+
+Then use as ES6 module (recommended):
 
 ```javascript
-// As node module:
-Install:
-$ npm install --save fparser
-
-Use:
-const Formula = require('fparser');
-
-or:
 import Formula from 'fparser';
 ```
+
+or use it as UMD module:
+
+```javascript
+const Formula = require('fparser');
+```
+
+... and finally use it:
 
 ```javascript
 // 1. Create a Formula object instance by passing a formula string:
@@ -59,11 +71,6 @@ let results = fObj.evaluate([{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,
 // You can also directly evaluate a value if you only need a one-shot result:
 let result = Formula.calc('2^x', { x: 3 }); // result = 8
 let results = Formula.calc('2^x', [{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
-
-// Usage in NodeJS:
-const Formula = require('fparser');
-const fObj = new Formula('2^x)');
-// .... vice versa
 ```
 
 ## More options
@@ -88,7 +95,10 @@ const fObj = new Formula('2*[var1] + sin([var2]+PI)');
 let result = fObj.evaluate({ var1: 5, var2: 0.7 });
 ```
 
-### Using named path variables
+The reason for the bracket syntax is the support of shortcut multiplication of single vars, e.g. `2xy` is a shorthand for `2*x*y`. As the parser cannot decide if `xy` means "the variable named `xy", or `calc x*y`, we had to introduce the
+bracket syntax.
+
+### Using named object path variables
 
 Named variables in brackets can also describe an object property path:
 
@@ -99,7 +109,7 @@ const fObj = new Formula('2*[var1.propertyA] + 3*[var2.propertyB.propertyC]');
 let result = fObj.evaluate({ var1: { propertyA: 3 }, var2: { propertyB: { propertyC: 9 } } });
 ```
 
-This even works for array values: Instead of the property name, use an index in an array:
+This even works for array values: Instead of the property name, use a 0-based index in an array:
 
 ```javascript
 // var2.propertyB is an array, so we can use an index for the 3rd entry of propertyB:
@@ -123,6 +133,21 @@ let result = fObj.evaluate({
 });
 
 If defined in the value object AND on the formula object, the Value object has the precedence
+```
+
+Functions also support the object path syntax:
+
+```javascript
+// in an evaluate() value object:
+const fObj = new Formula('sin(lib.inverse(x))');
+const res = fObj.evaluate({
+	lib: { inverse: (value) => 1/value }
+});
+
+// or set it on the Formula instance:
+const fObj2 = new Formula('sin(lib.inverse(x))');
+fObj2.lib = { inverse: (value) => 1/value };
+const res2 = fObj.evaluate();
 ```
 
 ### Re-use a Formula object
@@ -223,6 +248,18 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 ```
 
 ## Changelog
+
+### 3.0.0
+
+This is a long-wanted "migrate to typescript and modernize build infrastrucure" release. 
+It introduces some *few* breaking changes, which hopefully are simple to adapt in existing code, or does not affect end users at all (I hope).
+
+- [Breaking]: new build system (vitejs instead of webpack)
+- [Breaking]: UMD module version available as `dist/fparser.umd.js` instead of `dist/fparser.js`: If you need the UMD version, use `dist/fparser.umd.js` instead of `dist/fparser.js`.
+- [Breaking]: An empty formula now throws an Error when parsed.
+- [Breaking]: `VariableExpression` class now needs Formula instance in constructor. This should not affect any end-user, but I did not test all edge cases.
+- [Change]: Migrating source code to TypeScript. This should not affect end-users.
+- [Feature]: Variables and functions now both support object paths (e.g. `obj.fn(3*[obj.value])`)
 
 ### 2.1.0
 

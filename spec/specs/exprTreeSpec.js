@@ -1,14 +1,8 @@
-describe('Expression Tree tests', function() {
-    let Fparser = null;
+import Fparser from '../../dist/fparser.js';
+describe('Expression Tree tests', function () {
     let Expression = null;
-    beforeEach(function() {
-        if (typeof require !== 'undefined') {
-            Fparser = require('../../dist/fparser-dev');
-            Expression = Fparser.Expression;
-        } else {
-            Fparser = window.Formula;
-            Expression = Fparser.Expression;
-        }
+    beforeEach(function () {
+        Expression = Fparser.Expression;
     });
 
     describe('parse()', () => {
@@ -82,13 +76,13 @@ describe('Expression Tree tests', function() {
                             ),
                             new Fparser.ValueExpression(4)
                         ),
-                        new Fparser.VariableExpression('x')
+                        new Fparser.VariableExpression('x', f)
                     ),
                     new Fparser.BracketExpression(
                         new Fparser.PlusMinusExpression(
                             '-',
                             new Fparser.ValueExpression(3),
-                            new Fparser.VariableExpression('y')
+                            new Fparser.VariableExpression('y', f)
                         )
                     )
                 )

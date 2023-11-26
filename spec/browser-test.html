@@ -2,18 +2,24 @@
 <html>
     <head>
         <title>Fparse test</title>
-        <script src="../dist/fparser-dev.js"></script>
+        <script type="module" src="../dist/fparser.js"></script>
     </head>
     <body>
         <div id="output"></div>
+        <div id="vars"></div>
 
-        <script>
+        <script type="module">
+            import Formula from '../dist/fparser.js';
             var out = document.getElementById('output');
+            var vars = document.getElementById('vars');
 
-            var f1 = '3*x^2 * 2*x + 4';
+            // var f1 = '3*x^2 * 2*x + 4';
+            var f1 = '3*o.f([o.x])';
             var p1 = new Formula(f1);
-            var res1 = p1.evaluate({x:3});
+            var res1 = p1.evaluate({o: {x: 2, f: (x) => x * 2}});
+            // var res1 = p1.evaluate({x:3});
             out.innerHTML += f1 + ', for x = 3: '+res1;
+            vars.innerHTML = JSON.stringify(p1.getVariables());
         </script>
     </body>
 </html>
