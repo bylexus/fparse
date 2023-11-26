@@ -1,11 +1,13 @@
 {
     "name": "fparser",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "description": "A Math Formula parser library for JavaScript",
     "main": "dist/fparser.js",
     "type": "module",
     "module": "src/fparser.ts",
-    "files": ["dist/"],
+    "files": [
+        "dist/"
+    ],
     "scripts": {
         "docker-image": "docker build --pull --target develop -t fparser .",
         "docker-shell": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparser bash",
