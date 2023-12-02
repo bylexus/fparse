@@ -249,6 +249,10 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ## Changelog
 
+### 3.0.1
+
+- [Bugfix] Fixing `main` entry in `package.json`: The 3.0.0 build could not be used as ES 6 module import with the non-existing main entry.
+
 ### 3.0.0
 
 This is a long-wanted "migrate to typescript and modernize build infrastrucure" release. 
