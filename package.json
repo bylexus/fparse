@@ -4,7 +4,7 @@
     "description": "A Math Formula parser library for JavaScript",
     "main": "dist/fparser.js",
     "type": "module",
-    "module": "src/fparser.ts",
+    "module": "dist/fparser.js",
     "files": [
         "dist/"
     ],
