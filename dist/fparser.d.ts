@@ -11,19 +11,20 @@ type ValueObject = {
 };
 declare class Expression {
     static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression;
-    evaluate(params?: ValueObject): number;
+    evaluate(params?: ValueObject): number | string;
     toString(): string;
 }
 declare class BracketExpression extends Expression {
     innerExpression: Expression;
     constructor(expr: Expression);
-    evaluate(params?: {}): number;
+    evaluate(params?: {}): number | string;
     toString(): string;
 }
 declare class ValueExpression extends Expression {
-    value: number;
-    constructor(value: number | string);
-    evaluate(): number;
+    value: number | string;
+    type: string;
+    constructor(value: number | string, type?: string);
+    evaluate(): number | string;
     toString(): string;
 }
 declare class PlusMinusExpression extends Expression {
@@ -134,7 +135,7 @@ export default class Formula {
      * Cleans the input string from unnecessary whitespace,
      * and replaces some known constants:
      */
-    cleanupInputString(s: string): string;
+    cleanupInputFormula(s: string): string;
     /**
      * Parses the given formula string by using a state machine into a single Expression object,
      * which represents an expression tree (aka AST).

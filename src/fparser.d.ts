@@ -11,7 +11,7 @@ type ValueObject = {
 };
 declare class Expression {
     static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression;
-    evaluate(params?: ValueObject): number;
+    evaluate(params?: ValueObject): number | string;
     toString(): string;
 }
 declare class BracketExpression extends Expression {
@@ -21,9 +21,9 @@ declare class BracketExpression extends Expression {
     toString(): string;
 }
 declare class ValueExpression extends Expression {
-    value: number;
+    value: number | string;
     constructor(value: number | string);
-    evaluate(): number;
+    evaluate(): number | string;
     toString(): string;
 }
 declare class PlusMinusExpression extends Expression {

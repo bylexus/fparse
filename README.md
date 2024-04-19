@@ -22,6 +22,8 @@ Parses a mathematical formula from a string. Known expressions:
 -   the use of _own functions_
 -   the use of single-char _variables_ (like '2x')
 -   the use of named variables (like '2\*[myVar]')
+-   the use of strings as function arguments (like 'concat("Size: ", 2, " mm")')
+-   the use of strings as variables (like 'concat("Size: ", 2, " ", [unit])')
 -   the use of path named variables and functions (like '2\*[myVar.property.innerProperty]')
 -   _memoization_: store already evaluated results for faster re-calcs
 -   use it in Web pages, as ES6 module or as NodeJS module
@@ -148,6 +150,13 @@ const res = fObj.evaluate({
 const fObj2 = new Formula('sin(lib.inverse(x))');
 fObj2.lib = { inverse: (value) => 1/value };
 const res2 = fObj.evaluate();
+```
+
+### Using strings
+
+```javascript
+const fObj = new Formula('compare( [p1], [p2], "<" )', { supportStrings: true });
+let result = fObj.evaluate({ x: 1.5 });
 ```
 
 ### Re-use a Formula object
