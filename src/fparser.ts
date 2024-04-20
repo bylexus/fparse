@@ -584,7 +584,7 @@ export default class Formula {
             tmp = '',
             funcName = null,
             pCount = 0,
-            pStringOpened = false;
+            pStringDelimiter = '';
 
         while (act <= lastChar) {
             switch (state) {
@@ -628,9 +628,10 @@ export default class Formula {
                         // left named var separator char found, seems to be the beginning of a named var:
                         state = 'within-named-var';
                         tmp = '';
-                    } else if (char === '"') {
+                    } else if (char.match(/["']/)) {
                         // left string separator char found
                         state = 'within-string';
+                        pStringDelimiter = char;
                         tmp = '';
                     } else if (char.match(/[a-zA-Z]/)) {
                         // multiple chars means it may be a function, else its a var which counts as own expression:
@@ -710,11 +711,12 @@ export default class Formula {
 
                 case 'within-string':
                     char = str.charAt(act);
-                    if (char === '"') {
+                    if (char === pStringDelimiter) {
                         // end of string, create expression:
                         expressions.push(new ValueExpression(tmp, 'string'));
                         tmp = '';
                         state = 'initial';
+                        pStringDelimiter = '';
                     } else {
                         tmp += char;
                     }
@@ -723,11 +725,11 @@ export default class Formula {
                 case 'within-parentheses':
                 case 'within-func-parentheses':
                     char = str.charAt(act);
-                    if (pStringOpened) {
+                    if (pStringDelimiter) {
                         // If string is opened, then:
-                        if (char === '"') {
+                        if (char === pStringDelimiter) {
                             // end of string
-                            pStringOpened = false;
+                            pStringDelimiter = '';
                         }
                         // accumulate string chars
                         tmp += char;
@@ -753,9 +755,9 @@ export default class Formula {
                         // begin of a new sub-parenthesis, increase counter:
                         pCount++;
                         tmp += char;
-                    } else if (char === '"') {
+                    } else if (char.match(/["']/)) {
                         // start of string
-                        pStringOpened = true;
+                        pStringDelimiter = char;
                         tmp += char;
                     } else {
                         // all other things are just added to the sub-expression:
