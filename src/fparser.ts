@@ -46,19 +46,19 @@ type ValueObject = {
 };
 
 class MathOperatorHelper {
-    static throwIfNotNumber(value: number | string) {
+    static throwIfNotNumber(value: number | string ) {
         const valueType = typeof value;
-        if (valueType !== 'number') {
-            throw new Error('Math operators required type of number: given is ' + valueType);
+        if (valueType === 'string') {
+            throw new Error('Strings are not allowed in math operations');
         }
     }
 }
 
 class MathFunctionHelper {
-    static throwIfNotNumber(value: number | string) {
+    static throwIfNotNumber(value: number | string ) {
         const valueType = typeof value;
-        if (valueType !== 'number') {
-            throw new Error('Math functions required type of number: given is ' + valueType);
+        if (valueType === 'string') {
+            throw new Error('Strings are not allowed in math operations');
         }
     }
 }
@@ -157,15 +157,15 @@ class PlusMinusExpression extends Expression {
     }
 
     evaluate(params: ValueObject = {}): number {
-        const leftValue = Number(this.left.evaluate(params));
-        const rightValue = Number(this.right.evaluate(params));
+        const leftValue = this.left.evaluate(params);
+        const rightValue = this.right.evaluate(params);
         MathOperatorHelper.throwIfNotNumber(leftValue);
         MathOperatorHelper.throwIfNotNumber(rightValue);
         if (this.operator === '+') {
-            return leftValue + rightValue;
+            return Number(leftValue) + Number(rightValue);
         }
         if (this.operator === '-') {
-            return leftValue - rightValue;
+            return Number(leftValue) - Number(rightValue);
         }
         throw new Error('Unknown operator for PlusMinus expression');
     }
@@ -191,15 +191,15 @@ class MultDivExpression extends Expression {
     }
 
     evaluate(params: ValueObject = {}): number {
-        const leftValue = Number(this.left.evaluate(params));
-        const rightValue = Number(this.right.evaluate(params));
+        const leftValue = this.left.evaluate(params);
+        const rightValue = this.right.evaluate(params);
         MathOperatorHelper.throwIfNotNumber(leftValue);
         MathOperatorHelper.throwIfNotNumber(rightValue);
         if (this.operator === '*') {
-            return leftValue * rightValue;
+            return Number(leftValue) * Number(rightValue);
         }
         if (this.operator === '/') {
-            return leftValue / rightValue;
+            return Number(leftValue) / Number(rightValue);
         }
         throw new Error('Unknown operator for MultDiv expression');
     }
@@ -220,12 +220,12 @@ class PowerExpression extends Expression {
     }
 
     evaluate(params: ValueObject = {}): number {
-        const baseValue = Number(this.base.evaluate(params));
-        const exponentValue = Number(this.exponent.evaluate(params));
+        const baseValue = this.base.evaluate(params);
+        const exponentValue = this.exponent.evaluate(params);
         MathOperatorHelper.throwIfNotNumber(baseValue);
         MathOperatorHelper.throwIfNotNumber(exponentValue);
 
-        return Math.pow(baseValue, exponentValue);
+        return Math.pow(Number(baseValue), Number(exponentValue));
     }
 
     toString() {
@@ -398,7 +398,7 @@ export default class Formula {
     public options: FormulaOptions;
     public formulaStr: string;
     private _variables: string[];
-    private _memory: { [key: string]: number };
+    private _memory: { [key: string]: number | string };
 
     /**
      * Creates a new Formula instance
@@ -879,10 +879,10 @@ export default class Formula {
      *   also returned as array.
      * @return {Number|Array<Number>} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | number[] {
+    evaluate(valueObj: ValueObject | ValueObject[]): number | number[] | string | string[] {
         // resolve multiple value objects recursively:
         if (valueObj instanceof Array) {
-            return valueObj.map((v) => this.evaluate(v)) as number[];
+            return valueObj.map((v) => this.evaluate(v)) as number[] | string[];
         }
         let expr = this.getExpression();
         if (!(expr instanceof Expression)) {
@@ -893,19 +893,19 @@ export default class Formula {
             if (res !== null) {
                 return res;
             } else {
-                res = Number(expr.evaluate({ ...MATH_CONSTANTS, ...valueObj }));
+                res = expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
                 this.storeInMemory(valueObj, res);
                 return res;
             }
         }
-        return Number(expr.evaluate({ ...MATH_CONSTANTS, ...valueObj }));
+        return expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
     }
 
     hashValues(valueObj: ValueObject) {
         return JSON.stringify(valueObj);
     }
 
-    resultFromMemory(valueObj: ValueObject): number | null {
+    resultFromMemory(valueObj: ValueObject): number | string | null {
         let key = this.hashValues(valueObj);
         let res = this._memory[key];
         if (res !== undefined) {
@@ -915,7 +915,7 @@ export default class Formula {
         }
     }
 
-    storeInMemory(valueObj: ValueObject, value: number) {
+    storeInMemory(valueObj: ValueObject, value: number | string) {
         this._memory[this.hashValues(valueObj)] = value;
     }
 

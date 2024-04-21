@@ -208,12 +208,12 @@ export default class Formula {
      *   also returned as array.
      * @return {Number|Array<Number>} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | number[];
+    evaluate(valueObj: ValueObject | ValueObject[]): number | number[] | string | string[];
     hashValues(valueObj: ValueObject): string;
-    resultFromMemory(valueObj: ValueObject): number | null;
-    storeInMemory(valueObj: ValueObject, value: number): void;
+    resultFromMemory(valueObj: ValueObject): number | string | null;
+    storeInMemory(valueObj: ValueObject, value: number | string): void;
     getExpression(): Expression | null;
     getExpressionString(): string;
-    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): number | number[];
+    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): string | number | string[] | number[];
 }
 export {};
