@@ -42,8 +42,26 @@ type FormulaOptions = {
 };
 
 type ValueObject = {
-    [key: string]: number | Function | ValueObject;
+    [key: string]: number | string | Function | ValueObject;
 };
+
+class MathOperatorHelper {
+    static throwIfNotNumber(value: number | string) {
+        const valueType = typeof value;
+        if (valueType === 'string') {
+            throw new Error('Strings are not allowed in math operations');
+        }
+    }
+}
+
+class MathFunctionHelper {
+    static throwIfNotNumber(value: number | string) {
+        const valueType = typeof value;
+        if (valueType === 'string') {
+            throw new Error('Strings are not allowed in math operations');
+        }
+    }
+}
 
 class Expression {
     static createOperatorExpression(operator: string, left: Expression, right: Expression) {
@@ -59,7 +77,7 @@ class Expression {
         throw new Error(`Unknown operator: ${operator}`);
     }
 
-    evaluate(params: ValueObject = {}): number {
+    evaluate(params: ValueObject = {}): number | string {
         throw new Error('Empty Expression - Must be defined in child classes');
     }
 
@@ -78,7 +96,7 @@ class BracketExpression extends Expression {
             throw new Error('No inner expression given for bracket expression');
         }
     }
-    evaluate(params = {}): number {
+    evaluate(params = {}): number | string {
         return this.innerExpression.evaluate(params);
     }
     toString() {
@@ -87,20 +105,39 @@ class BracketExpression extends Expression {
 }
 
 class ValueExpression extends Expression {
-    value: number;
+    value: number | string;
+    type: string;
 
-    constructor(value: number | string) {
+    constructor(value: number | string, type: string = 'number') {
         super();
         this.value = Number(value);
-        if (isNaN(this.value)) {
-            throw new Error('Cannot parse number: ' + value);
+        switch (type) {
+            case 'number':
+                this.value = Number(value);
+                if (isNaN(this.value)) {
+                    throw new Error('Cannot parse number: ' + value);
+                }
+                break;
+            case 'string':
+                this.value = String(value);
+                break;
+            default:
+                throw new Error('Invalid value type: ' + type);
         }
+        this.type = type;
     }
-    evaluate(): number {
+    evaluate(): number | string {
         return this.value;
     }
     toString() {
-        return String(this.value);
+        switch (this.type) {
+            case 'number':
+                return String(this.value);
+            case 'string':
+                return String('"' + this.value + '"');
+            default:
+                throw new Error('Invalid type');
+        }
     }
 }
 
@@ -120,11 +157,15 @@ class PlusMinusExpression extends Expression {
     }
 
     evaluate(params: ValueObject = {}): number {
+        const leftValue = this.left.evaluate(params);
+        const rightValue = this.right.evaluate(params);
+        MathOperatorHelper.throwIfNotNumber(leftValue);
+        MathOperatorHelper.throwIfNotNumber(rightValue);
         if (this.operator === '+') {
-            return this.left.evaluate(params) + this.right.evaluate(params);
+            return Number(leftValue) + Number(rightValue);
         }
         if (this.operator === '-') {
-            return this.left.evaluate(params) - this.right.evaluate(params);
+            return Number(leftValue) - Number(rightValue);
         }
         throw new Error('Unknown operator for PlusMinus expression');
     }
@@ -150,11 +191,15 @@ class MultDivExpression extends Expression {
     }
 
     evaluate(params: ValueObject = {}): number {
+        const leftValue = this.left.evaluate(params);
+        const rightValue = this.right.evaluate(params);
+        MathOperatorHelper.throwIfNotNumber(leftValue);
+        MathOperatorHelper.throwIfNotNumber(rightValue);
         if (this.operator === '*') {
-            return this.left.evaluate(params) * this.right.evaluate(params);
+            return Number(leftValue) * Number(rightValue);
         }
         if (this.operator === '/') {
-            return this.left.evaluate(params) / this.right.evaluate(params);
+            return Number(leftValue) / Number(rightValue);
         }
         throw new Error('Unknown operator for MultDiv expression');
     }
@@ -175,7 +220,12 @@ class PowerExpression extends Expression {
     }
 
     evaluate(params: ValueObject = {}): number {
-        return Math.pow(this.base.evaluate(params), this.exponent.evaluate(params));
+        const baseValue = this.base.evaluate(params);
+        const exponentValue = this.exponent.evaluate(params);
+        MathOperatorHelper.throwIfNotNumber(baseValue);
+        MathOperatorHelper.throwIfNotNumber(exponentValue);
+
+        return Math.pow(Number(baseValue), Number(exponentValue));
     }
 
     toString() {
@@ -198,7 +248,7 @@ class FunctionExpression extends Expression {
         this.blacklisted = undefined;
     }
 
-    evaluate(params: ValueObject = {}): number {
+    evaluate(params: ValueObject = {}): number | string {
         params = params || {};
         const paramValues = this.argumentExpressions.map((a) => a.evaluate(params));
 
@@ -235,6 +285,10 @@ class FunctionExpression extends Expression {
             // Has the JS Math object a function as requested? Call it:
             const mathFn = getProperty(Math, this.varPath, this.fn);
             if (mathFn instanceof Function) {
+                paramValues.forEach((paramValue) => {
+                    MathFunctionHelper.throwIfNotNumber(paramValue);
+                });
+
                 return mathFn.apply(this, paramValues);
             }
         } catch (e) {
@@ -261,7 +315,7 @@ class FunctionExpression extends Expression {
 }
 
 function getProperty(object: ValueObject, path: string[], fullPath: string) {
-    let curr: number | Function | ValueObject = object;
+    let curr: number | string | Function | ValueObject = object;
     for (let propName of path) {
         if (typeof curr !== 'object') {
             throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
@@ -291,7 +345,7 @@ class VariableExpression extends Expression {
         this.varPath = fullPath.split('.');
     }
 
-    evaluate(params = {}) {
+    evaluate(params = {}): number | string {
         // params contain variable / value pairs: If this object's variable matches
         // a varname found in the params, return the value.
         // eg: params = {x: 5,y:3}, varname = x, return 5
@@ -316,7 +370,7 @@ class VariableExpression extends Expression {
             throw new Error(`Cannot use ${this.fullPath} as value: It contains a non-numerical value.`);
         }
 
-        return Number(value);
+        return value;
     }
     toString() {
         return `${this.varPath.join('.')}`;
@@ -344,7 +398,7 @@ export default class Formula {
     public options: FormulaOptions;
     public formulaStr: string;
     private _variables: string[];
-    private _memory: { [key: string]: number };
+    private _memory: { [key: string]: number | string };
 
     /**
      * Creates a new Formula instance
@@ -442,13 +496,21 @@ export default class Formula {
      * Cleans the input string from unnecessary whitespace,
      * and replaces some known constants:
      */
-    cleanupInputString(s: string) {
-        s = s.replace(/\s+/g, '');
-        // surround known math constants with [], to parse them as named variables [xxx]:
-        Object.keys(MATH_CONSTANTS).forEach((c) => {
-            s = s.replace(new RegExp(`\\b${c}\\b`, 'g'), `[${c}]`);
+    cleanupInputFormula(s: string) {
+        const resParts: string[] = [];
+        const srcParts = s.split('"');
+        srcParts.forEach((part, index) => {
+            // skip parts marked as string
+            if (index % 2 === 0) {
+                part = part.replace(/[\s]+/g, '');
+                // surround known math constants with [], to parse them as named variables [xxx]:
+                Object.keys(MATH_CONSTANTS).forEach((c) => {
+                    part = part.replace(new RegExp(`\\b${c}\\b`, 'g'), `[${c}]`);
+                });
+            }
+            resParts.push(part);
         });
-        return s;
+        return resParts.join('"');
     }
 
     /**
@@ -465,7 +527,7 @@ export default class Formula {
      *
      * We want to create an expression tree out of the string. This is done in 2 stages:
      * 1. form single expressions from the string: parse the string into known expression objects:
-     *   - numbers/variables
+     *   - numbers/[variables]/"strings"
      *   - operators
      *   - braces (with a sub-expression)
      *   - functions (with sub-expressions (aka argument expressions))
@@ -493,7 +555,7 @@ export default class Formula {
      */
     parse(str: string) {
         // clean the input string first. spaces, math constant replacements etc.:
-        str = this.cleanupInputString(str);
+        str = this.cleanupInputFormula(str);
         // start recursive call to parse:
         return this._do_parse(str);
     }
@@ -512,6 +574,7 @@ export default class Formula {
                 | 'within-parentheses'
                 | 'within-func-parentheses'
                 | 'within-named-var'
+                | 'within-string'
                 | 'within-expr'
                 | 'within-bracket'
                 | 'within-func'
@@ -520,7 +583,8 @@ export default class Formula {
             char = '',
             tmp = '',
             funcName = null,
-            pCount = 0;
+            pCount = 0,
+            pStringDelimiter = '';
 
         while (act <= lastChar) {
             switch (state) {
@@ -563,6 +627,11 @@ export default class Formula {
                     } else if (char === '[') {
                         // left named var separator char found, seems to be the beginning of a named var:
                         state = 'within-named-var';
+                        tmp = '';
+                    } else if (char.match(/["']/)) {
+                        // left string separator char found
+                        state = 'within-string';
+                        pStringDelimiter = char;
                         tmp = '';
                     } else if (char.match(/[a-zA-Z]/)) {
                         // multiple chars means it may be a function, else its a var which counts as own expression:
@@ -640,10 +709,31 @@ export default class Formula {
                     }
                     break;
 
+                case 'within-string':
+                    char = str.charAt(act);
+                    if (char === pStringDelimiter) {
+                        // end of string, create expression:
+                        expressions.push(new ValueExpression(tmp, 'string'));
+                        tmp = '';
+                        state = 'initial';
+                        pStringDelimiter = '';
+                    } else {
+                        tmp += char;
+                    }
+                    break;
+
                 case 'within-parentheses':
                 case 'within-func-parentheses':
                     char = str.charAt(act);
-                    if (char === ')') {
+                    if (pStringDelimiter) {
+                        // If string is opened, then:
+                        if (char === pStringDelimiter) {
+                            // end of string
+                            pStringDelimiter = '';
+                        }
+                        // accumulate string chars
+                        tmp += char;
+                    } else if (char === ')') {
                         //Check if this is the matching closing parenthesis.If not, just read ahead.
                         if (pCount <= 0) {
                             // Yes, we found the closing parenthesis, create new sub-expression:
@@ -664,6 +754,10 @@ export default class Formula {
                     } else if (char === '(') {
                         // begin of a new sub-parenthesis, increase counter:
                         pCount++;
+                        tmp += char;
+                    } else if (char.match(/["']/)) {
+                        // start of string
+                        pStringDelimiter = char;
                         tmp += char;
                     } else {
                         // all other things are just added to the sub-expression:
@@ -783,12 +877,12 @@ export default class Formula {
      * @param {ValueObject|Array<ValueObject>} valueObj An object containing values for variables and (unknown) functions,
      *   or an array of such objects: If an array is given, all objects are evaluated and the results
      *   also returned as array.
-     * @return {Number|Array<Number>} The evaluated result, or an array with results
+     * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | number[] {
+    evaluate(valueObj: ValueObject | ValueObject[]): number | string | (number | string)[] {
         // resolve multiple value objects recursively:
         if (valueObj instanceof Array) {
-            return valueObj.map((v) => this.evaluate(v)) as number[];
+            return valueObj.map((v) => this.evaluate(v)) as (number | string)[];
         }
         let expr = this.getExpression();
         if (!(expr instanceof Expression)) {
@@ -811,7 +905,7 @@ export default class Formula {
         return JSON.stringify(valueObj);
     }
 
-    resultFromMemory(valueObj: ValueObject): number | null {
+    resultFromMemory(valueObj: ValueObject): number | string | null {
         let key = this.hashValues(valueObj);
         let res = this._memory[key];
         if (res !== undefined) {
@@ -821,7 +915,7 @@ export default class Formula {
         }
     }
 
-    storeInMemory(valueObj: ValueObject, value: number) {
+    storeInMemory(valueObj: ValueObject, value: number | string) {
         this._memory[this.hashValues(valueObj)] = value;
     }
 

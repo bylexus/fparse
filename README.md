@@ -22,6 +22,8 @@ Parses a mathematical formula from a string. Known expressions:
 -   the use of _own functions_
 -   the use of single-char _variables_ (like '2x')
 -   the use of named variables (like '2\*[myVar]')
+-   the use of strings as function arguments (like 'concat("Size: ", 2, " mm")')
+-   the use of strings as variables (like 'concat("Size: ", 2, " ", [unit])')
 -   the use of path named variables and functions (like '2\*[myVar.property.innerProperty]')
 -   _memoization_: store already evaluated results for faster re-calcs
 -   use it in Web pages, as ES6 module or as NodeJS module
@@ -148,6 +150,29 @@ const res = fObj.evaluate({
 const fObj2 = new Formula('sin(lib.inverse(x))');
 fObj2.lib = { inverse: (value) => 1/value };
 const res2 = fObj.evaluate();
+```
+
+### Using strings
+
+You can also pass strings as values or variable values (not only numbers): It is then in your responsibility to
+provide a function that can make sense of the string:
+
+E.g. you can create a function that concats 2 values:
+
+```javascript
+const fObj = new Formula('concat([var1], "Bar")');
+let result = fObj.evaluate({ var1: 'Foo', concat: (s1, s2) => s1 + s2 });
+```
+
+Here, the result of the evaluation is again a string.
+
+Of course you can use strings to make decisions: Here, we provide a function `longer` that
+returns the length of the longer of two strings, and calculates the remaining length:
+
+```javascript
+const fObj = new Formula('20 - longer([var1], "Bar")');
+let result = fObj.evaluate({ var1: 'FooBar', longer: (s1, s2) => s1.length > s2.length ? s1.length : s2.length });
+// --> 14
 ```
 
 ### Re-use a Formula object
@@ -297,6 +322,12 @@ edge cases.
 -   modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
 -   Make sure you include dist/fparser.js if you are using it as a browser library.
 -   Drop support for Bower, as there are more modern approaches (npm) for package dependency nowadays
+
+## Contributors
+
+Thanks to all the additional contributors:
+
+- [LuigiPulcini](https://github.com/LuigiPulcini) for the Strings support
 
 ## License
 

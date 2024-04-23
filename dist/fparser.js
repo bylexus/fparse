@@ -1,7 +1,7 @@
-var k = Object.defineProperty;
-var P = (u, i, t) => i in u ? k(u, i, { enumerable: !0, configurable: !0, writable: !0, value: t }) : u[i] = t;
-var n = (u, i, t) => (P(u, typeof i != "symbol" ? i + "" : i, t), t);
-const f = {
+var P = Object.defineProperty;
+var O = (h, r, e) => r in h ? P(h, r, { enumerable: !0, configurable: !0, writable: !0, value: e }) : h[r] = e;
+var n = (h, r, e) => (O(h, typeof r != "symbol" ? r + "" : r, e), e);
+const E = {
   PI: Math.PI,
   E: Math.E,
   LN2: Math.LN2,
@@ -11,191 +11,226 @@ const f = {
   SQRT1_2: Math.SQRT1_2,
   SQRT2: Math.SQRT2
 };
-class l {
-  static createOperatorExpression(i, t, e) {
-    if (i === "^")
-      return new x(t, e);
-    if (i === "*" || i === "/")
-      return new g(i, t, e);
-    if (i === "+" || i === "-")
-      return new E(i, t, e);
-    throw new Error(`Unknown operator: ${i}`);
+class p {
+  static throwIfNotNumber(r) {
+    if (typeof r === "string")
+      throw new Error("Strings are not allowed in math operations");
   }
-  evaluate(i = {}) {
+}
+class $ {
+  static throwIfNotNumber(r) {
+    if (typeof r === "string")
+      throw new Error("Strings are not allowed in math operations");
+  }
+}
+class u {
+  static createOperatorExpression(r, e, t) {
+    if (r === "^")
+      return new x(e, t);
+    if (r === "*" || r === "/")
+      return new b(r, e, t);
+    if (r === "+" || r === "-")
+      return new g(r, e, t);
+    throw new Error(`Unknown operator: ${r}`);
+  }
+  evaluate(r = {}) {
     throw new Error("Empty Expression - Must be defined in child classes");
   }
   toString() {
     return "";
   }
 }
-class b extends l {
-  constructor(t) {
+class N extends u {
+  constructor(e) {
     super();
     n(this, "innerExpression");
-    if (this.innerExpression = t, !(this.innerExpression instanceof l))
+    if (this.innerExpression = e, !(this.innerExpression instanceof u))
       throw new Error("No inner expression given for bracket expression");
   }
-  evaluate(t = {}) {
-    return this.innerExpression.evaluate(t);
+  evaluate(e = {}) {
+    return this.innerExpression.evaluate(e);
   }
   toString() {
     return `(${this.innerExpression.toString()})`;
   }
 }
-class w extends l {
-  constructor(t) {
+class w extends u {
+  constructor(e, t = "number") {
     super();
     n(this, "value");
-    if (this.value = Number(t), isNaN(this.value))
-      throw new Error("Cannot parse number: " + t);
+    n(this, "type");
+    switch (this.value = Number(e), t) {
+      case "number":
+        if (this.value = Number(e), isNaN(this.value))
+          throw new Error("Cannot parse number: " + e);
+        break;
+      case "string":
+        this.value = String(e);
+        break;
+      default:
+        throw new Error("Invalid value type: " + t);
+    }
+    this.type = t;
   }
   evaluate() {
     return this.value;
   }
   toString() {
-    return String(this.value);
+    switch (this.type) {
+      case "number":
+        return String(this.value);
+      case "string":
+        return '"' + this.value + '"';
+      default:
+        throw new Error("Invalid type");
+    }
   }
 }
-class E extends l {
-  constructor(t, e, r) {
+class g extends u {
+  constructor(e, t, i) {
     super();
     n(this, "operator");
     n(this, "left");
     n(this, "right");
-    if (!["+", "-"].includes(t))
-      throw new Error(`Operator not allowed in Plus/Minus expression: ${t}`);
-    this.operator = t, this.left = e, this.right = r;
+    if (!["+", "-"].includes(e))
+      throw new Error(`Operator not allowed in Plus/Minus expression: ${e}`);
+    this.operator = e, this.left = t, this.right = i;
   }
-  evaluate(t = {}) {
-    if (this.operator === "+")
-      return this.left.evaluate(t) + this.right.evaluate(t);
+  evaluate(e = {}) {
+    const t = this.left.evaluate(e), i = this.right.evaluate(e);
+    if (p.throwIfNotNumber(t), p.throwIfNotNumber(i), this.operator === "+")
+      return Number(t) + Number(i);
     if (this.operator === "-")
-      return this.left.evaluate(t) - this.right.evaluate(t);
+      return Number(t) - Number(i);
     throw new Error("Unknown operator for PlusMinus expression");
   }
   toString() {
     return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
   }
 }
-class g extends l {
-  constructor(t, e, r) {
+class b extends u {
+  constructor(e, t, i) {
     super();
     n(this, "operator");
     n(this, "left");
     n(this, "right");
-    if (!["*", "/"].includes(t))
-      throw new Error(`Operator not allowed in Multiply/Division expression: ${t}`);
-    this.operator = t, this.left = e, this.right = r;
+    if (!["*", "/"].includes(e))
+      throw new Error(`Operator not allowed in Multiply/Division expression: ${e}`);
+    this.operator = e, this.left = t, this.right = i;
   }
-  evaluate(t = {}) {
-    if (this.operator === "*")
-      return this.left.evaluate(t) * this.right.evaluate(t);
+  evaluate(e = {}) {
+    const t = this.left.evaluate(e), i = this.right.evaluate(e);
+    if (p.throwIfNotNumber(t), p.throwIfNotNumber(i), this.operator === "*")
+      return Number(t) * Number(i);
     if (this.operator === "/")
-      return this.left.evaluate(t) / this.right.evaluate(t);
+      return Number(t) / Number(i);
     throw new Error("Unknown operator for MultDiv expression");
   }
   toString() {
     return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
   }
 }
-class x extends l {
-  constructor(t, e) {
+class x extends u {
+  constructor(e, t) {
     super();
     n(this, "base");
     n(this, "exponent");
-    this.base = t, this.exponent = e;
+    this.base = e, this.exponent = t;
   }
-  evaluate(t = {}) {
-    return Math.pow(this.base.evaluate(t), this.exponent.evaluate(t));
+  evaluate(e = {}) {
+    const t = this.base.evaluate(e), i = this.exponent.evaluate(e);
+    return p.throwIfNotNumber(t), p.throwIfNotNumber(i), Math.pow(Number(t), Number(i));
   }
   toString() {
     return `${this.base.toString()}^${this.exponent.toString()}`;
   }
 }
-class y extends l {
-  constructor(t, e, r = null) {
+class S extends u {
+  constructor(e, t, i = null) {
     super();
     n(this, "fn");
     n(this, "varPath");
     n(this, "argumentExpressions");
     n(this, "formulaObject");
     n(this, "blacklisted");
-    this.fn = t != null ? t : "", this.varPath = this.fn.split("."), this.argumentExpressions = e || [], this.formulaObject = r, this.blacklisted = void 0;
+    this.fn = e != null ? e : "", this.varPath = this.fn.split("."), this.argumentExpressions = t || [], this.formulaObject = i, this.blacklisted = void 0;
   }
-  evaluate(t = {}) {
-    var o;
-    t = t || {};
-    const e = this.argumentExpressions.map((s) => s.evaluate(t));
+  evaluate(e = {}) {
+    var a;
+    e = e || {};
+    const t = this.argumentExpressions.map((s) => s.evaluate(e));
     try {
-      let s = c(t, this.varPath, this.fn);
+      let s = m(e, this.varPath, this.fn);
       if (s instanceof Function)
-        return s.apply(this, e);
+        return s.apply(this, t);
     } catch (s) {
     }
-    let r;
+    let i;
     try {
-      r = c((o = this.formulaObject) != null ? o : {}, this.varPath, this.fn);
+      i = m((a = this.formulaObject) != null ? a : {}, this.varPath, this.fn);
     } catch (s) {
     }
-    if (this.formulaObject && r instanceof Function) {
+    if (this.formulaObject && i instanceof Function) {
       if (this.isBlacklisted())
         throw new Error("Blacklisted function called: " + this.fn);
-      return r.apply(this.formulaObject, e);
+      return i.apply(this.formulaObject, t);
     }
     try {
-      const s = c(Math, this.varPath, this.fn);
+      const s = m(Math, this.varPath, this.fn);
       if (s instanceof Function)
-        return s.apply(this, e);
+        return t.forEach((o) => {
+          $.throwIfNotNumber(o);
+        }), s.apply(this, t);
     } catch (s) {
     }
     throw new Error("Function not found: " + this.fn);
   }
   toString() {
-    return `${this.fn}(${this.argumentExpressions.map((t) => t.toString()).join(", ")})`;
+    return `${this.fn}(${this.argumentExpressions.map((e) => e.toString()).join(", ")})`;
   }
   isBlacklisted() {
-    return this.blacklisted === void 0 && (this.blacklisted = d.functionBlacklist.includes(
+    return this.blacklisted === void 0 && (this.blacklisted = y.functionBlacklist.includes(
       this.formulaObject ? this.formulaObject[this.fn] : null
     )), this.blacklisted;
   }
 }
-function c(u, i, t) {
-  let e = u;
-  for (let r of i) {
-    if (typeof e != "object")
-      throw new Error(`Cannot evaluate ${r}, property not found (from path ${t})`);
-    if (e[r] === void 0)
-      throw new Error(`Cannot evaluate ${r}, property not found (from path ${t})`);
-    e = e[r];
+function m(h, r, e) {
+  let t = h;
+  for (let i of r) {
+    if (typeof t != "object")
+      throw new Error(`Cannot evaluate ${i}, property not found (from path ${e})`);
+    if (t[i] === void 0)
+      throw new Error(`Cannot evaluate ${i}, property not found (from path ${e})`);
+    t = t[i];
   }
-  if (typeof e == "object")
+  if (typeof t == "object")
     throw new Error("Invalid value");
-  return e;
+  return t;
 }
-class v extends l {
-  constructor(t, e = null) {
+class d extends u {
+  constructor(e, t = null) {
     super();
     n(this, "fullPath");
     n(this, "varPath");
     n(this, "formulaObject");
-    this.formulaObject = e, this.fullPath = t, this.varPath = t.split(".");
+    this.formulaObject = t, this.fullPath = e, this.varPath = e.split(".");
   }
-  evaluate(t = {}) {
-    var r;
-    let e;
+  evaluate(e = {}) {
+    var i;
+    let t;
     try {
-      e = c(t, this.varPath, this.fullPath);
-    } catch (o) {
+      t = m(e, this.varPath, this.fullPath);
+    } catch (a) {
     }
-    if (e === void 0 && (e = c((r = this.formulaObject) != null ? r : {}, this.varPath, this.fullPath)), typeof e == "function" || typeof e == "object")
+    if (t === void 0 && (t = m((i = this.formulaObject) != null ? i : {}, this.varPath, this.fullPath)), typeof t == "function" || typeof t == "object")
       throw new Error(`Cannot use ${this.fullPath} as value: It contains a non-numerical value.`);
-    return Number(e);
+    return t;
   }
   toString() {
     return `${this.varPath.join(".")}`;
   }
 }
-const h = class h {
+const l = class l {
   /**
    * Creates a new Formula instance
    *
@@ -208,13 +243,13 @@ const h = class h {
    *    - memoization (bool): If true, results are stored and re-used when evaluate() is called with the same parameters
    * @param {Formula} parentFormula Internally used to build a Formula AST
    */
-  constructor(i, t = {}) {
+  constructor(r, e = {}) {
     n(this, "formulaExpression");
     n(this, "options");
     n(this, "formulaStr");
     n(this, "_variables");
     n(this, "_memory");
-    this.formulaExpression = null, this.options = { memoization: !1, ...t }, this.formulaStr = "", this._variables = [], this._memory = {}, this.setFormula(i);
+    this.formulaExpression = null, this.options = { memoization: !1, ...e }, this.formulaStr = "", this._variables = [], this._memory = {}, this.setFormula(r);
   }
   /**
    * Re-sets the given String and parses it to a formula expression. Can be used after initialization,
@@ -223,8 +258,8 @@ const h = class h {
    * @param {String} formulaString The formula string to set/parse
    * @return {this} The Formula object (this)
    */
-  setFormula(i) {
-    return i && (this.formulaExpression = null, this._variables = [], this._memory = {}, this.formulaStr = i, this.formulaExpression = this.parse(i)), this;
+  setFormula(r) {
+    return r && (this.formulaExpression = null, this._variables = [], this._memory = {}, this.formulaStr = r, this.formulaExpression = this.parse(r)), this;
   }
   /**
    * Enable memoization: An expression is only evaluated once for the same input.
@@ -244,31 +279,34 @@ const h = class h {
    * a sub-expression
    * e.g.: str = "x,pow(3,4)" returns 2 elements: x and pow(3,4).
    */
-  splitFunctionParams(i) {
-    let t = 0, e = "";
-    const r = [];
-    for (let o of i.split(""))
-      if (o === "," && t === 0)
-        r.push(e), e = "";
-      else if (o === "(")
-        t++, e += o;
-      else if (o === ")") {
-        if (t--, e += o, t < 0)
+  splitFunctionParams(r) {
+    let e = 0, t = "";
+    const i = [];
+    for (let a of r.split(""))
+      if (a === "," && e === 0)
+        i.push(t), t = "";
+      else if (a === "(")
+        e++, t += a;
+      else if (a === ")") {
+        if (e--, t += a, e < 0)
           throw new Error("ERROR: Too many closing parentheses!");
       } else
-        e += o;
-    if (t !== 0)
+        t += a;
+    if (e !== 0)
       throw new Error("ERROR: Too many opening parentheses!");
-    return e.length > 0 && r.push(e), r;
+    return t.length > 0 && i.push(t), i;
   }
   /**
    * Cleans the input string from unnecessary whitespace,
    * and replaces some known constants:
    */
-  cleanupInputString(i) {
-    return i = i.replace(/\s+/g, ""), Object.keys(f).forEach((t) => {
-      i = i.replace(new RegExp(`\\b${t}\\b`, "g"), `[${t}]`);
-    }), i;
+  cleanupInputFormula(r) {
+    const e = [];
+    return r.split('"').forEach((i, a) => {
+      a % 2 === 0 && (i = i.replace(/[\s]+/g, ""), Object.keys(E).forEach((s) => {
+        i = i.replace(new RegExp(`\\b${s}\\b`, "g"), `[${s}]`);
+      })), e.push(i);
+    }), e.join('"');
   }
   /**
    * Parses the given formula string by using a state machine into a single Expression object,
@@ -284,7 +322,7 @@ const h = class h {
    *
    * We want to create an expression tree out of the string. This is done in 2 stages:
    * 1. form single expressions from the string: parse the string into known expression objects:
-   *   - numbers/variables
+   *   - numbers/[variables]/"strings"
    *   - operators
    *   - braces (with a sub-expression)
    *   - functions (with sub-expressions (aka argument expressions))
@@ -310,79 +348,84 @@ const h = class h {
    * @param {String} str The formula string, e.g. '3*sin(PI/x)'
    * @returns {Expression} An expression object, representing the expression tree
    */
-  parse(i) {
-    return i = this.cleanupInputString(i), this._do_parse(i);
+  parse(r) {
+    return r = this.cleanupInputFormula(r), this._do_parse(r);
   }
   /**
    * @see parse(): this is the recursive parse function, without the clean string part.
    * @param {String} str
    * @returns {Expression} An expression object, representing the expression tree
    */
-  _do_parse(i) {
-    let t = i.length - 1, e = 0, r = "initial", o = [], s = "", a = "", m = null, p = 0;
-    for (; e <= t; ) {
-      switch (r) {
+  _do_parse(r) {
+    let e = r.length - 1, t = 0, i = "initial", a = [], s = "", o = "", v = null, f = 0, c = "";
+    for (; t <= e; ) {
+      switch (i) {
         case "initial":
-          if (s = i.charAt(e), s.match(/[0-9.]/))
-            r = "within-nr", a = "", e--;
+          if (s = r.charAt(t), s.match(/[0-9.]/))
+            i = "within-nr", o = "", t--;
           else if (this.isOperator(s)) {
-            if (s === "-" && (o.length === 0 || this.isOperatorExpr(o[o.length - 1]))) {
-              r = "within-nr", a = "-";
+            if (s === "-" && (a.length === 0 || this.isOperatorExpr(a[a.length - 1]))) {
+              i = "within-nr", o = "-";
               break;
             }
-            if (e === t || this.isOperatorExpr(o[o.length - 1])) {
-              r = "invalid";
+            if (t === e || this.isOperatorExpr(a[a.length - 1])) {
+              i = "invalid";
               break;
             } else
-              o.push(
-                l.createOperatorExpression(s, new l(), new l())
-              ), r = "initial";
+              a.push(
+                u.createOperatorExpression(s, new u(), new u())
+              ), i = "initial";
           } else
-            s === "(" ? (r = "within-parentheses", a = "", p = 0) : s === "[" ? (r = "within-named-var", a = "") : s.match(/[a-zA-Z]/) && (e < t && i.charAt(e + 1).match(/[a-zA-Z0-9_.]/) ? (a = s, r = "within-func") : (o.length > 0 && o[o.length - 1] instanceof w && o.push(
-              l.createOperatorExpression("*", new l(), new l())
-            ), o.push(new v(s, this)), this.registerVariable(s), r = "initial", a = ""));
+            s === "(" ? (i = "within-parentheses", o = "", f = 0) : s === "[" ? (i = "within-named-var", o = "") : s.match(/["']/) ? (i = "within-string", c = s, o = "") : s.match(/[a-zA-Z]/) && (t < e && r.charAt(t + 1).match(/[a-zA-Z0-9_.]/) ? (o = s, i = "within-func") : (a.length > 0 && a[a.length - 1] instanceof w && a.push(
+              u.createOperatorExpression("*", new u(), new u())
+            ), a.push(new d(s, this)), this.registerVariable(s), i = "initial", o = ""));
           break;
         case "within-nr":
-          s = i.charAt(e), s.match(/[0-9.]/) ? (a += s, e === t && (o.push(new w(a)), r = "initial")) : (a === "-" && (a = "-1"), o.push(new w(a)), a = "", r = "initial", e--);
+          s = r.charAt(t), s.match(/[0-9.]/) ? (o += s, t === e && (a.push(new w(o)), i = "initial")) : (o === "-" && (o = "-1"), a.push(new w(o)), o = "", i = "initial", t--);
           break;
         case "within-func":
-          if (s = i.charAt(e), s.match(/[a-zA-Z0-9_.]/))
-            a += s;
+          if (s = r.charAt(t), s.match(/[a-zA-Z0-9_.]/))
+            o += s;
           else if (s === "(")
-            m = a, a = "", p = 0, r = "within-func-parentheses";
+            v = o, o = "", f = 0, i = "within-func-parentheses";
           else
-            throw new Error("Wrong character for function at position " + e);
+            throw new Error("Wrong character for function at position " + t);
           break;
         case "within-named-var":
-          if (s = i.charAt(e), s === "]")
-            o.push(new v(a, this)), this.registerVariable(a), a = "", r = "initial";
+          if (s = r.charAt(t), s === "]")
+            a.push(new d(o, this)), this.registerVariable(o), o = "", i = "initial";
           else if (s.match(/[a-zA-Z0-9_.]/))
-            a += s;
+            o += s;
           else
             throw new Error("Character not allowed within named variable: " + s);
           break;
+        case "within-string":
+          s = r.charAt(t), s === c ? (a.push(new w(o, "string")), o = "", i = "initial", c = "") : o += s;
+          break;
         case "within-parentheses":
         case "within-func-parentheses":
-          if (s = i.charAt(e), s === ")")
-            if (p <= 0) {
-              if (r === "within-parentheses")
-                o.push(new b(this._do_parse(a)));
-              else if (r === "within-func-parentheses") {
-                let S = this.splitFunctionParams(a).map((M) => this._do_parse(M));
-                o.push(new y(m, S, this)), m = null;
+          if (s = r.charAt(t), c)
+            s === c && (c = ""), o += s;
+          else if (s === ")")
+            if (f <= 0) {
+              if (i === "within-parentheses")
+                a.push(new N(this._do_parse(o)));
+              else if (i === "within-func-parentheses") {
+                let M = this.splitFunctionParams(o).map((k) => this._do_parse(k));
+                a.push(new S(v, M, this)), v = null;
               }
-              r = "initial";
+              i = "initial";
             } else
-              p--, a += s;
+              f--, o += s;
           else
-            s === "(" && p++, a += s;
+            s === "(" ? (f++, o += s) : (s.match(/["']/) && (c = s), o += s);
           break;
       }
-      e++;
+      t++;
     }
-    if (r !== "initial")
+    if (i !== "initial")
       throw new Error("Could not parse formula: Syntax error.");
-    return this.buildExpressionTree(o);
+    return this.buildExpressionTree(a);
   }
   /**
    * @see parse(): Builds an expression tree from the given expression array.
@@ -393,44 +436,44 @@ const h = class h {
    * @param {*} expressions
    * @return {Expression} The root Expression of the built expression tree
    */
-  buildExpressionTree(i) {
-    if (i.length < 1)
+  buildExpressionTree(r) {
+    if (r.length < 1)
       throw new Error("No expression given!");
-    const t = [...i];
-    let e = 0, r = null;
-    for (; e < t.length; )
-      if (r = t[e], r instanceof x) {
-        if (e === 0 || e === t.length - 1)
+    const e = [...r];
+    let t = 0, i = null;
+    for (; t < e.length; )
+      if (i = e[t], i instanceof x) {
+        if (t === 0 || t === e.length - 1)
           throw new Error("Wrong operator position!");
-        r.base = t[e - 1], r.exponent = t[e + 1], t[e - 1] = r, t.splice(e, 2);
+        i.base = e[t - 1], i.exponent = e[t + 1], e[t - 1] = i, e.splice(t, 2);
       } else
-        e++;
-    for (e = 0, r = null; e < t.length; )
-      if (r = t[e], r instanceof g) {
-        if (e === 0 || e === t.length - 1)
+        t++;
+    for (t = 0, i = null; t < e.length; )
+      if (i = e[t], i instanceof b) {
+        if (t === 0 || t === e.length - 1)
           throw new Error("Wrong operator position!");
-        r.left = t[e - 1], r.right = t[e + 1], t[e - 1] = r, t.splice(e, 2);
+        i.left = e[t - 1], i.right = e[t + 1], e[t - 1] = i, e.splice(t, 2);
       } else
-        e++;
-    for (e = 0, r = null; e < t.length; )
-      if (r = t[e], r instanceof E) {
-        if (e === 0 || e === t.length - 1)
+        t++;
+    for (t = 0, i = null; t < e.length; )
+      if (i = e[t], i instanceof g) {
+        if (t === 0 || t === e.length - 1)
           throw new Error("Wrong operator position!");
-        r.left = t[e - 1], r.right = t[e + 1], t[e - 1] = r, t.splice(e, 2);
+        i.left = e[t - 1], i.right = e[t + 1], e[t - 1] = i, e.splice(t, 2);
       } else
-        e++;
-    if (t.length !== 1)
+        t++;
+    if (e.length !== 1)
       throw new Error("Could not parse formula: incorrect syntax?");
-    return t[0];
+    return e[0];
   }
-  isOperator(i) {
-    return typeof i == "string" && i.match(/[+\-*/^]/);
+  isOperator(r) {
+    return typeof r == "string" && r.match(/[+\-*/^]/);
   }
-  isOperatorExpr(i) {
-    return i instanceof E || i instanceof g || i instanceof x;
+  isOperatorExpr(r) {
+    return r instanceof g || r instanceof b || r instanceof x;
   }
-  registerVariable(i) {
-    this._variables.indexOf(i) < 0 && this._variables.push(i);
+  registerVariable(r) {
+    this._variables.indexOf(r) < 0 && this._variables.push(r);
   }
   getVariables() {
     return this._variables;
@@ -444,29 +487,29 @@ const h = class h {
    * @param {ValueObject|Array<ValueObject>} valueObj An object containing values for variables and (unknown) functions,
    *   or an array of such objects: If an array is given, all objects are evaluated and the results
    *   also returned as array.
-   * @return {Number|Array<Number>} The evaluated result, or an array with results
+   * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
    */
-  evaluate(i) {
-    if (i instanceof Array)
-      return i.map((e) => this.evaluate(e));
-    let t = this.getExpression();
-    if (!(t instanceof l))
+  evaluate(r) {
+    if (r instanceof Array)
+      return r.map((t) => this.evaluate(t));
+    let e = this.getExpression();
+    if (!(e instanceof u))
       throw new Error("No expression set: Did you init the object with a Formula?");
     if (this.options.memoization) {
-      let e = this.resultFromMemory(i);
-      return e !== null || (e = t.evaluate({ ...f, ...i }), this.storeInMemory(i, e)), e;
+      let t = this.resultFromMemory(r);
+      return t !== null || (t = e.evaluate({ ...E, ...r }), this.storeInMemory(r, t)), t;
     }
-    return t.evaluate({ ...f, ...i });
+    return e.evaluate({ ...E, ...r });
   }
-  hashValues(i) {
-    return JSON.stringify(i);
+  hashValues(r) {
+    return JSON.stringify(r);
   }
-  resultFromMemory(i) {
-    let t = this.hashValues(i), e = this._memory[t];
-    return e !== void 0 ? e : null;
+  resultFromMemory(r) {
+    let e = this.hashValues(r), t = this._memory[e];
+    return t !== void 0 ? t : null;
   }
-  storeInMemory(i, t) {
-    this._memory[this.hashValues(i)] = t;
+  storeInMemory(r, e) {
+    this._memory[this.hashValues(r)] = e;
   }
   getExpression() {
     return this.formulaExpression;
@@ -474,14 +517,14 @@ const h = class h {
   getExpressionString() {
     return this.formulaExpression ? this.formulaExpression.toString() : "";
   }
-  static calc(i, t = null, e = {}) {
-    return t = t != null ? t : {}, new h(i, e).evaluate(t);
+  static calc(r, e = null, t = {}) {
+    return e = e != null ? e : {}, new l(r, t).evaluate(e);
   }
 };
-n(h, "Expression", l), n(h, "BracketExpression", b), n(h, "PowerExpression", x), n(h, "MultDivExpression", g), n(h, "PlusMinusExpression", E), n(h, "ValueExpression", w), n(h, "VariableExpression", v), n(h, "FunctionExpression", y), n(h, "MATH_CONSTANTS", f), // Create a function blacklist:
-n(h, "functionBlacklist", Object.getOwnPropertyNames(h.prototype).filter((i) => h.prototype[i] instanceof Function).map((i) => h.prototype[i]));
-let d = h;
+n(l, "Expression", u), n(l, "BracketExpression", N), n(l, "PowerExpression", x), n(l, "MultDivExpression", b), n(l, "PlusMinusExpression", g), n(l, "ValueExpression", w), n(l, "VariableExpression", d), n(l, "FunctionExpression", S), n(l, "MATH_CONSTANTS", E), // Create a function blacklist:
+n(l, "functionBlacklist", Object.getOwnPropertyNames(l.prototype).filter((r) => l.prototype[r] instanceof Function).map((r) => l.prototype[r]));
+let y = l;
 export {
-  d as default
+  y as default
 };
 //# sourceMappingURL=fparser.js.map
