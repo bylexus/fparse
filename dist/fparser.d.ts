@@ -7,7 +7,7 @@ type FormulaOptions = {
     memoization?: boolean;
 };
 type ValueObject = {
-    [key: string]: number | Function | ValueObject;
+    [key: string]: number | string | Function | ValueObject;
 };
 declare class Expression {
     static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression;
@@ -57,7 +57,7 @@ declare class FunctionExpression extends Expression {
     formulaObject: Formula | null;
     blacklisted: boolean | undefined;
     constructor(fn: string | null, argumentExpressions: Expression[], formulaObject?: Formula | null);
-    evaluate(params?: ValueObject): number;
+    evaluate(params?: ValueObject): number | string;
     toString(): string;
     isBlacklisted(): boolean;
 }
@@ -66,7 +66,7 @@ declare class VariableExpression extends Expression {
     varPath: string[];
     formulaObject: Formula | null;
     constructor(fullPath: string, formulaObj?: Formula | null);
-    evaluate(params?: {}): number;
+    evaluate(params?: {}): number | string;
     toString(): string;
 }
 export default class Formula {
@@ -150,7 +150,7 @@ export default class Formula {
      *
      * We want to create an expression tree out of the string. This is done in 2 stages:
      * 1. form single expressions from the string: parse the string into known expression objects:
-     *   - numbers/variables
+     *   - numbers/[variables]/"strings"
      *   - operators
      *   - braces (with a sub-expression)
      *   - functions (with sub-expressions (aka argument expressions))
@@ -206,14 +206,14 @@ export default class Formula {
      * @param {ValueObject|Array<ValueObject>} valueObj An object containing values for variables and (unknown) functions,
      *   or an array of such objects: If an array is given, all objects are evaluated and the results
      *   also returned as array.
-     * @return {Number|Array<Number>} The evaluated result, or an array with results
+     * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | number[] | string | string[];
+    evaluate(valueObj: ValueObject | ValueObject[]): number | string | (number | string)[];
     hashValues(valueObj: ValueObject): string;
     resultFromMemory(valueObj: ValueObject): number | string | null;
     storeInMemory(valueObj: ValueObject, value: number | string): void;
     getExpression(): Expression | null;
     getExpressionString(): string;
-    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): string | number | string[] | number[];
+    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): string | number | (string | number)[];
 }
 export {};

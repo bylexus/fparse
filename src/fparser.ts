@@ -42,11 +42,11 @@ type FormulaOptions = {
 };
 
 type ValueObject = {
-    [key: string]: number | Function | ValueObject;
+    [key: string]: number | string | Function | ValueObject;
 };
 
 class MathOperatorHelper {
-    static throwIfNotNumber(value: number | string ) {
+    static throwIfNotNumber(value: number | string) {
         const valueType = typeof value;
         if (valueType === 'string') {
             throw new Error('Strings are not allowed in math operations');
@@ -55,7 +55,7 @@ class MathOperatorHelper {
 }
 
 class MathFunctionHelper {
-    static throwIfNotNumber(value: number | string ) {
+    static throwIfNotNumber(value: number | string) {
         const valueType = typeof value;
         if (valueType === 'string') {
             throw new Error('Strings are not allowed in math operations');
@@ -248,7 +248,7 @@ class FunctionExpression extends Expression {
         this.blacklisted = undefined;
     }
 
-    evaluate(params: ValueObject = {}): number {
+    evaluate(params: ValueObject = {}): number | string {
         params = params || {};
         const paramValues = this.argumentExpressions.map((a) => a.evaluate(params));
 
@@ -288,7 +288,7 @@ class FunctionExpression extends Expression {
                 paramValues.forEach((paramValue) => {
                     MathFunctionHelper.throwIfNotNumber(paramValue);
                 });
-    
+
                 return mathFn.apply(this, paramValues);
             }
         } catch (e) {
@@ -315,7 +315,7 @@ class FunctionExpression extends Expression {
 }
 
 function getProperty(object: ValueObject, path: string[], fullPath: string) {
-    let curr: number | Function | ValueObject = object;
+    let curr: number | string | Function | ValueObject = object;
     for (let propName of path) {
         if (typeof curr !== 'object') {
             throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
@@ -345,7 +345,7 @@ class VariableExpression extends Expression {
         this.varPath = fullPath.split('.');
     }
 
-    evaluate(params = {}) {
+    evaluate(params = {}): number | string {
         // params contain variable / value pairs: If this object's variable matches
         // a varname found in the params, return the value.
         // eg: params = {x: 5,y:3}, varname = x, return 5
@@ -527,7 +527,7 @@ export default class Formula {
      *
      * We want to create an expression tree out of the string. This is done in 2 stages:
      * 1. form single expressions from the string: parse the string into known expression objects:
-     *   - numbers/variables
+     *   - numbers/[variables]/"strings"
      *   - operators
      *   - braces (with a sub-expression)
      *   - functions (with sub-expressions (aka argument expressions))
@@ -877,12 +877,12 @@ export default class Formula {
      * @param {ValueObject|Array<ValueObject>} valueObj An object containing values for variables and (unknown) functions,
      *   or an array of such objects: If an array is given, all objects are evaluated and the results
      *   also returned as array.
-     * @return {Number|Array<Number>} The evaluated result, or an array with results
+     * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | number[] | string | string[] {
+    evaluate(valueObj: ValueObject | ValueObject[]): number | string | (number | string)[] {
         // resolve multiple value objects recursively:
         if (valueObj instanceof Array) {
-            return valueObj.map((v) => this.evaluate(v)) as number[] | string[];
+            return valueObj.map((v) => this.evaluate(v)) as (number | string)[];
         }
         let expr = this.getExpression();
         if (!(expr instanceof Expression)) {
