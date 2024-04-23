@@ -20,6 +20,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm ci
+    - run: rm -rf node_modules package-lock.json
+    - run: npm install
     - run: npm run build
     - run: npm test
