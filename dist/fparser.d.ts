@@ -10,7 +10,7 @@ type ValueObject = {
     [key: string]: number | Function | ValueObject;
 };
 declare class Expression {
-    static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression;
+    static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
     evaluate(params?: ValueObject): number | string;
     toString(): string;
 }
@@ -47,6 +47,14 @@ declare class PowerExpression extends Expression {
     base: Expression;
     exponent: Expression;
     constructor(base: Expression, exponent: Expression);
+    evaluate(params?: ValueObject): number;
+    toString(): string;
+}
+declare class LogicalExpression extends Expression {
+    operator: string;
+    left: Expression;
+    right: Expression;
+    constructor(operator: string, left: Expression, right: Expression);
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
@@ -194,7 +202,7 @@ export default class Formula {
      */
     buildExpressionTree(expressions: Expression[]): Expression;
     isOperator(char: string | null): false | RegExpMatchArray | null;
-    isOperatorExpr(expr: Expression): boolean;
+    isOperatorExpr(expr: Expression): expr is PowerExpression | MultDivExpression | PlusMinusExpression;
     registerVariable(varName: string): void;
     getVariables(): string[];
     /**
