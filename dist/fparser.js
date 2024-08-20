@@ -356,7 +356,7 @@ const u = class u {
    *
    * We want to create an expression tree out of the string. This is done in 2 stages:
    * 1. form single expressions from the string: parse the string into known expression objects:
-   *   - numbers/variables
+   *   - numbers/[variables]/"strings"
    *   - operators
    *   - braces (with a sub-expression)
    *   - functions (with sub-expressions (aka argument expressions))
@@ -535,7 +535,7 @@ const u = class u {
    * @param {ValueObject|Array<ValueObject>} valueObj An object containing values for variables and (unknown) functions,
    *   or an array of such objects: If an array is given, all objects are evaluated and the results
    *   also returned as array.
-   * @return {Number|Array<Number>} The evaluated result, or an array with results
+   * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
    */
   evaluate(i) {
     if (i instanceof Array)

@@ -1,7 +1,7 @@
 import Fparser from '../../dist/fparser.js';
 
 describe('String basic feature', function () {
-    it('support parsing with single and double quotes', function () {
+    it('support parsing with double quotes', function () {
         expect(new Fparser('"foo"').evaluate()).toEqual('foo');
     });
 
@@ -37,12 +37,6 @@ describe('String basic feature', function () {
         expect(new Fparser('myFnFoo(x)').evaluate({ myFnFoo: myFnFoo, x: 'bar' })).toEqual('foobar');
         expect(new Fparser('myFnFoo([myVar])').evaluate({ myFnFoo: myFnFoo, myVar: 'bar' })).toEqual('foobar');
     });
-
-    // it('blocking math operator "*" of number and variable', function () {
-    //     expect(new Fparser('2x').evaluate('2x', { x: 'foo' })).toThrowError(
-    //         /Math operators required type of number: given is string/
-    //     );
-    // });
 
     it('blocking math operator "+"', function () {
         const operations = ['"foo" + 123', '123 + "foo"', '"foo" + "bar"', '("foo") + 123', '123 + ("foo")'];
@@ -82,5 +76,28 @@ describe('String basic feature', function () {
         operations.forEach((operation) => {
             expect(() => new Fparser(operation).evaluate()).toThrowError(/Strings are not allowed in math operations/);
         });
+    });
+
+    it('works with string parameters in a real example', function () {
+        const leftElseRight = (l, op, r) => {
+            switch (op) {
+                case '<':
+                    return l < r ? l : r;
+                case '>':
+                    return l > r ? l : r;
+                default:
+                    throw new Error('Invalid operator: ' + op);
+            }
+        };
+        let res = new Fparser('4*leftElseRight([var1], "<", [var2])').evaluate({ var1: 1, var2: 2, leftElseRight });
+        expect(res).toEqual(4);
+
+        res = new Fparser('4*leftElseRight([var1], ">", [var2])').evaluate({ var1: 1, var2: 2, leftElseRight });
+        expect(res).toEqual(8);
+    });
+
+    it('evaluates a string result', function () {
+        let res = new Fparser('concat([var1], "Bar")').evaluate({ var1: 'Foo', concat: (s1, s2) => s1 + s2 });
+        expect(res).toEqual('FooBar');
     });
 });
