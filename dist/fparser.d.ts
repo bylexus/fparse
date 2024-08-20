@@ -84,6 +84,7 @@ export default class Formula {
     static PowerExpression: typeof PowerExpression;
     static MultDivExpression: typeof MultDivExpression;
     static PlusMinusExpression: typeof PlusMinusExpression;
+    static LogicalExpression: typeof LogicalExpression;
     static ValueExpression: typeof ValueExpression;
     static VariableExpression: typeof VariableExpression;
     static FunctionExpression: typeof FunctionExpression;
@@ -202,7 +203,7 @@ export default class Formula {
      */
     buildExpressionTree(expressions: Expression[]): Expression;
     isOperator(char: string | null): false | RegExpMatchArray | null;
-    isOperatorExpr(expr: Expression): expr is PowerExpression | MultDivExpression | PlusMinusExpression;
+    isOperatorExpr(expr: Expression): expr is PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
     registerVariable(varName: string): void;
     getVariables(): string[];
     /**
