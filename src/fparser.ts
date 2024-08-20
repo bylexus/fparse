@@ -427,6 +427,7 @@ export default class Formula {
     static PowerExpression = PowerExpression;
     static MultDivExpression = MultDivExpression;
     static PlusMinusExpression = PlusMinusExpression;
+    static LogicalExpression = LogicalExpression;
     static ValueExpression = ValueExpression;
     static VariableExpression = VariableExpression;
     static FunctionExpression = FunctionExpression;
@@ -941,7 +942,7 @@ export default class Formula {
 
     isOperatorExpr(expr: Expression) {
         return (
-            expr instanceof PlusMinusExpression || expr instanceof MultDivExpression || expr instanceof PowerExpression
+            expr instanceof PlusMinusExpression || expr instanceof MultDivExpression || expr instanceof PowerExpression || expr instanceof LogicalExpression
         );
     }
 

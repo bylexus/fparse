@@ -14,7 +14,7 @@ declare class Expression {
         operator: string,
         left: Expression,
         right: Expression
-    ): PowerExpression | MultDivExpression | PlusMinusExpression;
+    ): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
     evaluate(params?: ValueObject): number | string;
     toString(): string;
 }
@@ -53,6 +53,14 @@ declare class PowerExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+declare class LogicalExpression extends Expression {
+    operator: string;
+    left: Expression;
+    right: Expression;
+    constructor(operator: string, left: Expression, right: Expression);
+    evaluate(params?: ValueObject): number;
+    toString(): string;
+}
 declare class FunctionExpression extends Expression {
     fn: string;
     argumentExpressions: Expression[];
@@ -77,6 +85,7 @@ export default class Formula {
     static PowerExpression: typeof PowerExpression;
     static MultDivExpression: typeof MultDivExpression;
     static PlusMinusExpression: typeof PlusMinusExpression;
+    static LogicalExpression: typeof LogicalExpression;
     static ValueExpression: typeof ValueExpression;
     static VariableExpression: typeof VariableExpression;
     static FunctionExpression: typeof FunctionExpression;
