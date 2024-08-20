@@ -23,6 +23,24 @@ describe('Expression tests', function () {
                 inst = Fparser.Expression.createOperatorExpression('/');
                 expect(inst).toBeInstanceOf(Fparser.MultDivExpression);
 
+                inst = Fparser.Expression.createOperatorExpression('>');
+                expect(inst).toBeInstanceOf(Fparser.LogicalExpression);
+
+                inst = Fparser.Expression.createOperatorExpression('<');
+                expect(inst).toBeInstanceOf(Fparser.LogicalExpression);
+
+                inst = Fparser.Expression.createOperatorExpression('>=');
+                expect(inst).toBeInstanceOf(Fparser.LogicalExpression);
+
+                inst = Fparser.Expression.createOperatorExpression('<=');
+                expect(inst).toBeInstanceOf(Fparser.LogicalExpression);
+
+                inst = Fparser.Expression.createOperatorExpression('=');
+                expect(inst).toBeInstanceOf(Fparser.LogicalExpression);
+
+                inst = Fparser.Expression.createOperatorExpression('!=');
+                expect(inst).toBeInstanceOf(Fparser.LogicalExpression);
+
                 expect(() => Fparser.Expression.createOperatorExpression('%')).toThrowError('Unknown operator: %');
             });
         });
@@ -143,6 +161,133 @@ describe('Expression tests', function () {
             inst = new Fparser.PowerExpression(new Fparser.ValueExpression(-2), new Fparser.VariableExpression('x'));
             let res = inst.evaluate({ x: 3 });
             expect(res).toEqual(-8);
+        });
+    });
+
+    describe('LogicalExpression', () => {
+        it('is instantiated correctly', () => {
+            let inst = null;
+
+            inst = new Fparser.LogicalExpression('>');
+            expect(inst.operator).toBe('>');
+            inst = new Fparser.LogicalExpression('>', new Fparser.ValueExpression(4), new Fparser.ValueExpression(3));
+            expect(inst.operator).toBe('>');
+            expect(inst.left.value).toBe(4);
+            expect(inst.right.value).toBe(3);
+
+            inst = new Fparser.LogicalExpression('<');
+            expect(inst.operator).toBe('<');
+            inst = new Fparser.LogicalExpression('<', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4));
+            expect(inst.operator).toBe('<');
+            expect(inst.left.value).toBe(3);
+            expect(inst.right.value).toBe(4);
+
+            inst = new Fparser.LogicalExpression('>=');
+            expect(inst.operator).toBe('>=');
+            inst = new Fparser.LogicalExpression('>=', new Fparser.ValueExpression(4), new Fparser.ValueExpression(3));
+            expect(inst.operator).toBe('>=');
+            expect(inst.left.value).toBe(4);
+            expect(inst.right.value).toBe(3);
+
+            inst = new Fparser.LogicalExpression('<=');
+            expect(inst.operator).toBe('<=');
+            inst = new Fparser.LogicalExpression('<=', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4));
+            expect(inst.operator).toBe('<=');
+            expect(inst.left.value).toBe(3);
+            expect(inst.right.value).toBe(4);
+
+            inst = new Fparser.LogicalExpression('=');
+            expect(inst.operator).toBe('=');
+            inst = new Fparser.LogicalExpression('=', new Fparser.ValueExpression(3), new Fparser.ValueExpression(3));
+            expect(inst.operator).toBe('=');
+            expect(inst.left.value).toBe(3);
+            expect(inst.right.value).toBe(3);
+
+            inst = new Fparser.LogicalExpression('!=');
+            expect(inst.operator).toBe('!=');
+            inst = new Fparser.LogicalExpression('!=', new Fparser.ValueExpression(3), new Fparser.ValueExpression(4));
+            expect(inst.operator).toBe('!=');
+            expect(inst.left.value).toBe(3);
+            expect(inst.right.value).toBe(4);
+
+            expect(() => {
+                inst = new Fparser.LogicalExpression('+');
+            }).toThrow();
+        });
+        it('evaluates correctly', () => {
+            let inst = null;
+
+            inst = new Fparser.LogicalExpression(
+                '>',
+                new Fparser.ValueExpression(12),
+                new Fparser.VariableExpression('x')
+            );
+            let res = inst.evaluate({ x: 18 });
+            expect(res).toEqual(0);
+            res = inst.evaluate({ x: 8 });
+            expect(res).toEqual(1);
+            res = inst.evaluate({ x: 12 });
+            expect(res).toEqual(0);
+
+            inst = new Fparser.LogicalExpression(
+                '<',
+                new Fparser.ValueExpression(12),
+                new Fparser.VariableExpression('x')
+            );
+            res = inst.evaluate({ x: 18 });
+            expect(res).toEqual(1);
+            res = inst.evaluate({ x: 8 });
+            expect(res).toEqual(0);
+            res = inst.evaluate({ x: 12 });
+            expect(res).toEqual(0);
+
+            inst = new Fparser.LogicalExpression(
+                '>=',
+                new Fparser.ValueExpression(12),
+                new Fparser.VariableExpression('x')
+            );
+            res = inst.evaluate({ x: 18 });
+            expect(res).toEqual(0);
+            res = inst.evaluate({ x: 8 });
+            expect(res).toEqual(1);
+            res = inst.evaluate({ x: 12 });
+            expect(res).toEqual(1);
+
+            inst = new Fparser.LogicalExpression(
+                '<=',
+                new Fparser.ValueExpression(12),
+                new Fparser.VariableExpression('x')
+            );
+            res = inst.evaluate({ x: 18 });
+            expect(res).toEqual(1);
+            res = inst.evaluate({ x: 8 });
+            expect(res).toEqual(0);
+            res = inst.evaluate({ x: 12 });
+            expect(res).toEqual(1);
+
+            inst = new Fparser.LogicalExpression(
+                '=',
+                new Fparser.ValueExpression(12),
+                new Fparser.VariableExpression('x')
+            );
+            res = inst.evaluate({ x: 18 });
+            expect(res).toEqual(0);
+            res = inst.evaluate({ x: 8 });
+            expect(res).toEqual(0);
+            res = inst.evaluate({ x: 12 });
+            expect(res).toEqual(1);
+
+            inst = new Fparser.LogicalExpression(
+                '!=',
+                new Fparser.ValueExpression(12),
+                new Fparser.VariableExpression('x')
+            );
+            res = inst.evaluate({ x: 18 });
+            expect(res).toEqual(1);
+            res = inst.evaluate({ x: 8 });
+            expect(res).toEqual(1);
+            res = inst.evaluate({ x: 12 });
+            expect(res).toEqual(0);
         });
     });
 
