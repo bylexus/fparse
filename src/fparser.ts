@@ -68,11 +68,14 @@ class Expression {
         if (operator === '^') {
             return new PowerExpression(left, right);
         }
-        if (operator === '*' || operator === '/') {
+        if ( [ '*', '/' ].includes( operator ) ) {
             return new MultDivExpression(operator, left, right);
         }
-        if (operator === '+' || operator === '-') {
+        if ( [ '+', '-' ].includes( operator ) ) {
             return new PlusMinusExpression(operator, left, right);
+        }
+        if ( [ '<', '>', '<=', '>=', '=', '!=' ].includes( operator ) ) {
+            return new LogicalExpression(operator, left, right);
         }
         throw new Error(`Unknown operator: ${operator}`);
     }
@@ -232,6 +235,46 @@ class PowerExpression extends Expression {
         return `${this.base.toString()}^${this.exponent.toString()}`;
     }
 }
+
+class LogicalExpression extends Expression {
+    operator: string;
+    left: Expression;
+    right: Expression;
+    
+    constructor(operator: string, left: Expression, right: Expression) {
+        super();
+        if ( ! [ '<', '>', '<=', '>=', '=', '!=' ].includes( operator ) ) {
+            throw new Error(`Operator not allowed in Logical expression: ${operator}`);
+        }
+        this.operator = operator;
+        this.left = left;
+        this.right = right;
+    }
+
+    evaluate(params: ValueObject = {}): number {
+        const leftValue = this.left.evaluate(params);
+        const rightValue = this.right.evaluate(params);
+        switch ( this.operator ) {
+            case '<':
+                return leftValue < rightValue ? 1 : 0;
+            case '>':
+                return leftValue > rightValue ? 1 : 0;
+            case '<=':
+                return leftValue <= rightValue ? 1 : 0;
+            case '>=':
+                return leftValue >= rightValue ? 1 : 0;
+            case '=':
+                return leftValue === rightValue ? 1 : 0;
+            case '!=':
+                return leftValue !== rightValue ? 1 : 0;
+        }
+        throw new Error('Unknown operator for Logical expression');
+    }
+
+    toString() {
+        return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
+    }
+}
 class FunctionExpression extends Expression {
     fn: string;
     varPath: string[];
@@ -384,6 +427,7 @@ export default class Formula {
     static PowerExpression = PowerExpression;
     static MultDivExpression = MultDivExpression;
     static PlusMinusExpression = PlusMinusExpression;
+    static LogicalExpression = LogicalExpression;
     static ValueExpression = ValueExpression;
     static VariableExpression = VariableExpression;
     static FunctionExpression = FunctionExpression;
@@ -578,6 +622,7 @@ export default class Formula {
                 | 'within-expr'
                 | 'within-bracket'
                 | 'within-func'
+                | 'within-logical-operator'
                 | 'invalid' = 'initial',
             expressions = [],
             char = '',
@@ -618,6 +663,15 @@ export default class Formula {
                                 Expression.createOperatorExpression(char, new Expression(), new Expression())
                             );
                             state = 'initial';
+                        }
+                    } else if ( [ '>', '<', '=', '!' ].includes(char)) {
+                        // found the beginning of a logical operator, change state to "within-logical-operator"
+                        if (act === lastChar) {
+                            state = 'invalid'; // invalid to end with a logical operator
+                            break;
+                        } else {
+                            state = 'within-logical-operator';
+                            tmp = char;
                         }
                     } else if (char === '(') {
                         // left parenthes found, seems to be the beginning of a new sub-expression:
@@ -764,6 +818,21 @@ export default class Formula {
                         tmp += char;
                     }
                     break;
+                
+                case 'within-logical-operator':
+                    char = str.charAt(act);
+                    if (char === '=') {
+                        // the second char of a logical operator
+                        // can only be an equal sign
+                        tmp += char;
+                        act++;
+                    }
+                    // logical operator finished, create expression:
+                    expressions.push(Expression.createOperatorExpression(tmp, new Expression(), new Expression()));
+                    tmp = '';
+                    state = 'initial';
+                    act--;
+                    break;
             }
             act++;
         }
@@ -842,6 +911,25 @@ export default class Formula {
                 idx++;
             }
         }
+
+        // Replace all Logical expressions with a partial tree:
+        idx = 0;
+        expr = null;
+        while (idx < exprCopy.length) {
+            expr = exprCopy[idx];
+            if (expr instanceof LogicalExpression) {
+                if (idx === 0 || idx === exprCopy.length - 1) {
+                    throw new Error('Wrong operator position!');
+                }
+                expr.left = exprCopy[idx - 1];
+                expr.right = exprCopy[idx + 1];
+                exprCopy[idx - 1] = expr;
+                exprCopy.splice(idx, 2);
+            } else {
+                idx++;
+            }
+        }
+
         if (exprCopy.length !== 1) {
             throw new Error('Could not parse formula: incorrect syntax?');
         }
@@ -854,7 +942,7 @@ export default class Formula {
 
     isOperatorExpr(expr: Expression) {
         return (
-            expr instanceof PlusMinusExpression || expr instanceof MultDivExpression || expr instanceof PowerExpression
+            expr instanceof PlusMinusExpression || expr instanceof MultDivExpression || expr instanceof PowerExpression || expr instanceof LogicalExpression
         );
     }
 
