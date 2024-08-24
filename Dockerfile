@@ -9,11 +9,13 @@ RUN apt-get update && \
 FROM develop AS builder
 COPY ./ /build/
 WORKDIR /build
+RUN rm -rf node_modules package-lock.json
 RUN npm install
 RUN npm run build
 RUN npm test
 
 WORKDIR /build/demopage
+RUN rm -rf node_modules package-lock.json
 RUN npm install
 RUN npm run build
 
