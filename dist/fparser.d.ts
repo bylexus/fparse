@@ -10,7 +10,7 @@ type ValueObject = {
     [key: string]: number | string | Function | ValueObject;
 };
 declare class Expression {
-    static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression;
+    static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
     evaluate(params?: ValueObject): number | string;
     toString(): string;
 }
@@ -50,6 +50,14 @@ declare class PowerExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+declare class LogicalExpression extends Expression {
+    operator: string;
+    left: Expression;
+    right: Expression;
+    constructor(operator: string, left: Expression, right: Expression);
+    evaluate(params?: ValueObject): number;
+    toString(): string;
+}
 declare class FunctionExpression extends Expression {
     fn: string;
     varPath: string[];
@@ -76,6 +84,7 @@ export default class Formula {
     static PowerExpression: typeof PowerExpression;
     static MultDivExpression: typeof MultDivExpression;
     static PlusMinusExpression: typeof PlusMinusExpression;
+    static LogicalExpression: typeof LogicalExpression;
     static ValueExpression: typeof ValueExpression;
     static VariableExpression: typeof VariableExpression;
     static FunctionExpression: typeof FunctionExpression;
@@ -194,7 +203,7 @@ export default class Formula {
      */
     buildExpressionTree(expressions: Expression[]): Expression;
     isOperator(char: string | null): false | RegExpMatchArray | null;
-    isOperatorExpr(expr: Expression): boolean;
+    isOperatorExpr(expr: Expression): expr is PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
     registerVariable(varName: string): void;
     getVariables(): string[];
     /**

@@ -51,6 +51,14 @@ describe('Expression Tree tests', function () {
                 )
             );
         });
+        it('parses a logical expression correctly', () => {
+            const formulaStr = '3>1';
+            const f = new Fparser();
+            let ret = f.parse(formulaStr);
+            expect(ret).toEqual(
+                new Fparser.LogicalExpression('>', new Fparser.ValueExpression(3), new Fparser.ValueExpression(1))
+            );
+        });
 
         it('parses parentheses correctly', () => {
             const formulaStr = '2*(3+4)/4x*(3-y)';
