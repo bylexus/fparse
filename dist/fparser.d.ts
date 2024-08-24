@@ -203,7 +203,7 @@ export default class Formula {
      */
     buildExpressionTree(expressions: Expression[]): Expression;
     isOperator(char: string | null): false | RegExpMatchArray | null;
-    isOperatorExpr(expr: Expression): expr is PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
+    isOperatorExpr(expr: Expression): boolean;
     registerVariable(varName: string): void;
     getVariables(): string[];
     /**

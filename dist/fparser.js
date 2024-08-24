@@ -1,6 +1,6 @@
 var $ = Object.defineProperty;
 var O = (l, i, e) => i in l ? $(l, i, { enumerable: !0, configurable: !0, writable: !0, value: e }) : l[i] = e;
-var n = (l, i, e) => O(l, typeof i != "symbol" ? i + "" : i, e);
+var n = (l, i, e) => (O(l, typeof i != "symbol" ? i + "" : i, e), e);
 const g = {
   PI: Math.PI,
   E: Math.E,
@@ -415,9 +415,10 @@ const u = class u {
               break;
             } else
               r = "within-logical-operator", o = s;
-          else s === "(" ? (r = "within-parentheses", o = "", f = 0) : s === "[" ? (r = "within-named-var", o = "") : s.match(/["']/) ? (r = "within-string", c = s, o = "") : s.match(/[a-zA-Z]/) && (t < e && i.charAt(t + 1).match(/[a-zA-Z0-9_.]/) ? (o = s, r = "within-func") : (a.length > 0 && a[a.length - 1] instanceof w && a.push(
-            h.createOperatorExpression("*", new h(), new h())
-          ), a.push(new y(s, this)), this.registerVariable(s), r = "initial", o = ""));
+          else
+            s === "(" ? (r = "within-parentheses", o = "", f = 0) : s === "[" ? (r = "within-named-var", o = "") : s.match(/["']/) ? (r = "within-string", c = s, o = "") : s.match(/[a-zA-Z]/) && (t < e && i.charAt(t + 1).match(/[a-zA-Z0-9_.]/) ? (o = s, r = "within-func") : (a.length > 0 && a[a.length - 1] instanceof w && a.push(
+              h.createOperatorExpression("*", new h(), new h())
+            ), a.push(new y(s, this)), this.registerVariable(s), r = "initial", o = ""));
           break;
         case "within-nr":
           s = i.charAt(t), s.match(/[0-9.]/) ? (o += s, t === e && (a.push(new w(o)), r = "initial")) : (o === "-" && (o = "-1"), a.push(new w(o)), o = "", r = "initial", t--);
@@ -456,7 +457,8 @@ const u = class u {
               r = "initial";
             } else
               f--, o += s;
-          else s === "(" ? (f++, o += s) : (s.match(/["']/) && (c = s), o += s);
+          else
+            s === "(" ? (f++, o += s) : (s.match(/["']/) && (c = s), o += s);
           break;
         case "within-logical-operator":
           s = i.charAt(t), s === "=" && (o += s, t++), a.push(h.createOperatorExpression(o, new h(), new h())), o = "", r = "initial", t--;
