@@ -25,7 +25,10 @@ For an example application, see https://fparser.alexi.ch/.
 	- [Blacklisted functions](#blacklisted-functions)
 	- [Get all used variables](#get-all-used-variables)
 	- [Get the parsed formula string](#get-the-parsed-formula-string)
+- [Pre-defined functions](#pre-defined-functions)
+	- [`ifElse`](#ifelse)
 - [Changelog](#changelog)
+	- [(upcoming)](#upcoming)
 	- [3.1.0](#anchor-310)
 	- [3.0.1](#anchor-301)
 	- [3.0.0](#anchor-300)
@@ -239,7 +242,6 @@ Example: Kids get a 50% discount on a price if they are under 18:
 
 ```javascript
 const fObj = new Formula('ifElse([age] < 18, [price]*0.5, [price])');
-fObj.ifElse = (predicate, trueValue, falseValue) => (predicate ? trueValue : falseValue);
 const res = fObj.evaluate([{ price: 100, age: 17 }, { price: 100, age: 20 }]);
 // --> res = [50, 100]
 ```
@@ -342,7 +344,59 @@ const f = new Formula('x      * (  y  +    9 )');
 console.log(f.getExpressionString()); // 'x * (y + 9)'
 ```
 
+## Pre-defined functions
+
+### `ifElse`
+
+The `ifElse` function is a functional implementation of the `if/else` statement:
+
+If the predicate evaluates to true(-ish), the trueValue is returned, else the falseValue is returned:
+
+```javascript
+// If the given age is < 18, give a 50% price reduction:
+const fObj = new Formula('ifElse([age] < 18, [price]*0.5, [price])');
+const res = fObj.evaluate([{ price: 100, age: 17 }, { price: 100, age: 20 }]);
+```
+
+In an imperative languate, this is equivalent to:
+
+```
+if (age < 18) {
+	return price * 0.5;
+} else {
+	return price;
+}
+```
+
+Because `ifElse` is just a function expression, you can even nest it. The next example also combines the 
+usage of object functions to check if a person is under 18, and goes to a supported school, then we give it a reduction:
+
+```javascript
+const fObj = new Formula(`
+	ifElse([person.age] < 18, 
+		ifElse(schoolNames.includes([person.school]), 
+			[price]*0.5, 
+			[price]
+		),
+		[price]
+	)
+`);
+let res = fObj.evaluate({
+	person: { age: 17, school: 'ABC Primary' },
+	price: 100,
+	schoolNames: ['Local First', 'ABC Primary', 'Middleton High']
+});
+// res = 50: the person is < 18, and goes to a supported school, so we apply the reduced price.
+```
+
+That almost feels like programming!
+
+
 ## Changelog
+
+### (upcoming)
+
+- [Feature] `ifElse` functoin for conditional evaluation added
 
 ### 3.1.0
 
@@ -408,15 +462,15 @@ Thanks to all the additional contributors:
 ## TODOs, Whishlist
 
 * [ ] support for double- and single quote strings (now: only double quotes)
-* [ ] make parser state names via enum, instead of error-prone strings
 * [ ] Implement standard logic functions:
-	* [ ] `and(...args)`: if all given arguments are trueish (> 0), then the last arg is returned as value
-	* [ ] `or(...args)`: the first trueish (> 0) arg is returned as value
-	* [ ] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned
+	* [ ] `first(...args)`: the first trueish (> 0) arg is returned as value. If none are trueish, 0 is returned
+	* [x] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned
+	* [ ] `true(expr)`: returns 1 if the expression is trueish (> 0, true, strlen > 0), else 0
 * [ ] Refactor / rebuild parser:
   * separate tokenize step
   * then use Djikstra's Shunting Yard algorithm to convert the Inifix notation to Postfix, which is
     way simpler to execute (See https://en.wikipedia.org/wiki/Shunting_yard_algorithm)
+* [ ] make parser state names via enum, instead of error-prone strings
 
 ## License
 

@@ -3,8 +3,7 @@ import Fparser from '../../dist/fparser.js';
 describe('Expression tests', function () {
     describe('Expression', () => {
         it('evaluate() cannot be called on Expression', () => {
-            let inst = new Fparser.Expression();
-            expect(() => inst.evaluate({})).toThrowError('Empty Expression - Must be defined in child classes');
+            expect(() => new Fparser.Expression().evaluate({})).toThrow();
         });
         describe('createOperatorExpression', () => {
             it('returns the correct Expression instance for a given operator', () => {

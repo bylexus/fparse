@@ -50,6 +50,34 @@ describe('Named Variable tests', function () {
         expect(f.evaluate({ a: { b: 1, c: 2 } })).toEqual(3);
     });
 
+    it('replaces path variables with long names correctly', function () {
+        const f = new Fparser('[alex.blex] + [a.clex] + [alex.d]');
+        expect(
+            f.evaluate({
+                a: { b: 1, c: 2, clex: 5 },
+                alex: { blex: 3, c: 4, d: 6 }
+            })
+        ).toEqual(3 + 5 + 6);
+    });
+
+    it('can access string props from path variables', function () {
+        const f = new Fparser('[alex.blex.length]');
+        expect(
+            f.evaluate({
+                alex: { blex: 'Alex' }
+            })
+        ).toEqual(4);
+    });
+
+    it('can access array props from path variables', function () {
+        const f = new Fparser('[alex.blex.length]');
+        expect(
+            f.evaluate({
+                alex: { blex: [1, 2, 3, 4] }
+            })
+        ).toEqual(4);
+    });
+
     it('replaces path array variables correctly', function () {
         const f = new Fparser('[a.b.0] + [a.c.d.3]');
         expect(f.evaluate({ a: { b: [1, 2, 3], c: { d: [7, 8, 9, 10] } } })).toEqual(11);

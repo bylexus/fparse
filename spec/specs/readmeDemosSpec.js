@@ -101,7 +101,6 @@ describe('Demos from the readme', function () {
     describe('Conditional evaluation', () => {
         it('Example 1', () => {
             const fObj = new Formula('ifElse([age] < 18, [price]*0.5, [price])');
-            fObj.ifElse = (predicate, trueValue, falseValue) => (predicate ? trueValue : falseValue);
             const res = fObj.evaluate([
                 { price: 100, age: 17 },
                 { price: 100, age: 20 }
@@ -162,6 +161,34 @@ describe('Demos from the readme', function () {
             const f = new Formula('x      * (  y  +    9 )');
             let res = f.getExpressionString();
             expect(res).toEqual('x * (y + 9)');
+        });
+    });
+
+    describe('Pre-defined functions', () => {
+        describe('ifElse', () => {
+            it('Example 1', () => {
+                const fObj = new Formula('ifElse([age] < 18, [price]*0.5, [price])');
+                let res = fObj.evaluate({ age: 17, price: 100 });
+                expect(res).toEqual(50);
+            });
+
+            it('Example 1', () => {
+                const fObj = new Formula(`
+                    ifElse([person.age] < 18, 
+                      ifElse(schoolNames.includes([person.school]), 
+                          [price]*0.5, 
+                          [price]
+                      ),
+                      [price]
+                    )
+                `);
+                let res = fObj.evaluate({
+                    person: { age: 17, school: 'ABC Primary' },
+                    price: 100,
+                    schoolNames: ['Local First', 'ABC Primary', 'Middleton High']
+                });
+                expect(res).toEqual(50);
+            });
         });
     });
 });

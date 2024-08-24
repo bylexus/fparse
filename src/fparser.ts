@@ -63,32 +63,52 @@ class MathFunctionHelper {
     }
 }
 
-class Expression {
+/**
+ * Base class for all expressions: An Expression is somethint that eventually evaluates to a
+ * final value, like a number, or a string. It can be composed of other expressions, which
+ * are evaluated recursively until a final value is reached.
+ */
+abstract class Expression {
     static createOperatorExpression(operator: string, left: Expression, right: Expression) {
         if (operator === '^') {
             return new PowerExpression(left, right);
         }
-        if ( [ '*', '/' ].includes( operator ) ) {
+        if (['*', '/'].includes(operator)) {
             return new MultDivExpression(operator, left, right);
         }
-        if ( [ '+', '-' ].includes( operator ) ) {
+        if (['+', '-'].includes(operator)) {
             return new PlusMinusExpression(operator, left, right);
         }
-        if ( [ '<', '>', '<=', '>=', '=', '!=' ].includes( operator ) ) {
+        if (['<', '>', '<=', '>=', '=', '!='].includes(operator)) {
             return new LogicalExpression(operator, left, right);
         }
         throw new Error(`Unknown operator: ${operator}`);
     }
 
-    evaluate(params: ValueObject = {}): number | string {
-        throw new Error('Empty Expression - Must be defined in child classes');
-    }
+    abstract evaluate(params: ValueObject): number | string;
 
     toString() {
         return '';
     }
 }
 
+/**
+ * An unused expression - it is only used during parsing stage, to store a placeholder for a
+ * real expression later.
+ */
+class PlaceholderExpression extends Expression {
+    evaluate(params: ValueObject): number | string {
+        throw new Error('PlaceholderExpression cannot be evaluated');
+    }
+    toString() {
+        return '[placeholder]';
+    }
+}
+
+/**
+ * Represents a bracketed expression: (expr)
+ * It evaluates its inner expression.
+ */
 class BracketExpression extends Expression {
     innerExpression: Expression;
 
@@ -107,6 +127,9 @@ class BracketExpression extends Expression {
     }
 }
 
+/**
+ * Represents a final value, e.g. a number.
+ */
 class ValueExpression extends Expression {
     value: number | string;
     type: string;
@@ -144,7 +167,14 @@ class ValueExpression extends Expression {
     }
 }
 
+/**
+ * Represents the '+' or '-' operator expression:
+ * it evaluates its left and right expression and returns the sum / difference of the result
+ */
 class PlusMinusExpression extends Expression {
+    static PLUS = '+';
+    static MINUS = '-';
+
     operator: string;
     left: Expression;
     right: Expression;
@@ -178,7 +208,14 @@ class PlusMinusExpression extends Expression {
     }
 }
 
+/**
+ * Represents the '*' or '/' operator expression:
+ * it evaluates its left and right expression and returns the product / division of the two.
+ */
 class MultDivExpression extends Expression {
+    static MULT = '*';
+    static DIV = '/';
+
     operator: string;
     left: Expression;
     right: Expression;
@@ -212,6 +249,10 @@ class MultDivExpression extends Expression {
     }
 }
 
+/**
+ * Represents the 'power of' operator expression:
+ * evaluates base^exponent.
+ */
 class PowerExpression extends Expression {
     base: Expression;
     exponent: Expression;
@@ -236,14 +277,26 @@ class PowerExpression extends Expression {
     }
 }
 
+/**
+ * Represents locical operator expressions: All logical operations
+ * evaluate either to 0 or 1 (false or true): this way, you can use them in calculations
+ * to enable / disable different parts of the formula.
+ */
 class LogicalExpression extends Expression {
+    static LT = '<';
+    static GT = '>';
+    static LTE = '<=';
+    static GTE = '>=';
+    static EQ = '=';
+    static NEQ = '!=';
+
     operator: string;
     left: Expression;
     right: Expression;
-    
+
     constructor(operator: string, left: Expression, right: Expression) {
         super();
-        if ( ! [ '<', '>', '<=', '>=', '=', '!=' ].includes( operator ) ) {
+        if (!['<', '>', '<=', '>=', '=', '!='].includes(operator)) {
             throw new Error(`Operator not allowed in Logical expression: ${operator}`);
         }
         this.operator = operator;
@@ -254,7 +307,7 @@ class LogicalExpression extends Expression {
     evaluate(params: ValueObject = {}): number {
         const leftValue = this.left.evaluate(params);
         const rightValue = this.right.evaluate(params);
-        switch ( this.operator ) {
+        switch (this.operator) {
             case '<':
                 return leftValue < rightValue ? 1 : 0;
             case '>':
@@ -275,6 +328,11 @@ class LogicalExpression extends Expression {
         return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
     }
 }
+
+/**
+ * Represents a function expression: evaluates the expression in the function arguments,
+ * then executes the function with the evaluated arguments, an evaluates the result.
+ */
 class FunctionExpression extends Expression {
     fn: string;
     varPath: string[];
@@ -357,25 +415,52 @@ class FunctionExpression extends Expression {
     }
 }
 
+/**
+ * accesses an object's property by evaluating the given path.
+ *
+ * Example:
+ *  - Object: { a: { b: { c: 1 } } }
+ *  - Path: ['a', 'b', 'c']
+ *  - Result: 1
+ *
+ * @param object
+ * @param path
+ * @param fullPath
+ * @returns
+ */
 function getProperty(object: ValueObject, path: string[], fullPath: string) {
-    let curr: number | string | Function | ValueObject = object;
+    let curr: (number | string | Function | ValueObject) & { [key: string]: any } = object;
+    let prev: ((number | string | Function | ValueObject) & { [key: string]: any }) | null = null;
     for (let propName of path) {
-        if (typeof curr !== 'object') {
+        if (!['object', 'string'].includes(typeof curr)) {
             throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
         }
-        if (curr[propName] === undefined) {
+        if (typeof curr === 'object' && !(propName in curr)) {
             throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
         }
+        if (typeof curr === 'string' && !curr.hasOwnProperty(propName)) {
+            throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
+        }
+        prev = curr;
         curr = curr[propName];
     }
 
     if (typeof curr === 'object') {
         throw new Error('Invalid value');
     }
+    // If we have a function that is part of an object (e.g. array.includes()), we need to 
+    // bind the scope before returning:
+    if (typeof curr === 'function' && prev) {
+        curr = curr.bind(prev);
+    }
 
     return curr;
 }
 
+/**
+ * Evaluates a variable within a formula to its value. The variable value
+ * is expected to be given in the evaluate() method or on the formula object.
+ */
 class VariableExpression extends Expression {
     fullPath: string;
     varPath: string[];
@@ -420,6 +505,18 @@ class VariableExpression extends Expression {
     }
 }
 
+/**
+ * The Formula class represents a mathematical formula, including functions to evaluate
+ * the formula to its final result.
+ *
+ * Usage example:
+ *
+ * 1. Create a Formula object instance by passing a formula string:
+ * const fObj = new Formula('2^x');
+ *
+ * 2. evaluate the formula, delivering a value object for each unknown entity:
+ * let result = fObj.evaluate({ x: 3 }); // result = 8
+ */
 export default class Formula {
     [key: string]: any;
     static Expression = Expression;
@@ -432,10 +529,11 @@ export default class Formula {
     static VariableExpression = VariableExpression;
     static FunctionExpression = FunctionExpression;
     static MATH_CONSTANTS = MATH_CONSTANTS;
+    static ALLOWED_FUNCTIONS: string[] = ['ifElse'];
 
     // Create a function blacklist:
     static functionBlacklist = Object.getOwnPropertyNames(Formula.prototype)
-        .filter((prop) => Formula.prototype[prop] instanceof Function)
+        .filter((prop) => Formula.prototype[prop] instanceof Function && !this.ALLOWED_FUNCTIONS.includes(prop))
         .map((prop) => Formula.prototype[prop]);
 
     public formulaExpression: Expression | null;
@@ -660,11 +758,15 @@ export default class Formula {
                             break;
                         } else {
                             expressions.push(
-                                Expression.createOperatorExpression(char, new Expression(), new Expression())
+                                Expression.createOperatorExpression(
+                                    char,
+                                    new PlaceholderExpression(),
+                                    new PlaceholderExpression()
+                                )
                             );
                             state = 'initial';
                         }
-                    } else if ( [ '>', '<', '=', '!' ].includes(char)) {
+                    } else if (['>', '<', '=', '!'].includes(char)) {
                         // found the beginning of a logical operator, change state to "within-logical-operator"
                         if (act === lastChar) {
                             state = 'invalid'; // invalid to end with a logical operator
@@ -701,7 +803,11 @@ export default class Formula {
                                 expressions[expressions.length - 1] instanceof ValueExpression
                             ) {
                                 expressions.push(
-                                    Expression.createOperatorExpression('*', new Expression(), new Expression())
+                                    Expression.createOperatorExpression(
+                                        '*',
+                                        new PlaceholderExpression(),
+                                        new PlaceholderExpression()
+                                    )
                                 );
                             }
                             expressions.push(new VariableExpression(char, this));
@@ -818,7 +924,7 @@ export default class Formula {
                         tmp += char;
                     }
                     break;
-                
+
                 case 'within-logical-operator':
                     char = str.charAt(act);
                     if (char === '=') {
@@ -828,7 +934,13 @@ export default class Formula {
                         act++;
                     }
                     // logical operator finished, create expression:
-                    expressions.push(Expression.createOperatorExpression(tmp, new Expression(), new Expression()));
+                    expressions.push(
+                        Expression.createOperatorExpression(
+                            tmp,
+                            new PlaceholderExpression(),
+                            new PlaceholderExpression()
+                        )
+                    );
                     tmp = '';
                     state = 'initial';
                     act--;
@@ -942,7 +1054,10 @@ export default class Formula {
 
     isOperatorExpr(expr: Expression) {
         return (
-            expr instanceof PlusMinusExpression || expr instanceof MultDivExpression || expr instanceof PowerExpression || expr instanceof LogicalExpression
+            expr instanceof PlusMinusExpression ||
+            expr instanceof MultDivExpression ||
+            expr instanceof PowerExpression ||
+            expr instanceof LogicalExpression
         );
     }
 
@@ -1018,5 +1133,23 @@ export default class Formula {
     static calc(formula: string, valueObj: ValueObject | null = null, options = {}) {
         valueObj = valueObj ?? {};
         return new Formula(formula, options).evaluate(valueObj);
+    }
+
+    /**
+     * Implements an if/else condition as a function: Checks the predicate
+     * if it evaluates to true-ish (> 0, true, non-empty string, etc.). Returns the trueValue if
+     * the predicate evaluates to true, else the falseValue.
+     * allowed formula functio
+     * @param predicate
+     * @param trueValue
+     * @param falseValue
+     * @returns
+     */
+    ifElse(predicate: number | string | boolean, trueValue: any, falseValue: any): any {
+        if (predicate) {
+            return trueValue;
+        } else {
+            return falseValue;
+        }
     }
 }

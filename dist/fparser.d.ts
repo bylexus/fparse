@@ -9,17 +9,29 @@ type FormulaOptions = {
 type ValueObject = {
     [key: string]: number | string | Function | ValueObject;
 };
-declare class Expression {
+/**
+ * Base class for all expressions: An Expression is somethint that eventually evaluates to a
+ * final value, like a number, or a string. It can be composed of other expressions, which
+ * are evaluated recursively until a final value is reached.
+ */
+declare abstract class Expression {
     static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
-    evaluate(params?: ValueObject): number | string;
+    abstract evaluate(params: ValueObject): number | string;
     toString(): string;
 }
+/**
+ * Represents a bracketed expression: (expr)
+ * It evaluates its inner expression.
+ */
 declare class BracketExpression extends Expression {
     innerExpression: Expression;
     constructor(expr: Expression);
     evaluate(params?: {}): number | string;
     toString(): string;
 }
+/**
+ * Represents a final value, e.g. a number.
+ */
 declare class ValueExpression extends Expression {
     value: number | string;
     type: string;
@@ -27,7 +39,13 @@ declare class ValueExpression extends Expression {
     evaluate(): number | string;
     toString(): string;
 }
+/**
+ * Represents the '+' or '-' operator expression:
+ * it evaluates its left and right expression and returns the sum / difference of the result
+ */
 declare class PlusMinusExpression extends Expression {
+    static PLUS: string;
+    static MINUS: string;
     operator: string;
     left: Expression;
     right: Expression;
@@ -35,7 +53,13 @@ declare class PlusMinusExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+/**
+ * Represents the '*' or '/' operator expression:
+ * it evaluates its left and right expression and returns the product / division of the two.
+ */
 declare class MultDivExpression extends Expression {
+    static MULT: string;
+    static DIV: string;
     operator: string;
     left: Expression;
     right: Expression;
@@ -43,6 +67,10 @@ declare class MultDivExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+/**
+ * Represents the 'power of' operator expression:
+ * evaluates base^exponent.
+ */
 declare class PowerExpression extends Expression {
     base: Expression;
     exponent: Expression;
@@ -50,7 +78,18 @@ declare class PowerExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+/**
+ * Represents locical operator expressions: All logical operations
+ * evaluate either to 0 or 1 (false or true): this way, you can use them in calculations
+ * to enable / disable different parts of the formula.
+ */
 declare class LogicalExpression extends Expression {
+    static LT: string;
+    static GT: string;
+    static LTE: string;
+    static GTE: string;
+    static EQ: string;
+    static NEQ: string;
     operator: string;
     left: Expression;
     right: Expression;
@@ -58,6 +97,10 @@ declare class LogicalExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+/**
+ * Represents a function expression: evaluates the expression in the function arguments,
+ * then executes the function with the evaluated arguments, an evaluates the result.
+ */
 declare class FunctionExpression extends Expression {
     fn: string;
     varPath: string[];
@@ -69,6 +112,10 @@ declare class FunctionExpression extends Expression {
     toString(): string;
     isBlacklisted(): boolean;
 }
+/**
+ * Evaluates a variable within a formula to its value. The variable value
+ * is expected to be given in the evaluate() method or on the formula object.
+ */
 declare class VariableExpression extends Expression {
     fullPath: string;
     varPath: string[];
@@ -77,6 +124,18 @@ declare class VariableExpression extends Expression {
     evaluate(params?: {}): number | string;
     toString(): string;
 }
+/**
+ * The Formula class represents a mathematical formula, including functions to evaluate
+ * the formula to its final result.
+ *
+ * Usage example:
+ *
+ * 1. Create a Formula object instance by passing a formula string:
+ * const fObj = new Formula('2^x');
+ *
+ * 2. evaluate the formula, delivering a value object for each unknown entity:
+ * let result = fObj.evaluate({ x: 3 }); // result = 8
+ */
 export default class Formula {
     [key: string]: any;
     static Expression: typeof Expression;
@@ -98,6 +157,7 @@ export default class Formula {
         SQRT1_2: number;
         SQRT2: number;
     };
+    static ALLOWED_FUNCTIONS: string[];
     static functionBlacklist: any[];
     formulaExpression: Expression | null;
     options: FormulaOptions;
@@ -224,5 +284,16 @@ export default class Formula {
     getExpression(): Expression | null;
     getExpressionString(): string;
     static calc(formula: string, valueObj?: ValueObject | null, options?: {}): string | number | (string | number)[];
+    /**
+     * Implements an if/else condition as a function: Checks the predicate
+     * if it evaluates to true-ish (> 0, true, non-empty string, etc.). Returns the trueValue if
+     * the predicate evaluates to true, else the falseValue.
+     * allowed formula functio
+     * @param predicate
+     * @param trueValue
+     * @param falseValue
+     * @returns
+     */
+    ifElse(predicate: number | string | boolean, trueValue: any, falseValue: any): any;
 }
 export {};
