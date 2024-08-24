@@ -10,6 +10,35 @@ One can then provide values for all unknown variables / functions and evaluate a
 
 For an example application, see https://fparser.alexi.ch/.
 
+- [Features](#features)
+- [Usage](#usage)
+- [More options](#more-options)
+	- [Using multiple variables](#using-multiple-variables)
+	- [Using named variables](#using-named-variables)
+	- [Using named object path variables](#using-named-object-path-variables)
+	- [Using user-defined functions](#using-user-defined-functions)
+	- [Using strings](#using-strings)
+	- [Using logical operators](#using-logical-operators)
+	- [Conditional evaluation](#conditional-evaluation)
+	- [Re-use a Formula object](#re-use-a-formula-object)
+	- [Memoization](#memoization)
+	- [Blacklisted functions](#blacklisted-functions)
+	- [Get all used variables](#get-all-used-variables)
+	- [Get the parsed formula string](#get-the-parsed-formula-string)
+- [Changelog](#changelog)
+	- [3.1.0](#anchor-310)
+	- [3.0.1](#anchor-301)
+	- [3.0.0](#anchor-300)
+	- [2.1.0](#anchor-210)
+	- [2.0.2](#anchor-202)
+	- [2.0.0](#anchor-200)
+	- [1.4.0](#anchor-140)
+	- [1.3.0](#anchor-130)
+- [Contributors](#contributors)
+- [TODOs, Whishlist](#todos-whishlist)
+- [License](#license)
+
+
 ## Features
 
 Parses a mathematical formula from a string. Known expressions:
@@ -127,7 +156,7 @@ const fObj = new Formula('sin(inverse(x))');
 
 //Define the function(s) on the Formula object, then use it multiple times:
 fObj.inverse = (value) => 1/value;
-let results = fObj.evaluate({x: 1,x:2,x:3});
+let results = fObj.evaluate([{ x: 1 }, { x: 2 }, { x: 3 }]);
 
 // Or pass it in the value object, and OVERRIDE an existing function:
 let result = fObj.evaluate({
@@ -135,22 +164,23 @@ let result = fObj.evaluate({
 	inverse: (value) =>  (-1*value)
 });
 
-If defined in the value object AND on the formula object, the Value object has the precedence
 ```
+
+If the function is defined in the value object AND on the formula object, the Value object has precedence
 
 Functions also support the object path syntax:
 
 ```javascript
 // in an evaluate() value object:
-const fObj = new Formula('sin(lib.inverse(x))');
+const fObj = new Formula('sin(lib.inverse([lib.x]))');
 const res = fObj.evaluate({
-	lib: { inverse: (value) => 1/value }
+	lib: { inverse: (value) => 1 / value, x: Math.PI }
 });
 
 // or set it on the Formula instance:
 const fObj2 = new Formula('sin(lib.inverse(x))');
-fObj2.lib = { inverse: (value) => 1/value };
-const res2 = fObj.evaluate();
+fObj2.lib = { inverse: (value) => 1 / value };
+const res2 = fObj2.evaluate({ x: Math.PI });
 ```
 
 ### Using strings
@@ -176,7 +206,7 @@ let result = fObj.evaluate({ var1: 'FooBar', longer: (s1, s2) => s1.length > s2.
 // --> 14
 ```
 
-### Using of logical operators
+### Using logical operators
 
 Logical operators allow for conditional logic. The result of the evaluation is always `0` (expression is false) or `1` (expression is true).
 
@@ -185,7 +215,7 @@ Example:
 Calculate a percentage value based on a variable `x`, but only if `x` is between 0 and 1:
 
 ```javascript
-const fObj = new Formula('x >= 0 * x <= 1 * x * 100');
+const fObj = new Formula('(x >= 0) * (x <= 1) * x * 100');
 let result = fObj.evaluate([{ x: 0.5 }, { x: 0.7 }, { x: 1.5 },  { x: -0.5 }, { x: -1.7 }]);
 // --> [50, 70, 0, 0, 0]
 ```
@@ -198,6 +228,8 @@ fObj.withinOne = (x) => (x >= 0 && x <= 1 ? x : 0);
 let result = fObj.evaluate([{ x: 0.5 }, { x: 0.7 }, { x: 1.5 },  { x: -0.5 }, { x: -1.7 }]);
 // --> [50, 70, 0, 0, 0]
 ```
+
+**NOTE**: Logical operators have the LEAST precedence: `3 > 1 + 4 < 2` is evaluated as `3 > (1+4) < 2`.
 
 ### Conditional evaluation
 
@@ -295,9 +327,9 @@ Now, `evaluate` in your formula uses your own version of this function.
 ### Get all used variables
 
 ```javascript
-// Get all used variables in the order of their appereance:
+// Get all used variables in the order of their appearance:
 const f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
-console.log(f4.getVariables()); // ['x','y','var1','var2']
+console.log(f4.getVariables()); // ['x','PI','y','var1','var2']
 ```
 
 ### Get the parsed formula string
@@ -305,7 +337,7 @@ console.log(f4.getVariables()); // ['x','y','var1','var2']
 After parsing, get the formula string as parsed:
 
 ```javascript
-// Get all used variables in the order of their appereance:
+// Get all used variables in the order of their appearance:
 const f = new Formula('x      * (  y  +    9 )');
 console.log(f.getExpressionString()); // 'x * (y + 9)'
 ```

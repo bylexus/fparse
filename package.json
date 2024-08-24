@@ -14,6 +14,7 @@
         "docker-demopage": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app/demopage -p 3000:8080 fparser npm run dev",
         "docker-test": "docker run --rm -ti -v \"$PWD\":/usr/src/app -w /usr/src/app fparse npm run test",
         "build-dev": "NODE_ENV=development tsc --noEmit && vite build --mode=development && tsc --emitDeclarationOnly --declaration",
+        "prepublishOnly": "npm run build",
         "build": "NODE_ENV=production tsc --noEmit && vite build --minify --mode=production && tsc --emitDeclarationOnly --declaration",
         "build-demopage-image": "docker build --pull -t fparser-demopage .",
         "test": "NODE_ENV=development npm run build-dev && jasmine && karma start"
