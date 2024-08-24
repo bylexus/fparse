@@ -10,20 +10,24 @@ type ValueObject = {
     [key: string]: number | Function | ValueObject;
 };
 declare class Expression {
-    static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression;
-    evaluate(params?: ValueObject): number;
+    static createOperatorExpression(
+        operator: string,
+        left: Expression,
+        right: Expression
+    ): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
+    evaluate(params?: ValueObject): number | string;
     toString(): string;
 }
 declare class BracketExpression extends Expression {
     innerExpression: Expression;
     constructor(expr: Expression);
-    evaluate(params?: {}): number;
+    evaluate(params?: {}): number | string;
     toString(): string;
 }
 declare class ValueExpression extends Expression {
-    value: number;
+    value: number | string;
     constructor(value: number | string);
-    evaluate(): number;
+    evaluate(): number | string;
     toString(): string;
 }
 declare class PlusMinusExpression extends Expression {
@@ -49,13 +53,21 @@ declare class PowerExpression extends Expression {
     evaluate(params?: ValueObject): number;
     toString(): string;
 }
+declare class LogicalExpression extends Expression {
+    operator: string;
+    left: Expression;
+    right: Expression;
+    constructor(operator: string, left: Expression, right: Expression);
+    evaluate(params?: ValueObject): number;
+    toString(): string;
+}
 declare class FunctionExpression extends Expression {
     fn: string;
     argumentExpressions: Expression[];
     formulaObject: Formula | null;
     blacklisted: boolean | undefined;
     constructor(fn: string | null, argumentExpressions: Expression[], formulaObject?: Formula | null);
-    evaluate(params?: ValueObject): number;
+    evaluate(params?: ValueObject): number | string;
     toString(): string;
     isBlacklisted(): boolean;
 }
@@ -63,7 +75,7 @@ declare class VariableExpression extends Expression {
     fullPath: string;
     varPath: string[];
     constructor(fullPath: string);
-    evaluate(params?: {}): number;
+    evaluate(params?: {}): number | string;
     toString(): string;
 }
 export default class Formula {
@@ -73,6 +85,7 @@ export default class Formula {
     static PowerExpression: typeof PowerExpression;
     static MultDivExpression: typeof MultDivExpression;
     static PlusMinusExpression: typeof PlusMinusExpression;
+    static LogicalExpression: typeof LogicalExpression;
     static ValueExpression: typeof ValueExpression;
     static VariableExpression: typeof VariableExpression;
     static FunctionExpression: typeof FunctionExpression;
@@ -203,14 +216,14 @@ export default class Formula {
      * @param {ValueObject|Array<ValueObject>} valueObj An object containing values for variables and (unknown) functions,
      *   or an array of such objects: If an array is given, all objects are evaluated and the results
      *   also returned as array.
-     * @return {Number|Array<Number>} The evaluated result, or an array with results
+     * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | number[];
+    evaluate(valueObj: ValueObject | ValueObject[]): number | string | (number | string)[];
     hashValues(valueObj: ValueObject): string;
-    resultFromMemory(valueObj: ValueObject): number | null;
-    storeInMemory(valueObj: ValueObject, value: number): void;
+    resultFromMemory(valueObj: ValueObject): number | string | null;
+    storeInMemory(valueObj: ValueObject, value: number | string): void;
     getExpression(): Expression | null;
     getExpressionString(): string;
-    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): number | number[];
+    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): number | string | (number | string)[];
 }
 export {};

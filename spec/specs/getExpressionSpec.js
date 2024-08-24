@@ -69,6 +69,17 @@ describe('Get Expression tests', function () {
         });
     });
 
+    describe('LogicalExpression::toString', () => {
+        it('returns the expression as expression string', () => {
+            let f = new Fparser('-3     >-18.5');
+            expect(f.getExpression().toString()).toEqual('-3 > -18.5');
+        });
+        it('returns the expression as expression string for more complex formulas', () => {
+            let f = new Fparser('((-3    <= 2) =   1 + 3)    > 0');
+            expect(f.getExpression().toString()).toEqual('((-3 <= 2) = 1 + 3) > 0');
+        });
+    });
+
     describe('FunctionExpression::toString', () => {
         it('returns the expression as expression string', () => {
             let inst = new Fparser.FunctionExpression('max', [

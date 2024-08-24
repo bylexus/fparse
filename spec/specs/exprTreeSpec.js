@@ -51,6 +51,52 @@ describe('Expression Tree tests', function () {
                 )
             );
         });
+        it('parses a logical expression correctly', () => {
+            const formulaStr = '3>1';
+            const f = new Fparser();
+            let ret = f.parse(formulaStr);
+            expect(ret).toEqual(
+                new Fparser.LogicalExpression('>', new Fparser.ValueExpression(3), new Fparser.ValueExpression(1))
+            );
+        });
+
+        it('evaluates the order of logical expressions correct', () => {
+            // logical operators should have the lowest precedence.
+            // 3+2>1*4<2^3 should be evaulated as:
+            // ( 3+2 )>( 1*4 )<( 2^3 )
+            //    (5   >   4) < 8
+            //        1       < 8
+            // which evaulates to 1
+            const formulaStr = '3+2>1*4<2^3';
+            const f = new Fparser();
+            let ret = f.parse(formulaStr);
+            expect(ret).toEqual(
+                new Fparser.LogicalExpression(
+                    '<',
+                    new Fparser.LogicalExpression(
+                        '>',
+                        new Fparser.PlusMinusExpression(
+                            '+',
+                            new Fparser.ValueExpression(3),
+                            new Fparser.ValueExpression(2)
+                        ),
+                        new Fparser.MultDivExpression(
+                            '*',
+                            new Fparser.ValueExpression(1),
+                            new Fparser.ValueExpression(4)
+                        )
+                    ),
+                    new Fparser.PowerExpression(new Fparser.ValueExpression(2), new Fparser.ValueExpression(3))
+                )
+            );
+            expect(ret.evaluate()).toBe(1);
+        });
+
+        it('evaluates a logical expresstion with multiple operands correctly', () => {
+            const fObj = new Fparser('(x >= 0) * (x <= 1) * x * 100');
+            let result = fObj.evaluate([{ x: 0.5 }, { x: 0.7 }, { x: 1.5 }, { x: -0.5 }, { x: -1.7 }]);
+            expect(result).toEqual([50, 70, 0, -0, -0]);
+        });
 
         it('parses parentheses correctly', () => {
             const formulaStr = '2*(3+4)/4x*(3-y)';
