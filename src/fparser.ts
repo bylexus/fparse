@@ -1,7 +1,7 @@
 /**
  * JS Formula Parser
  * -------------------
- * (c) 2012-2023 Alexander Schenkel, alex@alexi.ch
+ * (c) 2012-2024 Alexander Schenkel, alex@alexi.ch
  *
  * JS Formula Parser takes a string, parses its mathmatical formula
  * and creates an evaluatable Formula object of it.

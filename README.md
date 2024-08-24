@@ -16,6 +16,7 @@ Parses a mathematical formula from a string. Known expressions:
 
 -   _Numbers_ in the form [-]digits[.digits], e.g. "-133.2945"
 -   _simple operators_: '+','-','\*','/', '^' expanded in correct order
+-   _logical operators_: '<','<=','>','>=', '=', '!=', which evaluate to 1 or 0. Useful for implementing conditional logic
 -   _parentheses_ '(', ')' for grouping (e.g. "5\*(3+2)")
 -   all _JavaScript Math object functions_ (e.g. "sin(3.14)")
 -   all _JavaScript Math constants_ like PI, E
@@ -27,7 +28,7 @@ Parses a mathematical formula from a string. Known expressions:
 -   the use of path named variables and functions (like '2\*[myVar.property.innerProperty]')
 -   _memoization_: store already evaluated results for faster re-calcs
 -   use it in Web pages, as ES6 module or as NodeJS module
--   Example:<br /> <code>-1*(sin(2^x)/(PI*x))\*cos(x))</code>
+-   Example:<br /> <code>-1*(sin(2^x)/(PI*x))\*cos(x)</code>
 
 ## Usage
 
@@ -174,6 +175,43 @@ const fObj = new Formula('20 - longer([var1], "Bar")');
 let result = fObj.evaluate({ var1: 'FooBar', longer: (s1, s2) => s1.length > s2.length ? s1.length : s2.length });
 // --> 14
 ```
+
+### Using of logical operators
+
+Logical operators allow for conditional logic. The result of the evaluation is always `0` (expression is false) or `1` (expression is true).
+
+Example:
+
+Calculate a percentage value based on a variable `x`, but only if `x` is between 0 and 1:
+
+```javascript
+const fObj = new Formula('x >= 0 * x <= 1 * x * 100');
+let result = fObj.evaluate([{ x: 0.5 }, { x: 0.7 }, { x: 1.5 },  { x: -0.5 }, { x: -1.7 }]);
+// --> [50, 70, 0, 0, 0]
+```
+
+This could be used to simulate or "shortcut" comparison functions. The same could be achieved with a user-definded function:
+
+```javascript
+const fObj = new Formula('withinOne(x) * 100');
+fObj.withinOne = (x) => (x >= 0 && x <= 1 ? x : 0);
+let result = fObj.evaluate([{ x: 0.5 }, { x: 0.7 }, { x: 1.5 },  { x: -0.5 }, { x: -1.7 }]);
+// --> [50, 70, 0, 0, 0]
+```
+
+### Conditional evaluation
+
+The previous chapter introduced logical operators. This can be used to implement a conditional function, or `if` function:
+
+Example: Kids get a 50% discount on a price if they are under 18:
+
+```javascript
+const fObj = new Formula('ifElse([age] < 18, [price]*0.5, [price])');
+fObj.ifElse = (predicate, trueValue, falseValue) => (predicate ? trueValue : falseValue);
+const res = fObj.evaluate([{ price: 100, age: 17 }, { price: 100, age: 20 }]);
+// --> res = [50, 100]
+```
+
 
 ### Re-use a Formula object
 
@@ -327,13 +365,22 @@ edge cases.
 
 Thanks to all the additional contributors:
 
-- [LuigiPulcini](https://github.com/LuigiPulcini) for the Strings support
+- [LuigiPulcini](https://github.com/LuigiPulcini) for:
+  - the Strings support
+  - the Logical Operator support
 
 ## TODOs, Whishlist
 
-
-* support for double- and single quote strings (now: only double quotes)
-* make parser state names via enum, instead of error-prone strings
+* [ ] support for double- and single quote strings (now: only double quotes)
+* [ ] make parser state names via enum, instead of error-prone strings
+* [ ] Implement standard logic functions:
+	* [ ] `and(...args)`: if all given arguments are trueish (> 0), then the last arg is returned as value
+	* [ ] `or(...args)`: the first trueish (> 0) arg is returned as value
+	* [ ] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned
+* [ ] Refactor / rebuild parser:
+  * separate tokenize step
+  * then use Djikstra's Shunting Yard algorithm to convert the Inifix notation to Postfix, which is
+    way simpler to execute (See https://en.wikipedia.org/wiki/Shunting_yard_algorithm)
 
 ## License
 
