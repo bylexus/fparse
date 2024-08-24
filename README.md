@@ -329,6 +329,12 @@ Thanks to all the additional contributors:
 
 - [LuigiPulcini](https://github.com/LuigiPulcini) for the Strings support
 
+## TODOs, Whishlist
+
+
+* support for double- and single quote strings (now: only double quotes)
+* make parser state names via enum, instead of error-prone strings
+
 ## License
 
 Licensed under the MIT license, see LICENSE file.
