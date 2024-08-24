@@ -312,6 +312,10 @@ console.log(f.getExpressionString()); // 'x * (y + 9)'
 
 ## Changelog
 
+### 3.1.0
+
+- [Feature] Adding Logical Operators `<`, `>`, `<=`, `>=`, `=`, `!=`
+
 ### 3.0.1
 
 - [Bugfix] Fixing `main` entry in `package.json`: The 3.0.0 build could not be used as ES 6 module import with the non-existing main entry.
