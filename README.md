@@ -27,6 +27,7 @@ For an example application, see https://fparser.alexi.ch/.
 	- [Get the parsed formula string](#get-the-parsed-formula-string)
 - [Pre-defined functions](#pre-defined-functions)
 	- [`ifElse`](#ifelse)
+	- [`first`](#first)
 - [Changelog](#changelog)
 	- [(upcoming)](#upcoming)
 	- [3.1.0](#anchor-310)
@@ -391,12 +392,24 @@ let res = fObj.evaluate({
 
 That almost feels like programming!
 
+### `first`
+
+The `first` function selects the first true-ish value from multiple arguments:
+
+```javascript
+const fObj = new Formula('a * first(x, y, z)');
+let res = fObj.evaluate({ a: 10, x: 0, y: -2, z: 0 }); // -20: y is selected as the first non-nullish value
+```
+
+**TODO:** `fparser` does not support array values for now: so it is not possible to use an array/list structure or variables containing an array. This will be implemented in a future release.
+
 
 ## Changelog
 
 ### (upcoming)
 
-- [Feature] `ifElse` functoin for conditional evaluation added
+- [Feature] `ifElse()` function for conditional evaluation added
+- [Feature] `first()` function selects the first true-ish value from multiple arguments
 
 ### 3.1.0
 
@@ -463,9 +476,12 @@ Thanks to all the additional contributors:
 
 * [ ] support for double- and single quote strings (now: only double quotes)
 * [ ] Implement standard logic functions:
-	* [ ] `first(...args)`: the first trueish (> 0) arg is returned as value. If none are trueish, 0 is returned
+	* [x] `first(...args)`: the first trueish (> 0) arg is returned as value. If none are trueish, the last element is returned.
 	* [x] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned
 	* [ ] `true(expr)`: returns 1 if the expression is trueish (> 0, true, strlen > 0), else 0
+* [ ] Get rid of the short form `3x` instead of `3*x`: It makes variable handling and parsing much more complex,
+      and longer variable names must be marked explicitely. So I will introduce a breaking change in the next major, removing this form.
+* [ ] allow arrays as variable values, to be used in functions or other context. But first I must get rid of the mentioned short form above, as for now, `[...]` stands for a variable name
 * [ ] Refactor / rebuild parser:
   * separate tokenize step
   * then use Djikstra's Shunting Yard algorithm to convert the Inifix notation to Postfix, which is

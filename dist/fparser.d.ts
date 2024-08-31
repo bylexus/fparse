@@ -294,6 +294,7 @@ export default class Formula {
      * @param falseValue
      * @returns
      */
-    ifElse(predicate: number | string | boolean, trueValue: any, falseValue: any): any;
+    ifElse(predicate: any, trueValue: any, falseValue: any): any;
+    first(...args: any[]): any;
 }
 export {};

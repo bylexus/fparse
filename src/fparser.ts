@@ -429,8 +429,8 @@ class FunctionExpression extends Expression {
  * @returns
  */
 function getProperty(object: ValueObject, path: string[], fullPath: string) {
-    let curr: (number | string | Function | ValueObject) & { [key: string]: any } = object;
-    let prev: ((number | string | Function | ValueObject) & { [key: string]: any }) | null = null;
+    let curr: (number | string | Function | Object) & { [key: string]: any } = object;
+    let prev: ((number | string | Function | Object) & { [key: string]: any }) | null = null;
     for (let propName of path) {
         if (!['object', 'string'].includes(typeof curr)) {
             throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
@@ -445,10 +445,10 @@ function getProperty(object: ValueObject, path: string[], fullPath: string) {
         curr = curr[propName];
     }
 
-    if (typeof curr === 'object') {
+    if (typeof curr === 'object' && !(curr instanceof Array)) {
         throw new Error('Invalid value');
     }
-    // If we have a function that is part of an object (e.g. array.includes()), we need to 
+    // If we have a function that is part of an object (e.g. array.includes()), we need to
     // bind the scope before returning:
     if (typeof curr === 'function' && prev) {
         curr = curr.bind(prev);
@@ -529,7 +529,7 @@ export default class Formula {
     static VariableExpression = VariableExpression;
     static FunctionExpression = FunctionExpression;
     static MATH_CONSTANTS = MATH_CONSTANTS;
-    static ALLOWED_FUNCTIONS: string[] = ['ifElse'];
+    static ALLOWED_FUNCTIONS: string[] = ['ifElse', 'first'];
 
     // Create a function blacklist:
     static functionBlacklist = Object.getOwnPropertyNames(Formula.prototype)
@@ -1145,11 +1145,35 @@ export default class Formula {
      * @param falseValue
      * @returns
      */
-    ifElse(predicate: number | string | boolean, trueValue: any, falseValue: any): any {
+    ifElse(predicate: any, trueValue: any, falseValue: any): any {
         if (predicate) {
             return trueValue;
         } else {
             return falseValue;
         }
+    }
+
+    first(...args: any[]): any {
+        for (const arg of args) {
+            if (arg instanceof Array) {
+                let res = this.first(...arg);
+                if (res) {
+                    return res;
+                }
+            } else {
+                if (arg) {
+                    return arg;
+                }
+            }
+        }
+        if (args.length > 0) {
+            const last = args[args.length - 1];
+            if (last instanceof Array) {
+                return this.first(...last);
+            } else {
+                return last;
+            }
+        }
+        throw new Error('first(): At least one argument is required');
     }
 }

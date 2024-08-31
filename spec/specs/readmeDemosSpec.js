@@ -190,5 +190,13 @@ describe('Demos from the readme', function () {
                 expect(res).toEqual(50);
             });
         });
+
+        describe('first', () => {
+            it('Example 1', () => {
+                const fObj = new Formula('a * first(x, y, z)');
+                let res = fObj.evaluate({ a: 10, x: 0, y: -2, z: 0 });
+                expect(res).toEqual(-20);
+            });
+        });
     });
 });
