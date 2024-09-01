@@ -17,7 +17,8 @@
         "prepublishOnly": "npm run build",
         "build": "NODE_ENV=production tsc --noEmit && vite build --minify --mode=production && tsc --emitDeclarationOnly --declaration",
         "build-demopage-image": "docker build --pull -t fparser-demopage .",
-        "test": "NODE_ENV=development npm run build-dev && jasmine && karma start"
+        "test": "NODE_ENV=development npm run build-dev && jasmine && karma start",
+        "jasmine": "NODE_ENV=development npm run build-dev && jasmine"
     },
     "keywords": [
         "javascript",

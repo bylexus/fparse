@@ -479,6 +479,7 @@ Thanks to all the additional contributors:
 	* [x] `first(...args)`: the first trueish (> 0) arg is returned as value. If none are trueish, the last element is returned.
 	* [x] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned
 	* [ ] `true(expr)`: returns 1 if the expression is trueish (> 0, true, strlen > 0), else 0
+	* [ ] `mod(x, y)`: returns x % y, `div(x, y)`: returns x / y (integer division / modulus). Modulus could also be implemented as `%` operator
 * [ ] Get rid of the short form `3x` instead of `3*x`: It makes variable handling and parsing much more complex,
       and longer variable names must be marked explicitely. So I will introduce a breaking change in the next major, removing this form.
 * [ ] allow arrays as variable values, to be used in functions or other context. But first I must get rid of the mentioned short form above, as for now, `[...]` stands for a variable name
