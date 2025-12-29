@@ -45,7 +45,14 @@ class MathOperatorHelper {
   }
 }
 class Expression {
-  static createOperatorExpression(operator, left, right) {
+  /**
+   * Creates an operator expression from a token.
+   * @param operatorToken The operator token (or string for backward compatibility)
+   * @param left Left operand expression
+   * @param right Right operand expression
+   */
+  static createOperatorExpression(operatorToken, left, right) {
+    const operator = typeof operatorToken === "string" ? operatorToken : String(operatorToken.value);
     if (operator === "^") {
       return new PowerExpression(left, right);
     }
@@ -694,7 +701,7 @@ class Parser {
       this.consume();
       const right = this.parseExpression(nextPrecedence);
       left = Expression.createOperatorExpression(
-        token.value,
+        token,
         left,
         right
       );

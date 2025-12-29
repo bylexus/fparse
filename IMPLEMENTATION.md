@@ -497,6 +497,13 @@ parse(str: string): Expression {
 
 **Files modified:**
 - `src/fparser.ts` - Added export for `Parser` class
+- `src/expression.ts` - Updated `createOperatorExpression()` to accept `Token` objects (with backward compatibility for strings)
+- `src/parser.ts` - Updated to pass full `Token` objects instead of just operator strings
+
+**Type Safety Improvements:**
+- The `Expression.createOperatorExpression()` method now accepts `Token | string` instead of just `string`
+- Parser passes full Token objects, providing better type safety and access to position information
+- Maintains backward compatibility with the old parser by accepting string operators
 
 ### Step 3: Integration
 - [ ] Integrate `Tokenizer` and `Parser` into `Formula` class

@@ -2,6 +2,7 @@ import Formula from "./fparser";
 import { getProperty } from "./helpers";
 import { MathFunctionHelper } from "./math_function_helper";
 import { MathOperatorHelper } from "./math_operator_helper";
+import type { Token } from "./tokenizer";
 
 /**
  * Base class for all expressions: An Expression is somethint that eventually evaluates to a
@@ -9,7 +10,20 @@ import { MathOperatorHelper } from "./math_operator_helper";
  * are evaluated recursively until a final value is reached.
  */
 export abstract class Expression {
-    static createOperatorExpression(operator: string, left: Expression, right: Expression) {
+    /**
+     * Creates an operator expression from a token.
+     * @param operatorToken The operator token (or string for backward compatibility)
+     * @param left Left operand expression
+     * @param right Right operand expression
+     */
+    static createOperatorExpression(
+        operatorToken: Token | string,
+        left: Expression,
+        right: Expression
+    ) {
+        // Extract operator string from token or use directly if it's a string (backward compatibility)
+        const operator = typeof operatorToken === 'string' ? operatorToken : String(operatorToken.value);
+
         if (operator === '^') {
             return new PowerExpression(left, right);
         }

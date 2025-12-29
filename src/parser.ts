@@ -94,7 +94,7 @@ export class Parser {
             const right = this.parseExpression(nextPrecedence);
 
             left = Expression.createOperatorExpression(
-                token.value as string,
+                token,
                 left,
                 right
             );
