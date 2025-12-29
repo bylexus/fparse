@@ -22,7 +22,7 @@
         "prepublishOnly": "npm run build",
         "build": "NODE_ENV=production tsc --noEmit && vite build --minify --mode=production && tsc --emitDeclarationOnly --declaration",
         "build-demopage-image": "docker build --pull -t fparser-demopage .",
-        "test": "NODE_ENV=development npm run build-dev && jasmine && karma start",
+        "test": "NODE_ENV=development npm run build-dev && jasmine && karma start karma.conf.cjs",
         "jasmine": "NODE_ENV=development npm run build-dev && jasmine"
     },
     "keywords": [
@@ -46,8 +46,6 @@
     },
     "homepage": "https://fparser.alexi.ch/",
     "devDependencies": {
-        "typescript": "^5.2.2",
-        "vite": "^5.0.0",
         "eslint": "^8.54.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.1",
@@ -55,7 +53,10 @@
         "karma": "^6.4.2",
         "karma-chrome-launcher": "^3.2.0",
         "karma-jasmine": "^5.1.0",
-        "prettier": "^3.1.0"
+        "prettier": "^3.1.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.3",
+        "vite": "^5.0.0"
     },
     "eslintConfig": {
         "root": true,
@@ -114,5 +115,10 @@
         "semi": true,
         "singleQuote": true,
         "trailingComma": "none"
+    },
+    "ts-node": {
+        "compilerOptions": {
+            "module": "commonjs"
+        }
     }
 }
