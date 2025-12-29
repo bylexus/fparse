@@ -154,23 +154,6 @@ export default class Formula {
     }
 
 
-    /**
-     * Cleans the input string from unnecessary whitespace.
-     * Note: Math constants (PI, E, etc.) are no longer wrapped in brackets
-     * as the new tokenizer handles multi-char variables directly.
-     */
-    cleanupInputFormula(s: string) {
-        const resParts: string[] = [];
-        const srcParts = s.split('"');
-        srcParts.forEach((part, index) => {
-            // skip parts marked as string
-            if (index % 2 === 0) {
-                part = part.replace(/[\s]+/g, '');
-            }
-            resParts.push(part);
-        });
-        return resParts.join('"');
-    }
 
     /**
      * Parses the given formula string into an Abstract Syntax Tree (AST).
@@ -194,10 +177,8 @@ export default class Formula {
      * @returns {Expression} An expression object, representing the expression tree
      */
     parse(str: string): Expression {
-        // Clean the input string: remove whitespace
-        str = this.cleanupInputFormula(str);
-
         // Phase 1: Tokenize the input string
+        // The tokenizer handles whitespace automatically via skipWhitespace()
         const tokenizer = new Tokenizer();
         const tokens = tokenizer.tokenize(str);
 

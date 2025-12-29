@@ -529,25 +529,25 @@ parse(str: string): Expression {
 ### Step 3: Integration ✅ COMPLETED
 - [x] Integrate `Tokenizer` and `Parser` into `Formula` class
 - [x] Update `parse()` method to use new implementation
-- [x] Update `cleanupInputFormula()` to remove bracket-wrapping of constants
+- [x] Remove `cleanupInputFormula()` entirely (redundant - tokenizer handles whitespace)
 
 **Status:** Complete and all tests passing (251/251).
 
 **What was implemented:**
 - Updated `Formula.parse()` method to use the new two-phase architecture:
-  1. Tokenization phase using `Tokenizer` class
+  1. Tokenization phase using `Tokenizer` class (handles whitespace automatically)
   2. Parsing phase using `Parser` class with Pratt parsing
-- Removed bracket-wrapping of math constants (PI, E, etc.) from `cleanupInputFormula()`
-- Removed obsolete methods:
+- Removed obsolete methods (270+ lines of code removed):
   - `_do_parse()` - 250+ line state machine parser (replaced by `Parser` class)
   - `buildExpressionTree()` - No longer needed with Pratt parsing
   - `splitFunctionParams()` - Parser now handles function arguments directly
+  - `cleanupInputFormula()` - **Removed entirely** - tokenizer's `skipWhitespace()` handles this
   - `isOperator()` - Only used internally by old parser
   - `isOperatorExpr()` - Only used internally by old parser
 - Removed unused `PlaceholderExpression` import
 
 **Files modified:**
-- `src/fparser.ts` - Updated `parse()`, `cleanupInputFormula()`, removed obsolete methods
+- `src/fparser.ts` - Updated `parse()`, removed all obsolete methods (270+ lines removed)
 - Tests updated for breaking changes (see Step 4 below)
 
 ### Step 4: Testing & Migration ✅ COMPLETED

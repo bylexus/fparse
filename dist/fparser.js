@@ -905,22 +905,6 @@ const _Formula = class _Formula {
     this._memory = {};
   }
   /**
-   * Cleans the input string from unnecessary whitespace.
-   * Note: Math constants (PI, E, etc.) are no longer wrapped in brackets
-   * as the new tokenizer handles multi-char variables directly.
-   */
-  cleanupInputFormula(s) {
-    const resParts = [];
-    const srcParts = s.split('"');
-    srcParts.forEach((part, index) => {
-      if (index % 2 === 0) {
-        part = part.replace(/[\s]+/g, "");
-      }
-      resParts.push(part);
-    });
-    return resParts.join('"');
-  }
-  /**
    * Parses the given formula string into an Abstract Syntax Tree (AST).
    *
    * The parsing is done in two phases:
@@ -942,7 +926,6 @@ const _Formula = class _Formula {
    * @returns {Expression} An expression object, representing the expression tree
    */
   parse(str) {
-    str = this.cleanupInputFormula(str);
     const tokenizer = new Tokenizer();
     const tokens = tokenizer.tokenize(str);
     const parser = new Parser(tokens, this);

@@ -82,12 +82,6 @@ export default class Formula {
      */
     disableMemoization(): void;
     /**
-     * Cleans the input string from unnecessary whitespace.
-     * Note: Math constants (PI, E, etc.) are no longer wrapped in brackets
-     * as the new tokenizer handles multi-char variables directly.
-     */
-    cleanupInputFormula(s: string): string;
-    /**
      * Parses the given formula string into an Abstract Syntax Tree (AST).
      *
      * The parsing is done in two phases:
