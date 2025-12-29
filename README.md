@@ -11,6 +11,11 @@ One can then provide values for all unknown variables / functions and evaluate a
 For an example application, see https://fparser.alexi.ch/.
 
 - [Features](#features)
+- [Breaking Changes in v4.0](#breaking-changes-in-v40)
+	- [Syntax Changes](#syntax-changes)
+	- [Semantic Changes](#semantic-changes)
+	- [Removed Public Methods](#removed-public-methods)
+	- [Benefits](#benefits)
 - [Usage](#usage)
 - [More options](#more-options)
 	- [Using multiple variables](#using-multiple-variables)
@@ -29,7 +34,7 @@ For an example application, see https://fparser.alexi.ch/.
 	- [`ifElse`](#ifelse)
 	- [`first`](#first)
 - [Changelog](#changelog)
-	- [(upcoming)](#upcoming)
+	- [4.0.0](#anchor-400)
 	- [3.1.0](#anchor-310)
 	- [3.0.1](#anchor-301)
 	- [3.0.0](#anchor-300)
@@ -54,14 +59,56 @@ Parses a mathematical formula from a string. Known expressions:
 -   all _JavaScript Math object functions_ (e.g. "sin(3.14)")
 -   all _JavaScript Math constants_ like PI, E
 -   the use of _own functions_
--   the use of single-char _variables_ (like '2x')
--   the use of named variables (like '2\*[myVar]')
+-   the use of _variables_ (like 'x', 'myVar')
+-   the use of named variables with optional brackets (like '2\*myVar' or '2\*[myVar]')
 -   the use of strings as function arguments (like 'concat("Size: ", 2, " mm")')
 -   the use of strings as variables (like 'concat("Size: ", 2, " ", [unit])')
 -   the use of path named variables and functions (like '2\*[myVar.property.innerProperty]')
 -   _memoization_: store already evaluated results for faster re-calcs
 -   use it in Web pages, as ES6 module or as NodeJS module
 -   Example:<br /> <code>-1*(sin(2^x)/(PI*x))\*cos(x)</code>
+
+## Breaking Changes in v4.0
+
+Version 4.0 introduces significant improvements to the parser architecture, but includes some breaking changes. If you're upgrading from v3.x, please review these changes:
+
+### Syntax Changes
+
+**Implicit multiplication is no longer supported.** You must now use explicit `*` operators:
+
+| Old Syntax (v3.x) | New Syntax (v4.0) | Status |
+|-------------------|-------------------|--------|
+| `2x` | `2*x` | ❌ No longer supported |
+| `2xy` | `2*x*y` | ❌ No longer supported |
+| `-3x` | `-3*x` | ❌ No longer supported |
+| `3x^2` | `3*x^2` | ❌ No longer supported |
+| `[myVar]` | `myVar` or `[myVar]` | ✅ Both work (brackets optional) |
+| `PI*x` | `PI*x` | ✅ Still works |
+
+**Migration:** Update all formulas to use explicit multiplication operators (`*`).
+
+### Semantic Changes
+
+**Power operator (`^`) is now right-associative** (following mathematical convention):
+
+| Expression | Old Behavior (v3.x) | New Behavior (v4.0) |
+|------------|---------------------|---------------------|
+| `2^3^2` | Left-associative: `(2^3)^2 = 64` | Right-associative: `2^(3^2) = 512` |
+| `2^2^3` | `(2^2)^3 = 64` | `2^(2^3) = 256` |
+
+If you have formulas with chained power operators and need the old behavior, add explicit parentheses: `(2^3)^2`.
+
+### Removed Public Methods
+
+The following internal methods are no longer available as they were only used by the old parser:
+
+- `isOperator(char)` - Only used internally by old state machine parser
+- `isOperatorExpr(expr)` - Only used internally by old state machine parser
+- `splitFunctionParams(str)` - Parser now handles function arguments directly
+
+### Benefits
+
+These changes enable a cleaner, more maintainable parser with better error messages and easier extensibility. Multi-character variables no longer require brackets, making formulas more readable.
 
 ## Usage
 
@@ -122,17 +169,20 @@ let result = fObj.evaluate({ a: 2, b: -1, c: 3, x: 3 }); // result = 18
 
 ### Using named variables
 
-Instead of single-char variables (like `2x+y`), you can also use named variables in brackets:
+You can use multi-character variable names. Brackets are optional but still supported for backwards compatibility:
 
 ```javascript
-const fObj = new Formula('2*[var1] + sin([var2]+PI)');
+const fObj = new Formula('2*var1 + sin(var2+PI)');
 
 // Just pass a value object containing a value for each named variable:
 let result = fObj.evaluate({ var1: 5, var2: 0.7 });
+
+// Brackets are still supported if you prefer:
+const fObj2 = new Formula('2*[var1] + sin([var2]+PI)');
+let result2 = fObj2.evaluate({ var1: 5, var2: 0.7 });
 ```
 
-The reason for the bracket syntax is the support of shortcut multiplication of single vars, e.g. `2xy` is a shorthand for `2*x*y`. As the parser cannot decide if `xy` means "the variable named `xy", or `calc x*y`, we had to introduce the
-bracket syntax.
+**Note:** Since v4.0, operators must be explicit. Single-char variable shortcuts like `2x` (meaning `2*x`) are no longer supported. See [Breaking Changes in v4.0](#breaking-changes-in-v40) for more details.
 
 ### Using named object path variables
 
@@ -406,8 +456,24 @@ let res = fObj.evaluate({ a: 10, x: 0, y: -2, z: 0 }); // -20: y is selected as 
 
 ## Changelog
 
-### (upcoming)
+### 4.0.0
 
+This is a major release with significant architectural improvements and some breaking changes. See [Breaking Changes in v4.0](#breaking-changes-in-v40) for migration guide.
+
+**New Architecture:**
+- [Change] Complete parser refactoring: Separated tokenization and parsing into two distinct phases
+- [Change] Implemented regex-based tokenizer for cleaner, more maintainable code
+- [Change] Implemented Pratt parsing algorithm for operator precedence handling
+- [Change] Removed 270+ lines of complex state machine code
+- [Feature] Better error messages with token position information
+
+**Breaking Changes:**
+- [Breaking] Implicit multiplication removed: `2x` must now be written as `2*x`
+- [Breaking] Power operator (`^`) is now right-associative: `2^3^2` evaluates as `2^(3^2)` instead of `(2^3)^2`
+- [Breaking] Removed public methods: `isOperator()`, `isOperatorExpr()`, `splitFunctionParams()`
+
+**Improvements:**
+- [Feature] Multi-character variables no longer require brackets: `myVar` instead of `[myVar]` (brackets still supported)
 - [Feature] `ifElse()` function for conditional evaluation added
 - [Feature] `first()` function selects the first true-ish value from multiple arguments
 
@@ -480,14 +546,9 @@ Thanks to all the additional contributors:
 	* [x] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned
 	* [ ] `true(expr)`: returns 1 if the expression is trueish (> 0, true, strlen > 0), else 0
 	* [ ] `mod(x, y)`: returns x % y, `div(x, y)`: returns x / y (integer division / modulus). Modulus could also be implemented as `%` operator
-* [ ] Get rid of the short form `3x` instead of `3*x`: It makes variable handling and parsing much more complex,
-      and longer variable names must be marked explicitely. So I will introduce a breaking change in the next major, removing this form.
-* [ ] allow arrays as variable values, to be used in functions or other context. But first I must get rid of the mentioned short form above, as for now, `[...]` stands for a variable name
-* [ ] Refactor / rebuild parser:
-  * separate tokenize step
-  * then use Djikstra's Shunting Yard algorithm to convert the Inifix notation to Postfix, which is
-    way simpler to execute (See https://en.wikipedia.org/wiki/Shunting_yard_algorithm)
-* [ ] make parser state names via enum, instead of error-prone strings
+* [x] ~~Get rid of the short form `3x` instead of `3*x`~~ - **DONE in v4.0**: Implicit multiplication removed, operators must be explicit
+* [ ] allow arrays as variable values, to be used in functions or other context
+* [x] ~~Refactor / rebuild parser~~ - **DONE in v4.0**: Parser completely refactored with separate tokenization and Pratt parsing
 
 ## License
 

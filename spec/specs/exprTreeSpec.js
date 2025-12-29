@@ -94,7 +94,7 @@ describe('Expression Tree tests', function () {
             expect(ret.evaluate()).toBe(1);
         });
 
-        it('evaluates a logical expresstion with multiple operands correctly', () => {
+        it('evaluates a logical expression with multiple operands correctly', () => {
             const fObj = new Fparser('(x >= 0) * (x <= 1) * x * 100');
             let result = fObj.evaluate([{ x: 0.5 }, { x: 0.7 }, { x: 1.5 }, { x: -0.5 }, { x: -1.7 }]);
             expect(result).toEqual([50, 70, 0, -0, -0]);
