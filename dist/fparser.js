@@ -335,6 +335,509 @@ class VariableExpression extends Expression {
     return `${this.varPath.join(".")}`;
   }
 }
+var TokenType = /* @__PURE__ */ ((TokenType2) => {
+  TokenType2["NUMBER"] = "NUMBER";
+  TokenType2["VARIABLE"] = "VARIABLE";
+  TokenType2["OPERATOR"] = "OPERATOR";
+  TokenType2["LOGICAL_OPERATOR"] = "LOGICAL_OPERATOR";
+  TokenType2["FUNCTION"] = "FUNCTION";
+  TokenType2["LEFT_PAREN"] = "LEFT_PAREN";
+  TokenType2["RIGHT_PAREN"] = "RIGHT_PAREN";
+  TokenType2["COMMA"] = "COMMA";
+  TokenType2["STRING"] = "STRING";
+  TokenType2["EOF"] = "EOF";
+  return TokenType2;
+})(TokenType || {});
+class Tokenizer {
+  constructor() {
+    __publicField(this, "input");
+    __publicField(this, "position");
+    this.input = "";
+    this.position = 0;
+  }
+  tokenize(input) {
+    this.input = input;
+    this.position = 0;
+    const tokens = [];
+    while (this.position < this.input.length) {
+      this.skipWhitespace();
+      if (this.position >= this.input.length)
+        break;
+      const token = this.nextToken(tokens);
+      if (token) {
+        tokens.push(token);
+      }
+    }
+    tokens.push({
+      type: "EOF",
+      value: "",
+      raw: "",
+      position: this.position,
+      length: 0
+    });
+    return tokens;
+  }
+  nextToken(tokens) {
+    return this.readString() || this.readLogicalOperator() || this.readNumber(tokens) || this.readOperator() || this.readParenthesis() || this.readComma() || this.readIdentifier() || this.throwUnexpectedChar();
+  }
+  skipWhitespace() {
+    while (this.position < this.input.length && /\s/.test(this.input[this.position])) {
+      this.position++;
+    }
+  }
+  peek(offset = 0) {
+    return this.input[this.position + offset] || "";
+  }
+  /**
+   * Read a number token. Includes the minus sign if it's unambiguously part of the number.
+   * Handles negative numbers when preceded by operators, commas, left parenthesis, or at start.
+   */
+  readNumber(tokens) {
+    const start = this.position;
+    let raw = "";
+    if (this.peek() === "-") {
+      const prevToken = tokens.length > 0 ? tokens[tokens.length - 1] : null;
+      const canBeNegative = !prevToken || prevToken.type === "OPERATOR" || prevToken.type === "LOGICAL_OPERATOR" || prevToken.type === "COMMA" || prevToken.type === "LEFT_PAREN";
+      if (canBeNegative && /\d/.test(this.peek(1))) {
+        raw += this.peek();
+        this.position++;
+      } else {
+        return null;
+      }
+    }
+    if (!/\d/.test(this.peek())) {
+      if (raw === "-") {
+        this.position = start;
+        return null;
+      }
+      return null;
+    }
+    while (/\d/.test(this.peek())) {
+      raw += this.peek();
+      this.position++;
+    }
+    if (this.peek() === ".") {
+      raw += this.peek();
+      this.position++;
+      while (/\d/.test(this.peek())) {
+        raw += this.peek();
+        this.position++;
+      }
+    }
+    const value = parseFloat(raw);
+    return {
+      type: "NUMBER",
+      value,
+      raw,
+      position: start,
+      length: this.position - start
+    };
+  }
+  /**
+   * Read an identifier (variable or function name).
+   * Supports: myVar, x, PI, my_var, obj.prop, [myVar], [obj.prop]
+   */
+  readIdentifier() {
+    const start = this.position;
+    let raw = "";
+    let value = "";
+    let isBracketed = false;
+    if (this.peek() === "[") {
+      isBracketed = true;
+      raw += this.peek();
+      this.position++;
+      while (this.position < this.input.length && this.peek() !== "]") {
+        if (!/[a-zA-Z0-9_.]/.test(this.peek())) {
+          throw new Error(
+            `Invalid character '${this.peek()}' in bracketed variable at position ${this.position}`
+          );
+        }
+        value += this.peek();
+        raw += this.peek();
+        this.position++;
+      }
+      if (this.peek() !== "]") {
+        throw new Error(`Unclosed bracket for variable at position ${start}`);
+      }
+      raw += this.peek();
+      this.position++;
+    } else {
+      if (!/[a-zA-Z_]/.test(this.peek())) {
+        return null;
+      }
+      while (/[a-zA-Z0-9_.]/.test(this.peek())) {
+        value += this.peek();
+        raw += this.peek();
+        this.position++;
+      }
+    }
+    if (value === "") {
+      if (isBracketed) {
+        throw new Error(`Empty bracketed variable at position ${start}`);
+      }
+      return null;
+    }
+    let savedPos = this.position;
+    this.skipWhitespace();
+    const isFunction = this.peek() === "(";
+    this.position = savedPos;
+    return {
+      type: isFunction ? "FUNCTION" : "VARIABLE",
+      value,
+      raw,
+      position: start,
+      length: this.position - start
+    };
+  }
+  /**
+   * Read a string literal (single or double quoted).
+   * Supports escaped quotes: \" or \'
+   */
+  readString() {
+    const start = this.position;
+    const quote = this.peek();
+    if (quote !== '"' && quote !== "'") {
+      return null;
+    }
+    let raw = quote;
+    let value = "";
+    this.position++;
+    while (this.position < this.input.length) {
+      const char = this.peek();
+      if (char === "\\" && (this.peek(1) === quote || this.peek(1) === "\\")) {
+        const escapedChar = this.peek(1);
+        raw += char + escapedChar;
+        value += escapedChar;
+        this.position += 2;
+      } else if (char === quote) {
+        raw += char;
+        this.position++;
+        break;
+      } else {
+        raw += char;
+        value += char;
+        this.position++;
+      }
+    }
+    if (!raw.endsWith(quote)) {
+      throw new Error(`Unterminated string at position ${start}`);
+    }
+    return {
+      type: "STRING",
+      value,
+      raw,
+      position: start,
+      length: this.position - start
+    };
+  }
+  /**
+   * Read a simple operator: +, -, *, /, ^
+   */
+  readOperator() {
+    const char = this.peek();
+    const operatorPattern = /[+\-*/^]/;
+    if (!operatorPattern.test(char)) {
+      return null;
+    }
+    const start = this.position;
+    this.position++;
+    return {
+      type: "OPERATOR",
+      value: char,
+      raw: char,
+      position: start,
+      length: 1
+    };
+  }
+  /**
+   * Read a logical operator: <, >, <=, >=, =, !=
+   */
+  readLogicalOperator() {
+    const start = this.position;
+    const char = this.peek();
+    const nextChar = this.peek(1);
+    if (char === "<" && nextChar === "=" || char === ">" && nextChar === "=" || char === "!" && nextChar === "=") {
+      const raw = char + nextChar;
+      this.position += 2;
+      return {
+        type: "LOGICAL_OPERATOR",
+        value: raw,
+        raw,
+        position: start,
+        length: 2
+      };
+    }
+    if (char === "<" || char === ">" || char === "=") {
+      this.position++;
+      return {
+        type: "LOGICAL_OPERATOR",
+        value: char,
+        raw: char,
+        position: start,
+        length: 1
+      };
+    }
+    if (char === "!") {
+      throw new Error(`Invalid operator '!' at position ${start}. Did you mean '!='?`);
+    }
+    return null;
+  }
+  /**
+   * Read parentheses
+   */
+  readParenthesis() {
+    const char = this.peek();
+    const start = this.position;
+    if (char === "(") {
+      this.position++;
+      return {
+        type: "LEFT_PAREN",
+        value: "(",
+        raw: "(",
+        position: start,
+        length: 1
+      };
+    }
+    if (char === ")") {
+      this.position++;
+      return {
+        type: "RIGHT_PAREN",
+        value: ")",
+        raw: ")",
+        position: start,
+        length: 1
+      };
+    }
+    return null;
+  }
+  /**
+   * Read comma separator
+   */
+  readComma() {
+    const char = this.peek();
+    const start = this.position;
+    if (char === ",") {
+      this.position++;
+      return {
+        type: "COMMA",
+        value: ",",
+        raw: ",",
+        position: start,
+        length: 1
+      };
+    }
+    return null;
+  }
+  /**
+   * Throw an error for unexpected characters
+   */
+  throwUnexpectedChar() {
+    const char = this.peek();
+    throw new Error(`Unexpected character '${char}' at position ${this.position}`);
+  }
+}
+const PRECEDENCE = {
+  // Logical operators (lowest precedence)
+  "=": 1,
+  "!=": 1,
+  "<": 1,
+  ">": 1,
+  "<=": 1,
+  ">=": 1,
+  // Addition/Subtraction
+  "+": 2,
+  "-": 2,
+  // Multiplication/Division
+  "*": 3,
+  "/": 3,
+  // Power (highest precedence, right-associative)
+  "^": 4
+};
+class Parser {
+  constructor(tokens, formulaObject) {
+    __publicField(this, "tokens");
+    __publicField(this, "current");
+    __publicField(this, "formulaObject");
+    this.tokens = tokens;
+    this.current = 0;
+    this.formulaObject = formulaObject;
+  }
+  /**
+   * Main entry point: Parse the token stream into an Expression tree
+   */
+  parse() {
+    const expr = this.parseExpression(0);
+    if (!this.isAtEnd()) {
+      const token = this.peek();
+      throw new Error(
+        `Unexpected token '${token.value}' at position ${token.position}: Expected end of expression`
+      );
+    }
+    return expr;
+  }
+  /**
+   * Pratt parsing: handles operator precedence elegantly
+   * @param minPrecedence Minimum precedence level to parse
+   */
+  parseExpression(minPrecedence) {
+    let left = this.parsePrimary();
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+      if (token.type !== TokenType.OPERATOR && token.type !== TokenType.LOGICAL_OPERATOR) {
+        break;
+      }
+      const precedence = this.getPrecedence(token);
+      if (precedence < minPrecedence)
+        break;
+      const isRightAssociative = token.value === "^";
+      const nextPrecedence = isRightAssociative ? precedence : precedence + 1;
+      this.consume();
+      const right = this.parseExpression(nextPrecedence);
+      left = Expression.createOperatorExpression(
+        token.value,
+        left,
+        right
+      );
+    }
+    return left;
+  }
+  /**
+   * Parse primary expressions: numbers, variables, functions, parentheses, unary operators
+   */
+  parsePrimary() {
+    const token = this.peek();
+    if (this.match(TokenType.OPERATOR) && token.value === "-") {
+      this.consume();
+      const expr = this.parsePrimary();
+      return new MultDivExpression("*", new ValueExpression(-1), expr);
+    }
+    if (this.match(TokenType.OPERATOR) && token.value === "+") {
+      this.consume();
+      return this.parsePrimary();
+    }
+    if (this.match(TokenType.NUMBER)) {
+      this.consume();
+      return new ValueExpression(token.value);
+    }
+    if (this.match(TokenType.STRING)) {
+      this.consume();
+      return new ValueExpression(token.value, "string");
+    }
+    if (this.match(TokenType.LEFT_PAREN)) {
+      return this.parseParenthesizedExpression();
+    }
+    if (this.match(TokenType.VARIABLE, TokenType.FUNCTION)) {
+      return this.parseVariableOrFunction();
+    }
+    throw new Error(
+      `Unexpected token '${token.value}' at position ${token.position}: Expected number, variable, function, or '('`
+    );
+  }
+  /**
+   * Parse a parenthesized expression: (expr)
+   */
+  parseParenthesizedExpression() {
+    const leftParen = this.consume(TokenType.LEFT_PAREN);
+    const expr = this.parseExpression(0);
+    if (!this.match(TokenType.RIGHT_PAREN)) {
+      const token = this.peek();
+      throw new Error(
+        `Missing closing parenthesis at position ${token.position}: Expected ')' to match '(' at position ${leftParen.position}`
+      );
+    }
+    this.consume(TokenType.RIGHT_PAREN);
+    return new BracketExpression(expr);
+  }
+  /**
+   * Parse a variable or function call
+   */
+  parseVariableOrFunction() {
+    const token = this.consume();
+    const name = token.value;
+    if (this.match(TokenType.LEFT_PAREN)) {
+      return this.parseFunctionCall(name, token.position);
+    }
+    this.formulaObject.registerVariable(name);
+    return new VariableExpression(name, this.formulaObject);
+  }
+  /**
+   * Parse a function call: functionName(arg1, arg2, ...)
+   */
+  parseFunctionCall(name, namePosition) {
+    const leftParen = this.consume(TokenType.LEFT_PAREN);
+    const args = [];
+    if (!this.match(TokenType.RIGHT_PAREN)) {
+      do {
+        args.push(this.parseExpression(0));
+      } while (this.matchAndConsume(TokenType.COMMA));
+    }
+    if (!this.match(TokenType.RIGHT_PAREN)) {
+      const token = this.peek();
+      throw new Error(
+        `Missing closing parenthesis for function '${name}' at position ${token.position}: Expected ')' to match '(' at position ${leftParen.position}`
+      );
+    }
+    this.consume(TokenType.RIGHT_PAREN);
+    return new FunctionExpression(name, args, this.formulaObject);
+  }
+  // ==================== Helper Methods ====================
+  /**
+   * Get the current token without consuming it
+   */
+  peek() {
+    return this.tokens[this.current];
+  }
+  /**
+   * Consume the current token and move to the next one
+   * @param expected Optional: throw error if current token is not of this type
+   */
+  consume(expected) {
+    const token = this.peek();
+    if (expected && token.type !== expected) {
+      throw new Error(
+        `Expected ${expected} at position ${token.position}, got ${token.type} ('${token.value}')`
+      );
+    }
+    this.current++;
+    return token;
+  }
+  /**
+   * Check if the current token matches any of the given types
+   */
+  match(...types) {
+    return types.includes(this.peek().type);
+  }
+  /**
+   * If the current token matches the given type, consume it and return true
+   */
+  matchAndConsume(type) {
+    if (this.match(type)) {
+      this.consume();
+      return true;
+    }
+    return false;
+  }
+  /**
+   * Check if we've reached the end of the token stream
+   */
+  isAtEnd() {
+    return this.peek().type === TokenType.EOF;
+  }
+  /**
+   * Get the precedence level for a token
+   */
+  getPrecedence(token) {
+    if (token.type === TokenType.LOGICAL_OPERATOR) {
+      const op = token.value;
+      return PRECEDENCE[op] ?? 0;
+    }
+    if (token.type === TokenType.OPERATOR) {
+      const op = token.value;
+      return PRECEDENCE[op] ?? 0;
+    }
+    return 0;
+  }
+}
 const MATH_CONSTANTS = {
   PI: Math.PI,
   E: Math.E,
@@ -894,6 +1397,9 @@ __publicField(_Formula, "ALLOWED_FUNCTIONS", ["ifElse", "first"]);
 __publicField(_Formula, "functionBlacklist", Object.getOwnPropertyNames(_Formula.prototype).filter((prop) => _Formula.prototype[prop] instanceof Function && !_Formula.ALLOWED_FUNCTIONS.includes(prop)).map((prop) => _Formula.prototype[prop]));
 let Formula = _Formula;
 export {
+  Parser,
+  TokenType,
+  Tokenizer,
   Formula as default
 };
 //# sourceMappingURL=fparser.js.map

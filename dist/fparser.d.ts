@@ -1,4 +1,7 @@
 import { BracketExpression, Expression, FunctionExpression, LogicalExpression, MultDivExpression, PlusMinusExpression, PowerExpression, ValueExpression, VariableExpression } from './expression';
+export { Tokenizer, TokenType } from './tokenizer';
+export type { Token } from './tokenizer';
+export { Parser } from './parser';
 declare global {
     interface Math {
         [key: string]: number | Function;

@@ -11,6 +11,10 @@ import {
     VariableExpression
 } from './expression';
 
+export { Tokenizer, TokenType } from './tokenizer';
+export type { Token } from './tokenizer';
+export { Parser } from './parser';
+
 /**
  * JS Formula Parser
  * -------------------
