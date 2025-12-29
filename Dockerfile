@@ -1,5 +1,5 @@
 # -------- Stage 1 - Develop Container
-FROM node:20 AS develop
+FROM node:24 AS develop
 VOLUME ["/usr/src/app"]
 RUN apt-get update && \
     apt-get install -y \
