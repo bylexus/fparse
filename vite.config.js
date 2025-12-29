@@ -5,13 +5,14 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ mode }) => {
     return {
         build: {
-            target: 'es2018',
+            target: 'modules',
             sourcemap: true,
             minify: mode === 'production',
             lib: {
                 entry: resolve(__dirname, 'src/fparser.ts'),
                 name: 'Formula',
-                fileName: 'fparser'
+                fileName: 'fparser',
+                formats: ['es']
             }
         }
     };

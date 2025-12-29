@@ -1,129 +1,13 @@
+import { BracketExpression, Expression, FunctionExpression, LogicalExpression, MultDivExpression, PlusMinusExpression, PowerExpression, ValueExpression, VariableExpression } from './expression';
 declare global {
     interface Math {
         [key: string]: number | Function;
     }
 }
-type FormulaOptions = {
-    memoization?: boolean;
-};
-type ValueObject = {
-    [key: string]: number | string | Function | ValueObject;
-};
-/**
- * Base class for all expressions: An Expression is somethint that eventually evaluates to a
- * final value, like a number, or a string. It can be composed of other expressions, which
- * are evaluated recursively until a final value is reached.
- */
-declare abstract class Expression {
-    static createOperatorExpression(operator: string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
-    abstract evaluate(params: ValueObject): number | string;
-    toString(): string;
-}
-/**
- * Represents a bracketed expression: (expr)
- * It evaluates its inner expression.
- */
-declare class BracketExpression extends Expression {
-    innerExpression: Expression;
-    constructor(expr: Expression);
-    evaluate(params?: {}): number | string;
-    toString(): string;
-}
-/**
- * Represents a final value, e.g. a number.
- */
-declare class ValueExpression extends Expression {
-    value: number | string;
-    type: string;
-    constructor(value: number | string, type?: string);
-    evaluate(): number | string;
-    toString(): string;
-}
-/**
- * Represents the '+' or '-' operator expression:
- * it evaluates its left and right expression and returns the sum / difference of the result
- */
-declare class PlusMinusExpression extends Expression {
-    static PLUS: string;
-    static MINUS: string;
-    operator: string;
-    left: Expression;
-    right: Expression;
-    constructor(operator: string, left: Expression, right: Expression);
-    evaluate(params?: ValueObject): number;
-    toString(): string;
-}
-/**
- * Represents the '*' or '/' operator expression:
- * it evaluates its left and right expression and returns the product / division of the two.
- */
-declare class MultDivExpression extends Expression {
-    static MULT: string;
-    static DIV: string;
-    operator: string;
-    left: Expression;
-    right: Expression;
-    constructor(operator: string, left: Expression, right: Expression);
-    evaluate(params?: ValueObject): number;
-    toString(): string;
-}
-/**
- * Represents the 'power of' operator expression:
- * evaluates base^exponent.
- */
-declare class PowerExpression extends Expression {
-    base: Expression;
-    exponent: Expression;
-    constructor(base: Expression, exponent: Expression);
-    evaluate(params?: ValueObject): number;
-    toString(): string;
-}
-/**
- * Represents locical operator expressions: All logical operations
- * evaluate either to 0 or 1 (false or true): this way, you can use them in calculations
- * to enable / disable different parts of the formula.
- */
-declare class LogicalExpression extends Expression {
-    static LT: string;
-    static GT: string;
-    static LTE: string;
-    static GTE: string;
-    static EQ: string;
-    static NEQ: string;
-    operator: string;
-    left: Expression;
-    right: Expression;
-    constructor(operator: string, left: Expression, right: Expression);
-    evaluate(params?: ValueObject): number;
-    toString(): string;
-}
-/**
- * Represents a function expression: evaluates the expression in the function arguments,
- * then executes the function with the evaluated arguments, an evaluates the result.
- */
-declare class FunctionExpression extends Expression {
-    fn: string;
-    varPath: string[];
-    argumentExpressions: Expression[];
-    formulaObject: Formula | null;
-    blacklisted: boolean | undefined;
-    constructor(fn: string | null, argumentExpressions: Expression[], formulaObject?: Formula | null);
-    evaluate(params?: ValueObject): number | string;
-    toString(): string;
-    isBlacklisted(): boolean;
-}
 /**
  * Evaluates a variable within a formula to its value. The variable value
  * is expected to be given in the evaluate() method or on the formula object.
  */
-declare class VariableExpression extends Expression {
-    fullPath: string;
-    varPath: string[];
-    formulaObject: Formula | null;
-    constructor(fullPath: string, formulaObj?: Formula | null);
-    evaluate(params?: {}): number | string;
-    toString(): string;
-}
 /**
  * The Formula class represents a mathematical formula, including functions to evaluate
  * the formula to its final result.
@@ -297,4 +181,3 @@ export default class Formula {
     ifElse(predicate: any, trueValue: any, falseValue: any): any;
     first(...args: any[]): any;
 }
-export {};
