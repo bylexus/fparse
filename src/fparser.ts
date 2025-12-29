@@ -4,12 +4,14 @@ import {
     FunctionExpression,
     LogicalExpression,
     MultDivExpression,
-    PlaceholderExpression,
     PlusMinusExpression,
     PowerExpression,
     ValueExpression,
     VariableExpression
 } from './expression';
+
+import { Tokenizer } from './tokenizer';
+import { Parser } from './parser';
 
 export { Tokenizer, TokenType } from './tokenizer';
 export type { Token } from './tokenizer';
@@ -151,46 +153,11 @@ export default class Formula {
         this._memory = {};
     }
 
-    /**
-     * Splits the given string by ',', makes sure the ',' is not within
-     * a sub-expression
-     * e.g.: str = "x,pow(3,4)" returns 2 elements: x and pow(3,4).
-     */
-    splitFunctionParams(toSplit: string) {
-        // do not split on ',' within matching brackets.
-        let pCount = 0,
-            paramStr = '';
-        const params = [];
-        for (let chr of toSplit.split('')) {
-            if (chr === ',' && pCount === 0) {
-                // Found function param, save 'em
-                params.push(paramStr);
-                paramStr = '';
-            } else if (chr === '(') {
-                pCount++;
-                paramStr += chr;
-            } else if (chr === ')') {
-                pCount--;
-                paramStr += chr;
-                if (pCount < 0) {
-                    throw new Error('ERROR: Too many closing parentheses!');
-                }
-            } else {
-                paramStr += chr;
-            }
-        }
-        if (pCount !== 0) {
-            throw new Error('ERROR: Too many opening parentheses!');
-        }
-        if (paramStr.length > 0) {
-            params.push(paramStr);
-        }
-        return params;
-    }
 
     /**
-     * Cleans the input string from unnecessary whitespace,
-     * and replaces some known constants:
+     * Cleans the input string from unnecessary whitespace.
+     * Note: Math constants (PI, E, etc.) are no longer wrapped in brackets
+     * as the new tokenizer handles multi-char variables directly.
      */
     cleanupInputFormula(s: string) {
         const resParts: string[] = [];
@@ -199,10 +166,6 @@ export default class Formula {
             // skip parts marked as string
             if (index % 2 === 0) {
                 part = part.replace(/[\s]+/g, '');
-                // surround known math constants with [], to parse them as named variables [xxx]:
-                Object.keys(MATH_CONSTANTS).forEach((c) => {
-                    part = part.replace(new RegExp(`\\b${c}\\b`, 'g'), `[${c}]`);
-                });
             }
             resParts.push(part);
         });
@@ -210,410 +173,39 @@ export default class Formula {
     }
 
     /**
-     * Parses the given formula string by using a state machine into a single Expression object,
-     * which represents an expression tree (aka AST).
+     * Parses the given formula string into an Abstract Syntax Tree (AST).
      *
-     * First, we split the string into 'expression': An expression can be:
-     *   - a number, e.g. '3.45'
-     *   - an unknown variable, e.g. 'x'
-     *   - a single char operator, such as '*','+' etc...
-     *   - a named variable, in [], e.g. [myvar]
-     *   - a function, such as sin(x)
-     *   - a parenthessed expression, containing other expressions
+     * The parsing is done in two phases:
+     * 1. Tokenization: Convert the input string into a stream of tokens
+     * 2. Parsing: Convert the token stream into an Expression tree using Pratt parsing
      *
-     * We want to create an expression tree out of the string. This is done in 2 stages:
-     * 1. form single expressions from the string: parse the string into known expression objects:
-     *   - numbers/[variables]/"strings"
-     *   - operators
-     *   - braces (with a sub-expression)
-     *   - functions (with sub-expressions (aka argument expressions))
-     *   This will lead to an array of expressions.
-     *  As an example:
-     *  "2 + 3 * (4 + 3 ^ 5) * sin(PI * x)" forms an array of the following expressions:
-     *  `[2, +, 3, *, bracketExpr(4,+,3,^,5), * , functionExpr(PI,*,x)]`
-     * 2. From the raw expression array we form an expression tree by evaluating the expressions in the correct order:
-     *    e.g.:
-     *  the expression array `[2, +, 3, *, bracketExpr(4,+,3,^,5), * , functionExpr(PI,*,x)]` will be transformed into the expression tree:
+     * Example: "2 + 3 * sin(PI * x)" is tokenized into:
+     *   [NUMBER(2), OPERATOR(+), NUMBER(3), OPERATOR(*), FUNCTION(sin), ...]
+     * Then parsed into an expression tree:
      *  ```
      *         root expr:  (+)
      *                     / \
      *                    2    (*)
      *                        / \
-     *                     (*)  functionExpr(...)
-     *                     / \
-     *                    3   (bracket(..))
+     *                       3   functionExpr(sin, [PI*x])
      * ```
-     *
-     * In the end, we have a single root expression node, which then can be evaluated in the evaluate() function.
      *
      * @param {String} str The formula string, e.g. '3*sin(PI/x)'
      * @returns {Expression} An expression object, representing the expression tree
      */
-    parse(str: string) {
-        // clean the input string first. spaces, math constant replacements etc.:
+    parse(str: string): Expression {
+        // Clean the input string: remove whitespace
         str = this.cleanupInputFormula(str);
-        // start recursive call to parse:
-        return this._do_parse(str);
+
+        // Phase 1: Tokenize the input string
+        const tokenizer = new Tokenizer();
+        const tokens = tokenizer.tokenize(str);
+
+        // Phase 2: Parse the token stream into an AST
+        const parser = new Parser(tokens, this);
+        return parser.parse();
     }
 
-    /**
-     * @see parse(): this is the recursive parse function, without the clean string part.
-     * @param {String} str
-     * @returns {Expression} An expression object, representing the expression tree
-     */
-    _do_parse(str: string): Expression {
-        let lastChar = str.length - 1,
-            act = 0,
-            state:
-                | 'initial'
-                | 'within-nr'
-                | 'within-parentheses'
-                | 'within-func-parentheses'
-                | 'within-named-var'
-                | 'within-string'
-                | 'within-expr'
-                | 'within-bracket'
-                | 'within-func'
-                | 'within-logical-operator'
-                | 'invalid' = 'initial',
-            expressions = [],
-            char = '',
-            tmp = '',
-            funcName = null,
-            pCount = 0,
-            pStringDelimiter = '';
-
-        while (act <= lastChar) {
-            switch (state) {
-                case 'initial':
-                    // None state, the beginning. Read a char and see what happens.
-                    char = str.charAt(act);
-                    if (char.match(/[0-9.]/)) {
-                        // found the beginning of a number, change state to "within-number"
-                        state = 'within-nr';
-                        tmp = '';
-                        act--;
-                    } else if (this.isOperator(char)) {
-                        // Simple operators. Note: '-' must be treaten specially,
-                        // it could be part of a number.
-                        // it MUST be part of a number if the last found expression
-                        // was an operator (or the beginning):
-                        if (char === '-') {
-                            if (expressions.length === 0 || this.isOperatorExpr(expressions[expressions.length - 1])) {
-                                state = 'within-nr';
-                                tmp = '-';
-                                break;
-                            }
-                        }
-
-                        // Found a simple operator, store as expression:
-                        if (act === lastChar || this.isOperatorExpr(expressions[expressions.length - 1])) {
-                            state = 'invalid'; // invalid to end with an operator, or have 2 operators in conjunction
-                            break;
-                        } else {
-                            expressions.push(
-                                Expression.createOperatorExpression(
-                                    char,
-                                    new PlaceholderExpression(),
-                                    new PlaceholderExpression()
-                                )
-                            );
-                            state = 'initial';
-                        }
-                    } else if (['>', '<', '=', '!'].includes(char)) {
-                        // found the beginning of a logical operator, change state to "within-logical-operator"
-                        if (act === lastChar) {
-                            state = 'invalid'; // invalid to end with a logical operator
-                            break;
-                        } else {
-                            state = 'within-logical-operator';
-                            tmp = char;
-                        }
-                    } else if (char === '(') {
-                        // left parenthes found, seems to be the beginning of a new sub-expression:
-                        state = 'within-parentheses';
-                        tmp = '';
-                        pCount = 0;
-                    } else if (char === '[') {
-                        // left named var separator char found, seems to be the beginning of a named var:
-                        state = 'within-named-var';
-                        tmp = '';
-                    } else if (char.match(/["']/)) {
-                        // left string separator char found
-                        state = 'within-string';
-                        pStringDelimiter = char;
-                        tmp = '';
-                    } else if (char.match(/[a-zA-Z]/)) {
-                        // multiple chars means it may be a function, else its a var which counts as own expression:
-                        if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z0-9_.]/)) {
-                            tmp = char;
-                            state = 'within-func';
-                        } else {
-                            // Single variable found:
-                            // We need to check some special considerations:
-                            // - If the last char was a number (e.g. 3x), we need to create a multiplication out of it (3*x)
-                            if (
-                                expressions.length > 0 &&
-                                expressions[expressions.length - 1] instanceof ValueExpression
-                            ) {
-                                expressions.push(
-                                    Expression.createOperatorExpression(
-                                        '*',
-                                        new PlaceholderExpression(),
-                                        new PlaceholderExpression()
-                                    )
-                                );
-                            }
-                            expressions.push(new VariableExpression(char, this));
-                            this.registerVariable(char);
-                            state = 'initial';
-                            tmp = '';
-                        }
-                    }
-                    break;
-                case 'within-nr':
-                    char = str.charAt(act);
-                    if (char.match(/[0-9.]/)) {
-                        //Still within number, store and continue
-                        tmp += char;
-                        if (act === lastChar) {
-                            expressions.push(new ValueExpression(tmp));
-                            state = 'initial';
-                        }
-                    } else {
-                        // Number finished on last round, so add as expression:
-                        if (tmp === '-') {
-                            // just a single '-' means: a variable could follow (e.g. like in 3*-x), we convert it to -1: (3*-1x)
-                            tmp = '-1';
-                        }
-                        expressions.push(new ValueExpression(tmp));
-                        tmp = '';
-                        state = 'initial';
-                        act--;
-                    }
-                    break;
-
-                case 'within-func':
-                    char = str.charAt(act);
-                    if (char.match(/[a-zA-Z0-9_.]/)) {
-                        tmp += char;
-                    } else if (char === '(') {
-                        funcName = tmp;
-                        tmp = '';
-                        pCount = 0;
-                        state = 'within-func-parentheses';
-                    } else {
-                        throw new Error('Wrong character for function at position ' + act);
-                    }
-
-                    break;
-
-                case 'within-named-var':
-                    char = str.charAt(act);
-                    if (char === ']') {
-                        // end of named var, create expression:
-                        expressions.push(new VariableExpression(tmp, this));
-                        this.registerVariable(tmp);
-                        tmp = '';
-                        state = 'initial';
-                    } else if (char.match(/[a-zA-Z0-9_.]/)) {
-                        tmp += char;
-                    } else {
-                        throw new Error('Character not allowed within named variable: ' + char);
-                    }
-                    break;
-
-                case 'within-string':
-                    char = str.charAt(act);
-                    if (char === pStringDelimiter) {
-                        // end of string, create expression:
-                        expressions.push(new ValueExpression(tmp, 'string'));
-                        tmp = '';
-                        state = 'initial';
-                        pStringDelimiter = '';
-                    } else {
-                        tmp += char;
-                    }
-                    break;
-
-                case 'within-parentheses':
-                case 'within-func-parentheses':
-                    char = str.charAt(act);
-                    if (pStringDelimiter) {
-                        // If string is opened, then:
-                        if (char === pStringDelimiter) {
-                            // end of string
-                            pStringDelimiter = '';
-                        }
-                        // accumulate string chars
-                        tmp += char;
-                    } else if (char === ')') {
-                        //Check if this is the matching closing parenthesis.If not, just read ahead.
-                        if (pCount <= 0) {
-                            // Yes, we found the closing parenthesis, create new sub-expression:
-                            if (state === 'within-parentheses') {
-                                expressions.push(new BracketExpression(this._do_parse(tmp)));
-                            } else if (state === 'within-func-parentheses') {
-                                // Function found: create expressions from the inner argument
-                                // string, and create a function expression with it:
-                                let args = this.splitFunctionParams(tmp).map((a) => this._do_parse(a));
-                                expressions.push(new FunctionExpression(funcName, args, this));
-                                funcName = null;
-                            }
-                            state = 'initial';
-                        } else {
-                            pCount--;
-                            tmp += char;
-                        }
-                    } else if (char === '(') {
-                        // begin of a new sub-parenthesis, increase counter:
-                        pCount++;
-                        tmp += char;
-                    } else if (char.match(/["']/)) {
-                        // start of string
-                        pStringDelimiter = char;
-                        tmp += char;
-                    } else {
-                        // all other things are just added to the sub-expression:
-                        tmp += char;
-                    }
-                    break;
-
-                case 'within-logical-operator':
-                    char = str.charAt(act);
-                    if (char === '=') {
-                        // the second char of a logical operator
-                        // can only be an equal sign
-                        tmp += char;
-                        act++;
-                    }
-                    // logical operator finished, create expression:
-                    expressions.push(
-                        Expression.createOperatorExpression(
-                            tmp,
-                            new PlaceholderExpression(),
-                            new PlaceholderExpression()
-                        )
-                    );
-                    tmp = '';
-                    state = 'initial';
-                    act--;
-                    break;
-            }
-            act++;
-        }
-
-        if (state !== 'initial') {
-            throw new Error('Could not parse formula: Syntax error.');
-        }
-
-        return this.buildExpressionTree(expressions);
-    }
-
-    /**
-     * @see parse(): Builds an expression tree from the given expression array.
-     * Builds a tree with a single root expression in the correct order of operator precedence.
-     *
-     * Note that the given expression objects are modified and linked.
-     *
-     * @param {*} expressions
-     * @return {Expression} The root Expression of the built expression tree
-     */
-    buildExpressionTree(expressions: Expression[]): Expression {
-        if (expressions.length < 1) {
-            throw new Error('No expression given!');
-        }
-        const exprCopy = [...expressions];
-        let idx = 0;
-        let expr = null;
-        // Replace all Power expressions with a partial tree:
-        while (idx < exprCopy.length) {
-            expr = exprCopy[idx];
-            if (expr instanceof PowerExpression) {
-                if (idx === 0 || idx === exprCopy.length - 1) {
-                    throw new Error('Wrong operator position!');
-                }
-                expr.base = exprCopy[idx - 1];
-                expr.exponent = exprCopy[idx + 1];
-                exprCopy[idx - 1] = expr;
-                exprCopy.splice(idx, 2);
-            } else {
-                idx++;
-            }
-        }
-
-        // Replace all Mult/Div expressions with a partial tree:
-        idx = 0;
-        expr = null;
-        while (idx < exprCopy.length) {
-            expr = exprCopy[idx];
-            if (expr instanceof MultDivExpression) {
-                if (idx === 0 || idx === exprCopy.length - 1) {
-                    throw new Error('Wrong operator position!');
-                }
-                expr.left = exprCopy[idx - 1];
-                expr.right = exprCopy[idx + 1];
-                exprCopy[idx - 1] = expr;
-                exprCopy.splice(idx, 2);
-            } else {
-                idx++;
-            }
-        }
-
-        // Replace all Plus/Minus expressions with a partial tree:
-        idx = 0;
-        expr = null;
-        while (idx < exprCopy.length) {
-            expr = exprCopy[idx];
-            if (expr instanceof PlusMinusExpression) {
-                if (idx === 0 || idx === exprCopy.length - 1) {
-                    throw new Error('Wrong operator position!');
-                }
-                expr.left = exprCopy[idx - 1];
-                expr.right = exprCopy[idx + 1];
-                exprCopy[idx - 1] = expr;
-                exprCopy.splice(idx, 2);
-            } else {
-                idx++;
-            }
-        }
-
-        // Replace all Logical expressions with a partial tree:
-        idx = 0;
-        expr = null;
-        while (idx < exprCopy.length) {
-            expr = exprCopy[idx];
-            if (expr instanceof LogicalExpression) {
-                if (idx === 0 || idx === exprCopy.length - 1) {
-                    throw new Error('Wrong operator position!');
-                }
-                expr.left = exprCopy[idx - 1];
-                expr.right = exprCopy[idx + 1];
-                exprCopy[idx - 1] = expr;
-                exprCopy.splice(idx, 2);
-            } else {
-                idx++;
-            }
-        }
-
-        if (exprCopy.length !== 1) {
-            throw new Error('Could not parse formula: incorrect syntax?');
-        }
-        return exprCopy[0];
-    }
-
-    isOperator(char: string | null) {
-        return typeof char === 'string' && char.match(/[+\-*/^]/);
-    }
-
-    isOperatorExpr(expr: Expression) {
-        return (
-            expr instanceof PlusMinusExpression ||
-            expr instanceof MultDivExpression ||
-            expr instanceof PowerExpression ||
-            expr instanceof LogicalExpression
-        );
-    }
 
     registerVariable(varName: string) {
         if (this._variables.indexOf(varName) < 0) {

@@ -14,7 +14,8 @@ describe('Named Variable tests', function () {
     });
 
     it('throws an error when named variable name contains invalid chars', function () {
-        const provider = [['[my-var]', /Character not allowed/]];
+        // Updated error message for new tokenizer
+        const provider = [['[my-var]', /Invalid character.*in bracketed variable/]];
 
         provider.forEach(function (testdata) {
             expect(function () {
@@ -30,7 +31,7 @@ describe('Named Variable tests', function () {
     });
 
     it('can evaluate named vars and Math constants correctly', function () {
-        const f = new Fparser('PI*[foo]+4E');
+        const f = new Fparser('PI*[foo]+4*E'); // Updated: 4E -> 4*E (no implicit multiplication)
         const variables = f.getVariables();
         expect(variables).toEqual(['PI', 'foo', 'E']);
         expect(f.getExpressionString()).toEqual('PI * foo + 4 * E');
@@ -112,7 +113,7 @@ describe('Named Variable tests', function () {
     });
 
     it('Complex example with all types of variables mixed', function () {
-        const f = new Fparser('3x^2+4*[xx] - 2*[obj.x] - 3*[obj.yy]');
+        const f = new Fparser('3*x^2+4*[xx] - 2*[obj.x] - 3*[obj.yy]'); // Updated: 3x^2 -> 3*x^2 (no implicit multiplication)
         expect(
             f.evaluate({
                 x: 1,
@@ -124,7 +125,7 @@ describe('Named Variable tests', function () {
             })
         ).toEqual(-7);
 
-        const f2 = new Fparser('3x^2+4*[xx] - 2*[obj.x] - 3*[obj.yy]');
+        const f2 = new Fparser('3*x^2+4*[xx] - 2*[obj.x] - 3*[obj.yy]'); // Updated: 3x^2 -> 3*x^2 (no implicit multiplication)
         f2.x = 1;
         f2.xx = 2;
         f2.obj = {

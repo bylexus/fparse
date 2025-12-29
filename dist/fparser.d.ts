@@ -82,75 +82,33 @@ export default class Formula {
      */
     disableMemoization(): void;
     /**
-     * Splits the given string by ',', makes sure the ',' is not within
-     * a sub-expression
-     * e.g.: str = "x,pow(3,4)" returns 2 elements: x and pow(3,4).
-     */
-    splitFunctionParams(toSplit: string): string[];
-    /**
-     * Cleans the input string from unnecessary whitespace,
-     * and replaces some known constants:
+     * Cleans the input string from unnecessary whitespace.
+     * Note: Math constants (PI, E, etc.) are no longer wrapped in brackets
+     * as the new tokenizer handles multi-char variables directly.
      */
     cleanupInputFormula(s: string): string;
     /**
-     * Parses the given formula string by using a state machine into a single Expression object,
-     * which represents an expression tree (aka AST).
+     * Parses the given formula string into an Abstract Syntax Tree (AST).
      *
-     * First, we split the string into 'expression': An expression can be:
-     *   - a number, e.g. '3.45'
-     *   - an unknown variable, e.g. 'x'
-     *   - a single char operator, such as '*','+' etc...
-     *   - a named variable, in [], e.g. [myvar]
-     *   - a function, such as sin(x)
-     *   - a parenthessed expression, containing other expressions
+     * The parsing is done in two phases:
+     * 1. Tokenization: Convert the input string into a stream of tokens
+     * 2. Parsing: Convert the token stream into an Expression tree using Pratt parsing
      *
-     * We want to create an expression tree out of the string. This is done in 2 stages:
-     * 1. form single expressions from the string: parse the string into known expression objects:
-     *   - numbers/[variables]/"strings"
-     *   - operators
-     *   - braces (with a sub-expression)
-     *   - functions (with sub-expressions (aka argument expressions))
-     *   This will lead to an array of expressions.
-     *  As an example:
-     *  "2 + 3 * (4 + 3 ^ 5) * sin(PI * x)" forms an array of the following expressions:
-     *  `[2, +, 3, *, bracketExpr(4,+,3,^,5), * , functionExpr(PI,*,x)]`
-     * 2. From the raw expression array we form an expression tree by evaluating the expressions in the correct order:
-     *    e.g.:
-     *  the expression array `[2, +, 3, *, bracketExpr(4,+,3,^,5), * , functionExpr(PI,*,x)]` will be transformed into the expression tree:
+     * Example: "2 + 3 * sin(PI * x)" is tokenized into:
+     *   [NUMBER(2), OPERATOR(+), NUMBER(3), OPERATOR(*), FUNCTION(sin), ...]
+     * Then parsed into an expression tree:
      *  ```
      *         root expr:  (+)
      *                     / \
      *                    2    (*)
      *                        / \
-     *                     (*)  functionExpr(...)
-     *                     / \
-     *                    3   (bracket(..))
+     *                       3   functionExpr(sin, [PI*x])
      * ```
-     *
-     * In the end, we have a single root expression node, which then can be evaluated in the evaluate() function.
      *
      * @param {String} str The formula string, e.g. '3*sin(PI/x)'
      * @returns {Expression} An expression object, representing the expression tree
      */
     parse(str: string): Expression;
-    /**
-     * @see parse(): this is the recursive parse function, without the clean string part.
-     * @param {String} str
-     * @returns {Expression} An expression object, representing the expression tree
-     */
-    _do_parse(str: string): Expression;
-    /**
-     * @see parse(): Builds an expression tree from the given expression array.
-     * Builds a tree with a single root expression in the correct order of operator precedence.
-     *
-     * Note that the given expression objects are modified and linked.
-     *
-     * @param {*} expressions
-     * @return {Expression} The root Expression of the built expression tree
-     */
-    buildExpressionTree(expressions: Expression[]): Expression;
-    isOperator(char: string | null): false | RegExpMatchArray | null;
-    isOperatorExpr(expr: Expression): boolean;
     registerVariable(varName: string): void;
     getVariables(): string[];
     /**

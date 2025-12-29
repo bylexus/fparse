@@ -12,14 +12,16 @@ describe('Expression Tree tests', function () {
             let ret = f.parse(formulaStr);
             expect(ret).toBeInstanceOf(Expression);
         });
-        it('parses a pow expression correctly', () => {
+        it('parses a pow expression correctly (right-associative)', () => {
             const formulaStr = '-2^    3^ 4 ';
             const f = new Fparser();
             let ret = f.parse(formulaStr);
+            // Power is now right-associative: -2^3^4 = (-2)^(3^4)
+            // Note: -2 at the start is tokenized as a negative number
             expect(ret).toEqual(
                 new Fparser.PowerExpression(
-                    new Fparser.PowerExpression(new Fparser.ValueExpression(-2), new Fparser.ValueExpression(3)),
-                    new Fparser.ValueExpression(4)
+                    new Fparser.ValueExpression(-2),
+                    new Fparser.PowerExpression(new Fparser.ValueExpression(3), new Fparser.ValueExpression(4))
                 )
             );
         });
@@ -99,7 +101,7 @@ describe('Expression Tree tests', function () {
         });
 
         it('parses parentheses correctly', () => {
-            const formulaStr = '2*(3+4)/4x*(3-y)';
+            const formulaStr = '2*(3+4)/4*x*(3-y)'; // Updated: 4x -> 4*x (no implicit multiplication)
             const f = new Fparser();
             let ret = f.parse(formulaStr);
             expect(ret).toEqual(

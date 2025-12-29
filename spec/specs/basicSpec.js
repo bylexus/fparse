@@ -32,13 +32,14 @@ describe('Basic tests', function () {
     });
 
     it('throws a syntax error when parsing failed', function () {
-        expect(() => new Fparser('10+')).toThrowError(/Syntax error/);
-        expect(() => new Fparser('-3*4^')).toThrowError(/Syntax error/);
-        expect(() => new Fparser('4*5+++')).toThrowError(/Syntax error/);
-        expect(() => new Fparser('4***5')).toThrowError(/Syntax error/);
-        expect(() => new Fparser('+4+5')).toThrowError(/Wrong operator position/);
-        expect(() => new Fparser('4+5*sin(pi')).toThrowError(/Syntax error/);
-        expect(() => new Fparser('4+5*sin)pi)')).toThrowError(/Wrong character for function/);
+        // Updated error messages for new parser - errors are now more specific with position info
+        expect(() => new Fparser('10+')).toThrowError(/Expected number, variable, function/);
+        expect(() => new Fparser('-3*4^')).toThrowError(/Expected number, variable, function/);
+        expect(() => new Fparser('4*5+++')).toThrowError(/Expected number, variable, function/);
+        expect(() => new Fparser('4***5')).toThrowError(/Expected number, variable, function/);
+        // expect(() => new Fparser('+4+5')).toThrowError(); // This is now valid: unary + is supported, removed test
+        expect(() => new Fparser('4+5*sin(pi')).toThrowError(/Missing closing parenthesis/);
+        expect(() => new Fparser('4+5*sin)pi)')).toThrowError(/Expected end of expression/);
     });
 
     it('parses parenthesis correctly', function () {
