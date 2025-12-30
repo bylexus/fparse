@@ -13,7 +13,7 @@ export declare abstract class Expression {
      * @param right Right operand expression
      */
     static createOperatorExpression(operatorToken: Token | string, left: Expression, right: Expression): PowerExpression | MultDivExpression | PlusMinusExpression | LogicalExpression;
-    abstract evaluate(params: ValueObject): number | string;
+    abstract evaluate(params: ValueObject): any;
     toString(): string;
 }
 /**
@@ -122,6 +122,6 @@ export declare class VariableExpression extends Expression {
     varPath: string[];
     formulaObject: Formula | null;
     constructor(fullPath: string, formulaObj?: Formula | null);
-    evaluate(params?: {}): number | string;
+    evaluate(params?: {}): any;
     toString(): string;
 }

@@ -11,7 +11,7 @@
  * @param fullPath
  * @returns
  */
-export declare function getProperty(object: ValueObject, path: string[], fullPath: string): any[] | (number & {
+export declare function getProperty(object: ValueObject, path: string[], fullPath: string): Function | (number & {
     [key: string]: any;
 }) | (Object & {
     [key: string]: any;

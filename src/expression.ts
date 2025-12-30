@@ -39,7 +39,7 @@ export abstract class Expression {
         throw new Error(`Unknown operator: ${operator}`);
     }
 
-    abstract evaluate(params: ValueObject): number | string;
+    abstract evaluate(params: ValueObject): any;
 
     toString() {
         return '';
@@ -381,13 +381,15 @@ export class VariableExpression extends Expression {
         this.varPath = fullPath.split('.');
     }
 
-    evaluate(params = {}): number | string {
+    evaluate(params = {}): any {
         // params contain variable / value pairs: If this object's variable matches
         // a varname found in the params, return the value.
         // eg: params = {x: 5,y:3}, varname = x, return 5
         // Objects and arrays are also supported:
         // e.g. params = {x: {y: 5}}, varname = x.y, return 5
         //  or  params = {x: [2,4,6]}, varname = x.2, return 6
+        // Objects can also be passed as function arguments:
+        // e.g. params = {p1: {x: 1, y: 2}}, varname = p1, return {x: 1, y: 2}
 
         // Let's look in the value object first:
         let value = undefined;
@@ -402,8 +404,8 @@ export class VariableExpression extends Expression {
             // This will throw an error if the property is not found:
             value = getProperty(this.formulaObject ?? {}, this.varPath, this.fullPath);
         }
-        if (typeof value === 'function' || typeof value === 'object') {
-            throw new Error(`Cannot use ${this.fullPath} as value: It contains a non-numerical value.`);
+        if (typeof value === 'function') {
+            throw new Error(`Cannot use ${this.fullPath} as value: It is a function and not allowed as a variable value.`);
         }
 
         return value;

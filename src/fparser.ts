@@ -10,12 +10,8 @@ import {
     VariableExpression
 } from './expression';
 
-import { Tokenizer } from './tokenizer';
+import { Tokenizer, TokenType } from './tokenizer';
 import { Parser } from './parser';
-
-export { Tokenizer, TokenType } from './tokenizer';
-export type { Token } from './tokenizer';
-export { Parser } from './parser';
 
 /**
  * JS Formula Parser
@@ -87,6 +83,11 @@ export default class Formula {
     static MATH_CONSTANTS = MATH_CONSTANTS;
     static ALLOWED_FUNCTIONS: string[] = ['ifElse', 'first'];
 
+    // Export helper classes as static props, to make them testable:
+    static Tokenizer = Tokenizer;
+    static TokenType = TokenType;
+    static Parser = Parser;
+
     // Create a function blacklist:
     static functionBlacklist = Object.getOwnPropertyNames(Formula.prototype)
         .filter((prop) => Formula.prototype[prop] instanceof Function && !this.ALLOWED_FUNCTIONS.includes(prop))
@@ -96,7 +97,7 @@ export default class Formula {
     public options: FormulaOptions;
     public formulaStr: string;
     private _variables: string[];
-    private _memory: { [key: string]: number | string };
+    private _memory: { [key: string]: any };
 
     /**
      * Creates a new Formula instance
@@ -153,8 +154,6 @@ export default class Formula {
         this._memory = {};
     }
 
-
-
     /**
      * Parses the given formula string into an Abstract Syntax Tree (AST).
      *
@@ -187,7 +186,6 @@ export default class Formula {
         return parser.parse();
     }
 
-
     registerVariable(varName: string) {
         if (this._variables.indexOf(varName) < 0) {
             this._variables.push(varName);
@@ -209,10 +207,10 @@ export default class Formula {
      *   also returned as array.
      * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | string | (number | string)[] {
+    evaluate(valueObj: ValueObject | ValueObject[]): any {
         // resolve multiple value objects recursively:
         if (valueObj instanceof Array) {
-            return valueObj.map((v) => this.evaluate(v)) as (number | string)[];
+            return valueObj.map((v) => this.evaluate(v));
         }
         let expr = this.getExpression();
         if (!(expr instanceof Expression)) {
@@ -235,7 +233,7 @@ export default class Formula {
         return JSON.stringify(valueObj);
     }
 
-    resultFromMemory(valueObj: ValueObject): number | string | null {
+    resultFromMemory(valueObj: ValueObject): any {
         let key = this.hashValues(valueObj);
         let res = this._memory[key];
         if (res !== undefined) {
@@ -245,7 +243,7 @@ export default class Formula {
         }
     }
 
-    storeInMemory(valueObj: ValueObject, value: number | string) {
+    storeInMemory(valueObj: ValueObject, value: any) {
         this._memory[this.hashValues(valueObj)] = value;
     }
 

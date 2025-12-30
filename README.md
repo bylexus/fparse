@@ -34,7 +34,7 @@ For an example application, see https://fparser.alexi.ch/.
 	- [`ifElse`](#ifelse)
 	- [`first`](#first)
 - [Changelog](#changelog)
-	- [V4.0.1](#v401)
+	- [V4.1.0](#v410)
 	- [V4.0.0](#v400)
 	- [V3.1.0](#v310)
 	- [V3.0.1](#v301)
@@ -113,13 +113,24 @@ These changes enable a cleaner, more maintainable parser with better error messa
 
 ## Usage
 
-Include directly in your web page:
+Include as ES module directly in your web page:
 
 ```html
 <!-- Within a web page: Load the fparser library: -->
-<script src="dist/fparser.js"></script>
-<script>const f = new Formula('x+3');</script>
+<script type="module">
+	import Formula from "dist/fparser.js";
+	const f = new Formula('x+3');
+</script>
 ```
+
+Use CommonJS / global syntax for non-module environments:
+```html
+<script src="dist/fparser.umd.cjs"></script>
+<script>
+	const f = new Formula('x+3');
+</script>
+```
+
 
 Install it from npmjs.org:
 
@@ -236,6 +247,19 @@ const res = fObj.evaluate({
 const fObj2 = new Formula('sin(lib.inverse(x))');
 fObj2.lib = { inverse: (value) => 1 / value };
 const res2 = fObj2.evaluate({ x: Math.PI });
+```
+
+You can also pass objects as function arguments:
+
+```javascript
+const fObj = new Formula('distance(p1, p2)');
+fObj.distance = (point1, point2) =>
+	Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+
+let result = fObj.evaluate({
+	p1: { x: 1, y: 3 },
+	p2: { x: 4, y: 7 }
+}); // result = 5
 ```
 
 ### Using strings
@@ -468,10 +492,12 @@ let res = fObj.evaluate({ a: 10, x: 0, y: -2, z: 0 }); // -20: y is selected as 
 
 ## Changelog
 
-### V4.0.1
+### V4.1.0
 
 - [Change] Tokenizer refactoring: Using true Regex pattern matching instead single-char matching.
            This makes the tokenizing part much more readable.
+- [Feature] Pass object values to formula functions: Functions now accept JavaScript objects as function parameter values.
+- [Feature] Return the UMD build (CommonJS / Global variable): this was  (accidentially / intentionally) removed in V4.0.0
 
 ### V4.0.0
 
@@ -488,6 +514,7 @@ This is a major release with significant architectural improvements and some bre
 - [Breaking] Implicit multiplication removed: `2x` must now be written as `2*x`
 - [Breaking] Power operator (`^`) is now right-associative: `2^3^2` evaluates as `2^(3^2)` instead of `(2^3)^2`
 - [Breaking] Removed public methods: `isOperator()`, `isOperatorExpr()`, `splitFunctionParams()`
+- [Breaking] Separating ES Module and CommonJS / UMD builds: use `fparser.js` for ES 6 modules, and `fparser.umd.cjs` for CommonJS / global JS environments
 
 **Improvements:**
 - [Feature] Multi-character variables no longer require brackets: `myVar` instead of `[myVar]` (brackets still supported)

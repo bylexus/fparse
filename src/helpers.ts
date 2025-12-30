@@ -29,9 +29,6 @@ export function getProperty(object: ValueObject, path: string[], fullPath: strin
         curr = curr[propName];
     }
 
-    if (typeof curr === 'object' && !(curr instanceof Array)) {
-        throw new Error('Invalid value');
-    }
     // If we have a function that is part of an object (e.g. array.includes()), we need to
     // bind the scope before returning:
     if (typeof curr === 'function' && prev) {

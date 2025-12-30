@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
                 entry: resolve(__dirname, 'src/fparser.ts'),
                 name: 'Formula',
                 fileName: 'fparser',
-                formats: ['es']
+                formats: ['es', 'umd']
             }
         }
     };

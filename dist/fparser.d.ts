@@ -1,7 +1,6 @@
 import { BracketExpression, Expression, FunctionExpression, LogicalExpression, MultDivExpression, PlusMinusExpression, PowerExpression, ValueExpression, VariableExpression } from './expression';
-export { Tokenizer, TokenType } from './tokenizer';
-export type { Token } from './tokenizer';
-export { Parser } from './parser';
+import { Tokenizer, TokenType } from './tokenizer';
+import { Parser } from './parser';
 declare global {
     interface Math {
         [key: string]: number | Function;
@@ -45,6 +44,9 @@ export default class Formula {
         SQRT2: number;
     };
     static ALLOWED_FUNCTIONS: string[];
+    static Tokenizer: typeof Tokenizer;
+    static TokenType: typeof TokenType;
+    static Parser: typeof Parser;
     static functionBlacklist: any[];
     formulaExpression: Expression | null;
     options: FormulaOptions;
@@ -116,13 +118,13 @@ export default class Formula {
      *   also returned as array.
      * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
      */
-    evaluate(valueObj: ValueObject | ValueObject[]): number | string | (number | string)[];
+    evaluate(valueObj: ValueObject | ValueObject[]): any;
     hashValues(valueObj: ValueObject): string;
-    resultFromMemory(valueObj: ValueObject): number | string | null;
-    storeInMemory(valueObj: ValueObject, value: number | string): void;
+    resultFromMemory(valueObj: ValueObject): any;
+    storeInMemory(valueObj: ValueObject, value: any): void;
     getExpression(): Expression | null;
     getExpressionString(): string;
-    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): string | number | (string | number)[];
+    static calc(formula: string, valueObj?: ValueObject | null, options?: {}): any;
     /**
      * Implements an if/else condition as a function: Checks the predicate
      * if it evaluates to true-ish (> 0, true, non-empty string, etc.). Returns the trueValue if

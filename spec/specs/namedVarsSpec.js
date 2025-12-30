@@ -103,6 +103,24 @@ describe('Named Variable tests', function () {
         f = new Fparser('[obj.xa] + [obj.yb]');
         f.obj = { xa: 1, yb: 20 };
         expect(f.evaluate()).toEqual(21);
+
+        // deeper nested objects:
+        f = new Fparser('[obj.a.nr1] + obj.b.nr2');
+        expect(
+            f.evaluate({
+                obj: { a: { nr1: 4 }, b: { nr2: 17 } }
+            })
+        ).toEqual(21);
+
+    });
+
+    it('can use an object as formula function value', function () {
+        const fObj = new Fparser();
+        fObj.distance = (point1, point2) =>
+            Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+        fObj.setFormula('distance(p1,p2)');
+        // sqrt(pow(1-4,2) + pow(3-7,2)) = sqrt(9 + 16) = sqrt(25) = 5
+        expect(fObj.evaluate({ p1: { x: 1, y: 3 }, p2: { x: 4, y: 7 } })).toEqual(5);
     });
 
     it('Values throw an exception when used as functions', function () {

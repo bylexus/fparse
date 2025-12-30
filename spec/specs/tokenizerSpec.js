@@ -1,4 +1,7 @@
-import { Tokenizer, TokenType } from '../../dist/fparser.js';
+import Formula from '../../dist/fparser.js';
+
+const Tokenizer = Formula.Tokenizer;
+const TokenType = Formula.TokenType;
 
 describe('Tokenizer', function () {
     let tokenizer;
