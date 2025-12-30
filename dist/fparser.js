@@ -1,87 +1,112 @@
-var R = Object.defineProperty;
-var A = (o, e, t) => e in o ? R(o, e, { enumerable: !0, configurable: !0, writable: !0, value: t }) : o[e] = t;
-var r = (o, e, t) => (A(o, typeof e != "symbol" ? e + "" : e, t), t);
-function f(o, e, t) {
-  let i = o, s = null;
-  for (let n of e) {
-    if (!["object", "string"].includes(typeof i))
-      throw new Error(`Cannot evaluate ${n}, property not found (from path ${t})`);
-    if (typeof i == "object" && !(n in i))
-      throw new Error(`Cannot evaluate ${n}, property not found (from path ${t})`);
-    if (typeof i == "string" && !i.hasOwnProperty(n))
-      throw new Error(`Cannot evaluate ${n}, property not found (from path ${t})`);
-    s = i, i = i[n];
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => {
+  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+  return value;
+};
+function getProperty(object, path, fullPath) {
+  let curr = object;
+  let prev = null;
+  for (let propName of path) {
+    if (!["object", "string"].includes(typeof curr)) {
+      throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
+    }
+    if (typeof curr === "object" && !(propName in curr)) {
+      throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
+    }
+    if (typeof curr === "string" && !curr.hasOwnProperty(propName)) {
+      throw new Error(`Cannot evaluate ${propName}, property not found (from path ${fullPath})`);
+    }
+    prev = curr;
+    curr = curr[propName];
   }
-  if (typeof i == "object" && !(i instanceof Array))
+  if (typeof curr === "object" && !(curr instanceof Array)) {
     throw new Error("Invalid value");
-  return typeof i == "function" && s && (i = i.bind(s)), i;
+  }
+  if (typeof curr === "function" && prev) {
+    curr = curr.bind(prev);
+  }
+  return curr;
 }
-class P {
-  static throwIfNotNumber(e) {
-    if (typeof e === "string")
+class MathFunctionHelper {
+  static throwIfNotNumber(value) {
+    const valueType = typeof value;
+    if (valueType === "string") {
       throw new Error("Strings are not allowed in math operations");
+    }
   }
 }
-class c {
-  static throwIfNotNumber(e) {
-    if (typeof e === "string")
+class MathOperatorHelper {
+  static throwIfNotNumber(value) {
+    const valueType = typeof value;
+    if (valueType === "string") {
       throw new Error("Strings are not allowed in math operations");
+    }
   }
 }
-class u {
+class Expression {
   /**
    * Creates an operator expression from a token.
    * @param operatorToken The operator token (or string for backward compatibility)
    * @param left Left operand expression
    * @param right Right operand expression
    */
-  static createOperatorExpression(e, t, i) {
-    const s = typeof e == "string" ? e : String(e.value);
-    if (s === "^")
-      return new O(t, i);
-    if (["*", "/"].includes(s))
-      return new E(s, t, i);
-    if (["+", "-"].includes(s))
-      return new m(s, t, i);
-    if (["<", ">", "<=", ">=", "=", "!="].includes(s))
-      return new l(s, t, i);
-    throw new Error(`Unknown operator: ${s}`);
+  static createOperatorExpression(operatorToken, left, right) {
+    const operator = typeof operatorToken === "string" ? operatorToken : String(operatorToken.value);
+    if (operator === "^") {
+      return new PowerExpression(left, right);
+    }
+    if (["*", "/"].includes(operator)) {
+      return new MultDivExpression(operator, left, right);
+    }
+    if (["+", "-"].includes(operator)) {
+      return new PlusMinusExpression(operator, left, right);
+    }
+    if (["<", ">", "<=", ">=", "=", "!="].includes(operator)) {
+      return new LogicalExpression(operator, left, right);
+    }
+    throw new Error(`Unknown operator: ${operator}`);
   }
   toString() {
     return "";
   }
 }
-class N extends u {
-  constructor(t) {
+class BracketExpression extends Expression {
+  constructor(expr) {
     super();
-    r(this, "innerExpression");
-    if (this.innerExpression = t, !(this.innerExpression instanceof u))
+    __publicField(this, "innerExpression");
+    this.innerExpression = expr;
+    if (!(this.innerExpression instanceof Expression)) {
       throw new Error("No inner expression given for bracket expression");
+    }
   }
-  evaluate(t = {}) {
-    return this.innerExpression.evaluate(t);
+  evaluate(params = {}) {
+    return this.innerExpression.evaluate(params);
   }
   toString() {
     return `(${this.innerExpression.toString()})`;
   }
 }
-class w extends u {
-  constructor(t, i = "number") {
+class ValueExpression extends Expression {
+  constructor(value, type = "number") {
     super();
-    r(this, "value");
-    r(this, "type");
-    switch (this.value = Number(t), i) {
+    __publicField(this, "value");
+    __publicField(this, "type");
+    this.value = Number(value);
+    switch (type) {
       case "number":
-        if (this.value = Number(t), isNaN(this.value))
-          throw new Error("Cannot parse number: " + t);
+        this.value = Number(value);
+        if (isNaN(this.value)) {
+          throw new Error("Cannot parse number: " + value);
+        }
         break;
       case "string":
-        this.value = String(t);
+        this.value = String(value);
         break;
       default:
-        throw new Error("Invalid value type: " + i);
+        throw new Error("Invalid value type: " + type);
     }
-    this.type = i;
+    this.type = type;
   }
   evaluate() {
     return this.value;
@@ -91,98 +116,124 @@ class w extends u {
       case "number":
         return String(this.value);
       case "string":
-        return '"' + this.value + '"';
+        return String('"' + this.value + '"');
       default:
         throw new Error("Invalid type");
     }
   }
 }
-class m extends u {
-  constructor(t, i, s) {
+class PlusMinusExpression extends Expression {
+  constructor(operator, left, right) {
     super();
-    r(this, "operator");
-    r(this, "left");
-    r(this, "right");
-    if (!["+", "-"].includes(t))
-      throw new Error(`Operator not allowed in Plus/Minus expression: ${t}`);
-    this.operator = t, this.left = i, this.right = s;
+    __publicField(this, "operator");
+    __publicField(this, "left");
+    __publicField(this, "right");
+    if (!["+", "-"].includes(operator)) {
+      throw new Error(`Operator not allowed in Plus/Minus expression: ${operator}`);
+    }
+    this.operator = operator;
+    this.left = left;
+    this.right = right;
   }
-  evaluate(t = {}) {
-    const i = this.left.evaluate(t), s = this.right.evaluate(t);
-    if (c.throwIfNotNumber(i), c.throwIfNotNumber(s), this.operator === "+")
-      return Number(i) + Number(s);
-    if (this.operator === "-")
-      return Number(i) - Number(s);
+  evaluate(params = {}) {
+    const leftValue = this.left.evaluate(params);
+    const rightValue = this.right.evaluate(params);
+    MathOperatorHelper.throwIfNotNumber(leftValue);
+    MathOperatorHelper.throwIfNotNumber(rightValue);
+    if (this.operator === "+") {
+      return Number(leftValue) + Number(rightValue);
+    }
+    if (this.operator === "-") {
+      return Number(leftValue) - Number(rightValue);
+    }
     throw new Error("Unknown operator for PlusMinus expression");
   }
   toString() {
     return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
   }
 }
-r(m, "PLUS", "+"), r(m, "MINUS", "-");
-class E extends u {
-  constructor(t, i, s) {
+__publicField(PlusMinusExpression, "PLUS", "+");
+__publicField(PlusMinusExpression, "MINUS", "-");
+class MultDivExpression extends Expression {
+  constructor(operator, left, right) {
     super();
-    r(this, "operator");
-    r(this, "left");
-    r(this, "right");
-    if (!["*", "/"].includes(t))
-      throw new Error(`Operator not allowed in Multiply/Division expression: ${t}`);
-    this.operator = t, this.left = i, this.right = s;
+    __publicField(this, "operator");
+    __publicField(this, "left");
+    __publicField(this, "right");
+    if (!["*", "/"].includes(operator)) {
+      throw new Error(`Operator not allowed in Multiply/Division expression: ${operator}`);
+    }
+    this.operator = operator;
+    this.left = left;
+    this.right = right;
   }
-  evaluate(t = {}) {
-    const i = this.left.evaluate(t), s = this.right.evaluate(t);
-    if (c.throwIfNotNumber(i), c.throwIfNotNumber(s), this.operator === "*")
-      return Number(i) * Number(s);
-    if (this.operator === "/")
-      return Number(i) / Number(s);
+  evaluate(params = {}) {
+    const leftValue = this.left.evaluate(params);
+    const rightValue = this.right.evaluate(params);
+    MathOperatorHelper.throwIfNotNumber(leftValue);
+    MathOperatorHelper.throwIfNotNumber(rightValue);
+    if (this.operator === "*") {
+      return Number(leftValue) * Number(rightValue);
+    }
+    if (this.operator === "/") {
+      return Number(leftValue) / Number(rightValue);
+    }
     throw new Error("Unknown operator for MultDiv expression");
   }
   toString() {
     return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
   }
 }
-r(E, "MULT", "*"), r(E, "DIV", "/");
-class O extends u {
-  constructor(t, i) {
+__publicField(MultDivExpression, "MULT", "*");
+__publicField(MultDivExpression, "DIV", "/");
+class PowerExpression extends Expression {
+  constructor(base, exponent) {
     super();
-    r(this, "base");
-    r(this, "exponent");
-    this.base = t, this.exponent = i;
+    __publicField(this, "base");
+    __publicField(this, "exponent");
+    this.base = base;
+    this.exponent = exponent;
   }
-  evaluate(t = {}) {
-    const i = this.base.evaluate(t), s = this.exponent.evaluate(t);
-    return c.throwIfNotNumber(i), c.throwIfNotNumber(s), Math.pow(Number(i), Number(s));
+  evaluate(params = {}) {
+    const baseValue = this.base.evaluate(params);
+    const exponentValue = this.exponent.evaluate(params);
+    MathOperatorHelper.throwIfNotNumber(baseValue);
+    MathOperatorHelper.throwIfNotNumber(exponentValue);
+    return Math.pow(Number(baseValue), Number(exponentValue));
   }
   toString() {
     return `${this.base.toString()}^${this.exponent.toString()}`;
   }
 }
-class l extends u {
-  constructor(t, i, s) {
+class LogicalExpression extends Expression {
+  constructor(operator, left, right) {
     super();
-    r(this, "operator");
-    r(this, "left");
-    r(this, "right");
-    if (!["<", ">", "<=", ">=", "=", "!="].includes(t))
-      throw new Error(`Operator not allowed in Logical expression: ${t}`);
-    this.operator = t, this.left = i, this.right = s;
+    __publicField(this, "operator");
+    __publicField(this, "left");
+    __publicField(this, "right");
+    if (!["<", ">", "<=", ">=", "=", "!="].includes(operator)) {
+      throw new Error(`Operator not allowed in Logical expression: ${operator}`);
+    }
+    this.operator = operator;
+    this.left = left;
+    this.right = right;
   }
-  evaluate(t = {}) {
-    const i = this.left.evaluate(t), s = this.right.evaluate(t);
+  evaluate(params = {}) {
+    const leftValue = this.left.evaluate(params);
+    const rightValue = this.right.evaluate(params);
     switch (this.operator) {
       case "<":
-        return i < s ? 1 : 0;
+        return leftValue < rightValue ? 1 : 0;
       case ">":
-        return i > s ? 1 : 0;
+        return leftValue > rightValue ? 1 : 0;
       case "<=":
-        return i <= s ? 1 : 0;
+        return leftValue <= rightValue ? 1 : 0;
       case ">=":
-        return i >= s ? 1 : 0;
+        return leftValue >= rightValue ? 1 : 0;
       case "=":
-        return i === s ? 1 : 0;
+        return leftValue === rightValue ? 1 : 0;
       case "!=":
-        return i !== s ? 1 : 0;
+        return leftValue !== rightValue ? 1 : 0;
     }
     throw new Error("Unknown operator for Logical expression");
   }
@@ -190,136 +241,181 @@ class l extends u {
     return `${this.left.toString()} ${this.operator} ${this.right.toString()}`;
   }
 }
-r(l, "LT", "<"), r(l, "GT", ">"), r(l, "LTE", "<="), r(l, "GTE", ">="), r(l, "EQ", "="), r(l, "NEQ", "!=");
-class b extends u {
-  constructor(t, i, s = null) {
+__publicField(LogicalExpression, "LT", "<");
+__publicField(LogicalExpression, "GT", ">");
+__publicField(LogicalExpression, "LTE", "<=");
+__publicField(LogicalExpression, "GTE", ">=");
+__publicField(LogicalExpression, "EQ", "=");
+__publicField(LogicalExpression, "NEQ", "!=");
+class FunctionExpression extends Expression {
+  constructor(fn, argumentExpressions, formulaObject = null) {
     super();
-    r(this, "fn");
-    r(this, "varPath");
-    r(this, "argumentExpressions");
-    r(this, "formulaObject");
-    r(this, "blacklisted");
-    this.fn = t ?? "", this.varPath = this.fn.split("."), this.argumentExpressions = i || [], this.formulaObject = s, this.blacklisted = void 0;
+    __publicField(this, "fn");
+    __publicField(this, "varPath");
+    __publicField(this, "argumentExpressions");
+    __publicField(this, "formulaObject");
+    __publicField(this, "blacklisted");
+    this.fn = fn ?? "";
+    this.varPath = this.fn.split(".");
+    this.argumentExpressions = argumentExpressions || [];
+    this.formulaObject = formulaObject;
+    this.blacklisted = void 0;
   }
-  evaluate(t = {}) {
-    t = t || {};
-    const i = this.argumentExpressions.map((n) => n.evaluate(t));
+  evaluate(params = {}) {
+    params = params || {};
+    const paramValues = this.argumentExpressions.map((a) => a.evaluate(params));
     try {
-      let n = f(t, this.varPath, this.fn);
-      if (n instanceof Function)
-        return n.apply(this, i);
-    } catch {
+      let fn = getProperty(params, this.varPath, this.fn);
+      if (fn instanceof Function) {
+        return fn.apply(this, paramValues);
+      }
+    } catch (e) {
     }
-    let s;
+    let objFn;
     try {
-      s = f(this.formulaObject ?? {}, this.varPath, this.fn);
-    } catch {
+      objFn = getProperty(this.formulaObject ?? {}, this.varPath, this.fn);
+    } catch (e) {
     }
-    if (this.formulaObject && s instanceof Function) {
-      if (this.isBlacklisted())
+    if (this.formulaObject && objFn instanceof Function) {
+      if (this.isBlacklisted()) {
         throw new Error("Blacklisted function called: " + this.fn);
-      return s.apply(this.formulaObject, i);
+      }
+      return objFn.apply(this.formulaObject, paramValues);
     }
     try {
-      const n = f(Math, this.varPath, this.fn);
-      if (n instanceof Function)
-        return i.forEach((p) => {
-          P.throwIfNotNumber(p);
-        }), n.apply(this, i);
-    } catch {
+      const mathFn = getProperty(Math, this.varPath, this.fn);
+      if (mathFn instanceof Function) {
+        paramValues.forEach((paramValue) => {
+          MathFunctionHelper.throwIfNotNumber(paramValue);
+        });
+        return mathFn.apply(this, paramValues);
+      }
+    } catch (e) {
     }
     throw new Error("Function not found: " + this.fn);
   }
   toString() {
-    return `${this.fn}(${this.argumentExpressions.map((t) => t.toString()).join(", ")})`;
+    return `${this.fn}(${this.argumentExpressions.map((a) => a.toString()).join(", ")})`;
   }
   isBlacklisted() {
-    return this.blacklisted === void 0 && (this.blacklisted = v.functionBlacklist.includes(
-      this.formulaObject ? this.formulaObject[this.fn] : null
-    )), this.blacklisted;
+    if (this.blacklisted === void 0) {
+      this.blacklisted = Formula.functionBlacklist.includes(
+        this.formulaObject ? this.formulaObject[this.fn] : null
+      );
+    }
+    return this.blacklisted;
   }
 }
-class k extends u {
-  constructor(t, i = null) {
+class VariableExpression extends Expression {
+  constructor(fullPath, formulaObj = null) {
     super();
-    r(this, "fullPath");
-    r(this, "varPath");
-    r(this, "formulaObject");
-    this.formulaObject = i, this.fullPath = t, this.varPath = t.split(".");
+    __publicField(this, "fullPath");
+    __publicField(this, "varPath");
+    __publicField(this, "formulaObject");
+    this.formulaObject = formulaObj;
+    this.fullPath = fullPath;
+    this.varPath = fullPath.split(".");
   }
-  evaluate(t = {}) {
-    let i;
+  evaluate(params = {}) {
+    let value = void 0;
     try {
-      i = f(t, this.varPath, this.fullPath);
-    } catch {
+      value = getProperty(params, this.varPath, this.fullPath);
+    } catch (e) {
     }
-    if (i === void 0 && (i = f(this.formulaObject ?? {}, this.varPath, this.fullPath)), typeof i == "function" || typeof i == "object")
+    if (value === void 0) {
+      value = getProperty(this.formulaObject ?? {}, this.varPath, this.fullPath);
+    }
+    if (typeof value === "function" || typeof value === "object") {
       throw new Error(`Cannot use ${this.fullPath} as value: It contains a non-numerical value.`);
-    return i;
+    }
+    return value;
   }
   toString() {
     return `${this.varPath.join(".")}`;
   }
 }
-var a = /* @__PURE__ */ ((o) => (o.NUMBER = "NUMBER", o.VARIABLE = "VARIABLE", o.OPERATOR = "OPERATOR", o.LOGICAL_OPERATOR = "LOGICAL_OPERATOR", o.FUNCTION = "FUNCTION", o.LEFT_PAREN = "LEFT_PAREN", o.RIGHT_PAREN = "RIGHT_PAREN", o.COMMA = "COMMA", o.STRING = "STRING", o.EOF = "EOF", o))(a || {});
-class y {
+var TokenType = /* @__PURE__ */ ((TokenType2) => {
+  TokenType2["NUMBER"] = "NUMBER";
+  TokenType2["VARIABLE"] = "VARIABLE";
+  TokenType2["OPERATOR"] = "OPERATOR";
+  TokenType2["LOGICAL_OPERATOR"] = "LOGICAL_OPERATOR";
+  TokenType2["FUNCTION"] = "FUNCTION";
+  TokenType2["LEFT_PAREN"] = "LEFT_PAREN";
+  TokenType2["RIGHT_PAREN"] = "RIGHT_PAREN";
+  TokenType2["COMMA"] = "COMMA";
+  TokenType2["STRING"] = "STRING";
+  TokenType2["EOF"] = "EOF";
+  return TokenType2;
+})(TokenType || {});
+const _Tokenizer = class _Tokenizer {
   constructor() {
-    r(this, "input");
-    r(this, "position");
-    this.input = "", this.position = 0;
+    __publicField(this, "input");
+    __publicField(this, "position");
+    this.input = "";
+    this.position = 0;
   }
-  tokenize(e) {
-    this.input = e, this.position = 0;
-    const t = [];
-    for (; this.position < this.input.length && (this.skipWhitespace(), !(this.position >= this.input.length)); ) {
-      const i = this.nextToken(t);
-      i && t.push(i);
+  tokenize(input) {
+    this.input = input;
+    this.position = 0;
+    const tokens = [];
+    while (this.position < this.input.length) {
+      this.skipWhitespace();
+      if (this.position >= this.input.length)
+        break;
+      const token = this.nextToken(tokens);
+      if (token) {
+        tokens.push(token);
+      }
     }
-    return t.push({
+    tokens.push({
       type: "EOF",
       value: "",
       raw: "",
       position: this.position,
       length: 0
-    }), t;
+    });
+    return tokens;
   }
-  nextToken(e) {
-    return this.readString() || this.readLogicalOperator() || this.readNumber(e) || this.readOperator() || this.readParenthesis() || this.readComma() || this.readIdentifier() || this.throwUnexpectedChar();
+  nextToken(tokens) {
+    return this.readString() || this.readLogicalOperator() || this.readNumber(tokens) || this.readOperator() || this.readParenthesis() || this.readComma() || this.readIdentifier() || this.throwUnexpectedChar();
   }
   skipWhitespace() {
-    for (; this.position < this.input.length && /\s/.test(this.input[this.position]); )
-      this.position++;
+    const remaining = this.input.slice(this.position);
+    const match = remaining.match(_Tokenizer.PATTERNS.WHITESPACE);
+    if (match) {
+      this.position += match[0].length;
+    }
   }
-  peek(e = 0) {
-    return this.input[this.position + e] || "";
+  remaining() {
+    return this.input.slice(this.position);
   }
   /**
    * Read a number token. Includes the minus sign if it's unambiguously part of the number.
    * Handles negative numbers when preceded by operators, commas, left parenthesis, or at start.
    */
-  readNumber(e) {
-    const t = this.position;
-    let i = "";
-    if (this.peek() === "-") {
-      const n = e.length > 0 ? e[e.length - 1] : null;
-      if ((!n || n.type === "OPERATOR" || n.type === "LOGICAL_OPERATOR" || n.type === "COMMA" || n.type === "LEFT_PAREN") && /\d/.test(this.peek(1)))
-        i += this.peek(), this.position++;
-      else
-        return null;
+  readNumber(tokens) {
+    const start = this.position;
+    const remaining = this.remaining();
+    const match = remaining.match(_Tokenizer.PATTERNS.NUMBER);
+    if (!match) {
+      return null;
     }
-    if (!/\d/.test(this.peek()))
-      return i === "-" && (this.position = t), null;
-    for (; /\d/.test(this.peek()); )
-      i += this.peek(), this.position++;
-    if (this.peek() === ".")
-      for (i += this.peek(), this.position++; /\d/.test(this.peek()); )
-        i += this.peek(), this.position++;
+    const raw = match[0];
+    if (raw.startsWith("-")) {
+      const prevToken = tokens.length > 0 ? tokens[tokens.length - 1] : null;
+      const canBeNegative = !prevToken || prevToken.type === "OPERATOR" || prevToken.type === "LOGICAL_OPERATOR" || prevToken.type === "COMMA" || prevToken.type === "LEFT_PAREN";
+      if (!canBeNegative) {
+        return null;
+      }
+    }
+    this.position += raw.length;
+    const value = parseFloat(raw);
     return {
       type: "NUMBER",
-      value: parseFloat(i),
-      raw: i,
-      position: t,
-      length: this.position - t
+      value,
+      raw,
+      position: start,
+      length: raw.length
     };
   }
   /**
@@ -327,155 +423,215 @@ class y {
    * Supports: myVar, x, PI, my_var, obj.prop, [myVar], [obj.prop]
    */
   readIdentifier() {
-    const e = this.position;
-    let t = "", i = "", s = !1;
-    if (this.peek() === "[") {
-      for (s = !0, t += this.peek(), this.position++; this.position < this.input.length && this.peek() !== "]"; ) {
-        if (!/[a-zA-Z0-9_.]/.test(this.peek()))
-          throw new Error(
-            `Invalid character '${this.peek()}' in bracketed variable at position ${this.position}`
-          );
-        i += this.peek(), t += this.peek(), this.position++;
+    const start = this.position;
+    const remaining = this.remaining();
+    let match = remaining.match(_Tokenizer.PATTERNS.BRACKETED_IDENTIFIER);
+    if (match) {
+      const raw = match[0];
+      const value = match[1];
+      if (value === "") {
+        throw new Error(`Empty bracketed variable at position ${start}`);
       }
-      if (this.peek() !== "]")
-        throw new Error(`Unclosed bracket for variable at position ${e}`);
-      t += this.peek(), this.position++;
-    } else {
-      if (!/[a-zA-Z_]/.test(this.peek()))
-        return null;
-      for (; /[a-zA-Z0-9_.]/.test(this.peek()); )
-        i += this.peek(), t += this.peek(), this.position++;
+      if (!/^[a-zA-Z0-9_.]+$/.test(value)) {
+        const invalidCharMatch = value.match(/[^a-zA-Z0-9_.]/);
+        const invalidChar = invalidCharMatch ? invalidCharMatch[0] : value[0];
+        const invalidCharPos = start + 1 + value.indexOf(invalidChar);
+        throw new Error(
+          `Invalid character '${invalidChar}' in bracketed variable at position ${invalidCharPos}`
+        );
+      }
+      this.position += raw.length;
+      const savedPos = this.position;
+      this.skipWhitespace();
+      const isFunction = this.position < this.input.length && this.input[this.position] === "(";
+      this.position = savedPos;
+      return {
+        type: isFunction ? "FUNCTION" : "VARIABLE",
+        value,
+        raw,
+        position: start,
+        length: raw.length
+      };
     }
-    if (i === "") {
-      if (s)
-        throw new Error(`Empty bracketed variable at position ${e}`);
-      return null;
+    match = remaining.match(_Tokenizer.PATTERNS.IDENTIFIER);
+    if (match) {
+      const raw = match[0];
+      const value = raw;
+      this.position += raw.length;
+      const savedPos = this.position;
+      this.skipWhitespace();
+      const isFunction = this.position < this.input.length && this.input[this.position] === "(";
+      this.position = savedPos;
+      return {
+        type: isFunction ? "FUNCTION" : "VARIABLE",
+        value,
+        raw,
+        position: start,
+        length: raw.length
+      };
     }
-    let n = this.position;
-    this.skipWhitespace();
-    const p = this.peek() === "(";
-    return this.position = n, {
-      type: p ? "FUNCTION" : "VARIABLE",
-      value: i,
-      raw: t,
-      position: e,
-      length: this.position - e
-    };
+    return null;
   }
   /**
    * Read a string literal (single or double quoted).
    * Supports escaped quotes: \" or \'
    */
   readString() {
-    const e = this.position, t = this.peek();
-    if (t !== '"' && t !== "'")
-      return null;
-    let i = t, s = "";
-    for (this.position++; this.position < this.input.length; ) {
-      const n = this.peek();
-      if (n === "\\" && (this.peek(1) === t || this.peek(1) === "\\")) {
-        const p = this.peek(1);
-        i += n + p, s += p, this.position += 2;
-      } else if (n === t) {
-        i += n, this.position++;
-        break;
-      } else
-        i += n, s += n, this.position++;
+    const start = this.position;
+    const remaining = this.remaining();
+    let match = remaining.match(_Tokenizer.PATTERNS.STRING_DOUBLE);
+    if (match) {
+      const raw = match[0];
+      const capturedValue = match[1];
+      const value = capturedValue.replace(/\\(.)/g, "$1");
+      this.position += raw.length;
+      return {
+        type: "STRING",
+        value,
+        raw,
+        position: start,
+        length: raw.length
+      };
     }
-    if (!i.endsWith(t))
-      throw new Error(`Unterminated string at position ${e}`);
-    return {
-      type: "STRING",
-      value: s,
-      raw: i,
-      position: e,
-      length: this.position - e
-    };
+    match = remaining.match(_Tokenizer.PATTERNS.STRING_SINGLE);
+    if (match) {
+      const raw = match[0];
+      const capturedValue = match[1];
+      const value = capturedValue.replace(/\\(.)/g, "$1");
+      this.position += raw.length;
+      return {
+        type: "STRING",
+        value,
+        raw,
+        position: start,
+        length: raw.length
+      };
+    }
+    if (remaining.startsWith('"') || remaining.startsWith("'")) {
+      throw new Error(`Unterminated string at position ${start}`);
+    }
+    return null;
   }
   /**
    * Read a simple operator: +, -, *, /, ^
    */
   readOperator() {
-    const e = this.peek();
-    if (!/[+\-*/^]/.test(e))
+    const start = this.position;
+    const remaining = this.remaining();
+    const match = remaining.match(_Tokenizer.PATTERNS.OPERATOR);
+    if (!match) {
       return null;
-    const i = this.position;
-    return this.position++, {
+    }
+    const raw = match[0];
+    this.position += raw.length;
+    return {
       type: "OPERATOR",
-      value: e,
-      raw: e,
-      position: i,
-      length: 1
+      value: raw,
+      raw,
+      position: start,
+      length: raw.length
     };
   }
   /**
    * Read a logical operator: <, >, <=, >=, =, !=
    */
   readLogicalOperator() {
-    const e = this.position, t = this.peek(), i = this.peek(1);
-    if (t === "<" && i === "=" || t === ">" && i === "=" || t === "!" && i === "=") {
-      const s = t + i;
-      return this.position += 2, {
-        type: "LOGICAL_OPERATOR",
-        value: s,
-        raw: s,
-        position: e,
-        length: 2
-      };
+    const start = this.position;
+    const remaining = this.remaining();
+    if (remaining.startsWith("!") && !remaining.startsWith("!=")) {
+      throw new Error(`Invalid operator '!' at position ${start}. Did you mean '!='?`);
     }
-    if (t === "<" || t === ">" || t === "=")
-      return this.position++, {
-        type: "LOGICAL_OPERATOR",
-        value: t,
-        raw: t,
-        position: e,
-        length: 1
-      };
-    if (t === "!")
-      throw new Error(`Invalid operator '!' at position ${e}. Did you mean '!='?`);
-    return null;
+    const match = remaining.match(_Tokenizer.PATTERNS.LOGICAL_OPERATOR);
+    if (!match) {
+      return null;
+    }
+    const raw = match[0];
+    this.position += raw.length;
+    return {
+      type: "LOGICAL_OPERATOR",
+      value: raw,
+      raw,
+      position: start,
+      length: raw.length
+    };
   }
   /**
    * Read parentheses
    */
   readParenthesis() {
-    const e = this.peek(), t = this.position;
-    return e === "(" ? (this.position++, {
-      type: "LEFT_PAREN",
-      value: "(",
-      raw: "(",
-      position: t,
-      length: 1
-    }) : e === ")" ? (this.position++, {
-      type: "RIGHT_PAREN",
-      value: ")",
-      raw: ")",
-      position: t,
-      length: 1
-    }) : null;
+    const start = this.position;
+    const remaining = this.remaining();
+    let match = remaining.match(_Tokenizer.PATTERNS.LEFT_PAREN);
+    if (match) {
+      const raw = match[0];
+      this.position += raw.length;
+      return {
+        type: "LEFT_PAREN",
+        value: raw,
+        raw,
+        position: start,
+        length: raw.length
+      };
+    }
+    match = remaining.match(_Tokenizer.PATTERNS.RIGHT_PAREN);
+    if (match) {
+      const raw = match[0];
+      this.position += raw.length;
+      return {
+        type: "RIGHT_PAREN",
+        value: raw,
+        raw,
+        position: start,
+        length: raw.length
+      };
+    }
+    return null;
   }
   /**
    * Read comma separator
    */
   readComma() {
-    const e = this.peek(), t = this.position;
-    return e === "," ? (this.position++, {
+    const start = this.position;
+    const remaining = this.remaining();
+    const match = remaining.match(_Tokenizer.PATTERNS.COMMA);
+    if (!match) {
+      return null;
+    }
+    const raw = match[0];
+    this.position += raw.length;
+    return {
       type: "COMMA",
-      value: ",",
-      raw: ",",
-      position: t,
-      length: 1
-    }) : null;
+      value: raw,
+      raw,
+      position: start,
+      length: raw.length
+    };
   }
   /**
    * Throw an error for unexpected characters
    */
   throwUnexpectedChar() {
-    const e = this.peek();
-    throw new Error(`Unexpected character '${e}' at position ${this.position}`);
+    const char = this.input[this.position] || "EOF";
+    throw new Error(`Unexpected character '${char}' at position ${this.position}`);
   }
-}
-const g = {
+};
+// Regex patterns for token matching
+__publicField(_Tokenizer, "PATTERNS", {
+  WHITESPACE: /^\s+/,
+  NUMBER: /^-?\d+(\.\d+)?/,
+  IDENTIFIER: /^[a-zA-Z_][a-zA-Z0-9_.]*/,
+  BRACKETED_IDENTIFIER: /^\[([^\]]*)\]/,
+  // Match anything between brackets, validate later
+  STRING_DOUBLE: /^"((?:[^"\\]|\\.)*)"/,
+  STRING_SINGLE: /^'((?:[^'\\]|\\.)*)'/,
+  LOGICAL_OPERATOR: /^(<=|>=|!=|<|>|=)/,
+  OPERATOR: /^[+\-*/^]/,
+  LEFT_PAREN: /^\(/,
+  RIGHT_PAREN: /^\)/,
+  COMMA: /^,/
+});
+let Tokenizer = _Tokenizer;
+const PRECEDENCE = {
   // Logical operators (lowest precedence)
   "=": 1,
   "!=": 1,
@@ -492,110 +648,132 @@ const g = {
   // Power (highest precedence, right-associative)
   "^": 4
 };
-class I {
-  constructor(e, t) {
-    r(this, "tokens");
-    r(this, "current");
-    r(this, "formulaObject");
-    this.tokens = e, this.current = 0, this.formulaObject = t;
+class Parser {
+  constructor(tokens, formulaObject) {
+    __publicField(this, "tokens");
+    __publicField(this, "current");
+    __publicField(this, "formulaObject");
+    this.tokens = tokens;
+    this.current = 0;
+    this.formulaObject = formulaObject;
   }
   /**
    * Main entry point: Parse the token stream into an Expression tree
    */
   parse() {
-    const e = this.parseExpression(0);
+    const expr = this.parseExpression(0);
     if (!this.isAtEnd()) {
-      const t = this.peek();
+      const token = this.peek();
       throw new Error(
-        `Unexpected token '${t.value}' at position ${t.position}: Expected end of expression`
+        `Unexpected token '${token.value}' at position ${token.position}: Expected end of expression`
       );
     }
-    return e;
+    return expr;
   }
   /**
    * Pratt parsing: handles operator precedence elegantly
    * @param minPrecedence Minimum precedence level to parse
    */
-  parseExpression(e) {
-    let t = this.parsePrimary();
-    for (; !this.isAtEnd(); ) {
-      const i = this.peek();
-      if (i.type !== a.OPERATOR && i.type !== a.LOGICAL_OPERATOR)
+  parseExpression(minPrecedence) {
+    let left = this.parsePrimary();
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+      if (token.type !== TokenType.OPERATOR && token.type !== TokenType.LOGICAL_OPERATOR) {
         break;
-      const s = this.getPrecedence(i);
-      if (s < e)
+      }
+      const precedence = this.getPrecedence(token);
+      if (precedence < minPrecedence)
         break;
-      const p = i.value === "^" ? s : s + 1;
+      const isRightAssociative = token.value === "^";
+      const nextPrecedence = isRightAssociative ? precedence : precedence + 1;
       this.consume();
-      const x = this.parseExpression(p);
-      t = u.createOperatorExpression(
-        i,
-        t,
-        x
+      const right = this.parseExpression(nextPrecedence);
+      left = Expression.createOperatorExpression(
+        token,
+        left,
+        right
       );
     }
-    return t;
+    return left;
   }
   /**
    * Parse primary expressions: numbers, variables, functions, parentheses, unary operators
    */
   parsePrimary() {
-    const e = this.peek();
-    if (this.match(a.OPERATOR) && e.value === "-") {
+    const token = this.peek();
+    if (this.match(TokenType.OPERATOR) && token.value === "-") {
       this.consume();
-      const t = this.parsePrimary();
-      return new E("*", new w(-1), t);
+      const expr = this.parsePrimary();
+      return new MultDivExpression("*", new ValueExpression(-1), expr);
     }
-    if (this.match(a.OPERATOR) && e.value === "+")
-      return this.consume(), this.parsePrimary();
-    if (this.match(a.NUMBER))
-      return this.consume(), new w(e.value);
-    if (this.match(a.STRING))
-      return this.consume(), new w(e.value, "string");
-    if (this.match(a.LEFT_PAREN))
+    if (this.match(TokenType.OPERATOR) && token.value === "+") {
+      this.consume();
+      return this.parsePrimary();
+    }
+    if (this.match(TokenType.NUMBER)) {
+      this.consume();
+      return new ValueExpression(token.value);
+    }
+    if (this.match(TokenType.STRING)) {
+      this.consume();
+      return new ValueExpression(token.value, "string");
+    }
+    if (this.match(TokenType.LEFT_PAREN)) {
       return this.parseParenthesizedExpression();
-    if (this.match(a.VARIABLE, a.FUNCTION))
+    }
+    if (this.match(TokenType.VARIABLE, TokenType.FUNCTION)) {
       return this.parseVariableOrFunction();
+    }
     throw new Error(
-      `Unexpected token '${e.value}' at position ${e.position}: Expected number, variable, function, or '('`
+      `Unexpected token '${token.value}' at position ${token.position}: Expected number, variable, function, or '('`
     );
   }
   /**
    * Parse a parenthesized expression: (expr)
    */
   parseParenthesizedExpression() {
-    const e = this.consume(a.LEFT_PAREN), t = this.parseExpression(0);
-    if (!this.match(a.RIGHT_PAREN)) {
-      const i = this.peek();
+    const leftParen = this.consume(TokenType.LEFT_PAREN);
+    const expr = this.parseExpression(0);
+    if (!this.match(TokenType.RIGHT_PAREN)) {
+      const token = this.peek();
       throw new Error(
-        `Missing closing parenthesis at position ${i.position}: Expected ')' to match '(' at position ${e.position}`
+        `Missing closing parenthesis at position ${token.position}: Expected ')' to match '(' at position ${leftParen.position}`
       );
     }
-    return this.consume(a.RIGHT_PAREN), new N(t);
+    this.consume(TokenType.RIGHT_PAREN);
+    return new BracketExpression(expr);
   }
   /**
    * Parse a variable or function call
    */
   parseVariableOrFunction() {
-    const e = this.consume(), t = e.value;
-    return this.match(a.LEFT_PAREN) ? this.parseFunctionCall(t, e.position) : (this.formulaObject.registerVariable(t), new k(t, this.formulaObject));
+    const token = this.consume();
+    const name = token.value;
+    if (this.match(TokenType.LEFT_PAREN)) {
+      return this.parseFunctionCall(name, token.position);
+    }
+    this.formulaObject.registerVariable(name);
+    return new VariableExpression(name, this.formulaObject);
   }
   /**
    * Parse a function call: functionName(arg1, arg2, ...)
    */
-  parseFunctionCall(e, t) {
-    const i = this.consume(a.LEFT_PAREN), s = [];
-    if (!this.match(a.RIGHT_PAREN))
-      do
-        s.push(this.parseExpression(0));
-      while (this.matchAndConsume(a.COMMA));
-    if (!this.match(a.RIGHT_PAREN)) {
-      const n = this.peek();
+  parseFunctionCall(name, namePosition) {
+    const leftParen = this.consume(TokenType.LEFT_PAREN);
+    const args = [];
+    if (!this.match(TokenType.RIGHT_PAREN)) {
+      do {
+        args.push(this.parseExpression(0));
+      } while (this.matchAndConsume(TokenType.COMMA));
+    }
+    if (!this.match(TokenType.RIGHT_PAREN)) {
+      const token = this.peek();
       throw new Error(
-        `Missing closing parenthesis for function '${e}' at position ${n.position}: Expected ')' to match '(' at position ${i.position}`
+        `Missing closing parenthesis for function '${name}' at position ${token.position}: Expected ')' to match '(' at position ${leftParen.position}`
       );
     }
-    return this.consume(a.RIGHT_PAREN), new b(e, s, this.formulaObject);
+    this.consume(TokenType.RIGHT_PAREN);
+    return new FunctionExpression(name, args, this.formulaObject);
   }
   // ==================== Helper Methods ====================
   /**
@@ -608,48 +786,54 @@ class I {
    * Consume the current token and move to the next one
    * @param expected Optional: throw error if current token is not of this type
    */
-  consume(e) {
-    const t = this.peek();
-    if (e && t.type !== e)
+  consume(expected) {
+    const token = this.peek();
+    if (expected && token.type !== expected) {
       throw new Error(
-        `Expected ${e} at position ${t.position}, got ${t.type} ('${t.value}')`
+        `Expected ${expected} at position ${token.position}, got ${token.type} ('${token.value}')`
       );
-    return this.current++, t;
+    }
+    this.current++;
+    return token;
   }
   /**
    * Check if the current token matches any of the given types
    */
-  match(...e) {
-    return e.includes(this.peek().type);
+  match(...types) {
+    return types.includes(this.peek().type);
   }
   /**
    * If the current token matches the given type, consume it and return true
    */
-  matchAndConsume(e) {
-    return this.match(e) ? (this.consume(), !0) : !1;
+  matchAndConsume(type) {
+    if (this.match(type)) {
+      this.consume();
+      return true;
+    }
+    return false;
   }
   /**
    * Check if we've reached the end of the token stream
    */
   isAtEnd() {
-    return this.peek().type === a.EOF;
+    return this.peek().type === TokenType.EOF;
   }
   /**
    * Get the precedence level for a token
    */
-  getPrecedence(e) {
-    if (e.type === a.LOGICAL_OPERATOR) {
-      const t = e.value;
-      return g[t] ?? 0;
+  getPrecedence(token) {
+    if (token.type === TokenType.LOGICAL_OPERATOR) {
+      const op = token.value;
+      return PRECEDENCE[op] ?? 0;
     }
-    if (e.type === a.OPERATOR) {
-      const t = e.value;
-      return g[t] ?? 0;
+    if (token.type === TokenType.OPERATOR) {
+      const op = token.value;
+      return PRECEDENCE[op] ?? 0;
     }
     return 0;
   }
 }
-const d = {
+const MATH_CONSTANTS = {
   PI: Math.PI,
   E: Math.E,
   LN2: Math.LN2,
@@ -658,7 +842,8 @@ const d = {
   LOG10E: Math.LOG10E,
   SQRT1_2: Math.SQRT1_2,
   SQRT2: Math.SQRT2
-}, h = class h {
+};
+const _Formula = class _Formula {
   /**
    * Creates a new Formula instance
    *
@@ -671,13 +856,18 @@ const d = {
    *    - memoization (bool): If true, results are stored and re-used when evaluate() is called with the same parameters
    * @param {Formula} parentFormula Internally used to build a Formula AST
    */
-  constructor(e, t = {}) {
-    r(this, "formulaExpression");
-    r(this, "options");
-    r(this, "formulaStr");
-    r(this, "_variables");
-    r(this, "_memory");
-    this.formulaExpression = null, this.options = { memoization: !1, ...t }, this.formulaStr = "", this._variables = [], this._memory = {}, this.setFormula(e);
+  constructor(fStr, options = {}) {
+    __publicField(this, "formulaExpression");
+    __publicField(this, "options");
+    __publicField(this, "formulaStr");
+    __publicField(this, "_variables");
+    __publicField(this, "_memory");
+    this.formulaExpression = null;
+    this.options = { ...{ memoization: false }, ...options };
+    this.formulaStr = "";
+    this._variables = [];
+    this._memory = {};
+    this.setFormula(fStr);
   }
   /**
    * Re-sets the given String and parses it to a formula expression. Can be used after initialization,
@@ -686,21 +876,29 @@ const d = {
    * @param {String} formulaString The formula string to set/parse
    * @return {this} The Formula object (this)
    */
-  setFormula(e) {
-    return e && (this.formulaExpression = null, this._variables = [], this._memory = {}, this.formulaStr = e, this.formulaExpression = this.parse(e)), this;
+  setFormula(formulaString) {
+    if (formulaString) {
+      this.formulaExpression = null;
+      this._variables = [];
+      this._memory = {};
+      this.formulaStr = formulaString;
+      this.formulaExpression = this.parse(formulaString);
+    }
+    return this;
   }
   /**
    * Enable memoization: An expression is only evaluated once for the same input.
    * Further evaluations with the same input will return the in-memory stored result.
    */
   enableMemoization() {
-    this.options.memoization = !0;
+    this.options.memoization = true;
   }
   /**
    * Disable in-memory memoization: each call to evaluate() is executed from scratch.
    */
   disableMemoization() {
-    this.options.memoization = !1, this._memory = {};
+    this.options.memoization = false;
+    this._memory = {};
   }
   /**
    * Parses the given formula string into an Abstract Syntax Tree (AST).
@@ -723,12 +921,16 @@ const d = {
    * @param {String} str The formula string, e.g. '3*sin(PI/x)'
    * @returns {Expression} An expression object, representing the expression tree
    */
-  parse(e) {
-    const i = new y().tokenize(e);
-    return new I(i, this).parse();
+  parse(str) {
+    const tokenizer = new Tokenizer();
+    const tokens = tokenizer.tokenize(str);
+    const parser = new Parser(tokens, this);
+    return parser.parse();
   }
-  registerVariable(e) {
-    this._variables.indexOf(e) < 0 && this._variables.push(e);
+  registerVariable(varName) {
+    if (this._variables.indexOf(varName) < 0) {
+      this._variables.push(varName);
+    }
   }
   getVariables() {
     return this._variables;
@@ -744,27 +946,40 @@ const d = {
    *   also returned as array.
    * @return {Number|String|(Number|String)[]} The evaluated result, or an array with results
    */
-  evaluate(e) {
-    if (e instanceof Array)
-      return e.map((i) => this.evaluate(i));
-    let t = this.getExpression();
-    if (!(t instanceof u))
-      throw new Error("No expression set: Did you init the object with a Formula?");
-    if (this.options.memoization) {
-      let i = this.resultFromMemory(e);
-      return i !== null || (i = t.evaluate({ ...d, ...e }), this.storeInMemory(e, i)), i;
+  evaluate(valueObj) {
+    if (valueObj instanceof Array) {
+      return valueObj.map((v) => this.evaluate(v));
     }
-    return t.evaluate({ ...d, ...e });
+    let expr = this.getExpression();
+    if (!(expr instanceof Expression)) {
+      throw new Error("No expression set: Did you init the object with a Formula?");
+    }
+    if (this.options.memoization) {
+      let res = this.resultFromMemory(valueObj);
+      if (res !== null) {
+        return res;
+      } else {
+        res = expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
+        this.storeInMemory(valueObj, res);
+        return res;
+      }
+    }
+    return expr.evaluate({ ...MATH_CONSTANTS, ...valueObj });
   }
-  hashValues(e) {
-    return JSON.stringify(e);
+  hashValues(valueObj) {
+    return JSON.stringify(valueObj);
   }
-  resultFromMemory(e) {
-    let t = this.hashValues(e), i = this._memory[t];
-    return i !== void 0 ? i : null;
+  resultFromMemory(valueObj) {
+    let key = this.hashValues(valueObj);
+    let res = this._memory[key];
+    if (res !== void 0) {
+      return res;
+    } else {
+      return null;
+    }
   }
-  storeInMemory(e, t) {
-    this._memory[this.hashValues(e)] = t;
+  storeInMemory(valueObj, value) {
+    this._memory[this.hashValues(valueObj)] = value;
   }
   getExpression() {
     return this.formulaExpression;
@@ -772,8 +987,9 @@ const d = {
   getExpressionString() {
     return this.formulaExpression ? this.formulaExpression.toString() : "";
   }
-  static calc(e, t = null, i = {}) {
-    return t = t ?? {}, new h(e, i).evaluate(t);
+  static calc(formula, valueObj = null, options = {}) {
+    valueObj = valueObj ?? {};
+    return new _Formula(formula, options).evaluate(valueObj);
   }
   /**
    * Implements an if/else condition as a function: Checks the predicate
@@ -785,31 +1001,55 @@ const d = {
    * @param falseValue
    * @returns
    */
-  ifElse(e, t, i) {
-    return e ? t : i;
+  ifElse(predicate, trueValue, falseValue) {
+    if (predicate) {
+      return trueValue;
+    } else {
+      return falseValue;
+    }
   }
-  first(...e) {
-    for (const t of e)
-      if (t instanceof Array) {
-        let i = this.first(...t);
-        if (i)
-          return i;
-      } else if (t)
-        return t;
-    if (e.length > 0) {
-      const t = e[e.length - 1];
-      return t instanceof Array ? this.first(...t) : t;
+  first(...args) {
+    for (const arg of args) {
+      if (arg instanceof Array) {
+        let res = this.first(...arg);
+        if (res) {
+          return res;
+        }
+      } else {
+        if (arg) {
+          return arg;
+        }
+      }
+    }
+    if (args.length > 0) {
+      const last = args[args.length - 1];
+      if (last instanceof Array) {
+        return this.first(...last);
+      } else {
+        return last;
+      }
     }
     throw new Error("first(): At least one argument is required");
   }
 };
-r(h, "Expression", u), r(h, "BracketExpression", N), r(h, "PowerExpression", O), r(h, "MultDivExpression", E), r(h, "PlusMinusExpression", m), r(h, "LogicalExpression", l), r(h, "ValueExpression", w), r(h, "VariableExpression", k), r(h, "FunctionExpression", b), r(h, "MATH_CONSTANTS", d), r(h, "ALLOWED_FUNCTIONS", ["ifElse", "first"]), // Create a function blacklist:
-r(h, "functionBlacklist", Object.getOwnPropertyNames(h.prototype).filter((e) => h.prototype[e] instanceof Function && !h.ALLOWED_FUNCTIONS.includes(e)).map((e) => h.prototype[e]));
-let v = h;
+__publicField(_Formula, "Expression", Expression);
+__publicField(_Formula, "BracketExpression", BracketExpression);
+__publicField(_Formula, "PowerExpression", PowerExpression);
+__publicField(_Formula, "MultDivExpression", MultDivExpression);
+__publicField(_Formula, "PlusMinusExpression", PlusMinusExpression);
+__publicField(_Formula, "LogicalExpression", LogicalExpression);
+__publicField(_Formula, "ValueExpression", ValueExpression);
+__publicField(_Formula, "VariableExpression", VariableExpression);
+__publicField(_Formula, "FunctionExpression", FunctionExpression);
+__publicField(_Formula, "MATH_CONSTANTS", MATH_CONSTANTS);
+__publicField(_Formula, "ALLOWED_FUNCTIONS", ["ifElse", "first"]);
+// Create a function blacklist:
+__publicField(_Formula, "functionBlacklist", Object.getOwnPropertyNames(_Formula.prototype).filter((prop) => _Formula.prototype[prop] instanceof Function && !_Formula.ALLOWED_FUNCTIONS.includes(prop)).map((prop) => _Formula.prototype[prop]));
+let Formula = _Formula;
 export {
-  I as Parser,
-  a as TokenType,
-  y as Tokenizer,
-  v as default
+  Parser,
+  TokenType,
+  Tokenizer,
+  Formula as default
 };
 //# sourceMappingURL=fparser.js.map

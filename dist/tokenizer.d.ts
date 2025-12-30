@@ -24,11 +24,12 @@ export interface Token {
 export declare class Tokenizer {
     private input;
     private position;
+    private static readonly PATTERNS;
     constructor();
     tokenize(input: string): Token[];
     private nextToken;
     private skipWhitespace;
-    private peek;
+    private remaining;
     /**
      * Read a number token. Includes the minus sign if it's unambiguously part of the number.
      * Handles negative numbers when preceded by operators, commas, left parenthesis, or at start.

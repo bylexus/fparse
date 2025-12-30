@@ -34,15 +34,16 @@ For an example application, see https://fparser.alexi.ch/.
 	- [`ifElse`](#ifelse)
 	- [`first`](#first)
 - [Changelog](#changelog)
-	- [4.0.0](#anchor-400)
-	- [3.1.0](#anchor-310)
-	- [3.0.1](#anchor-301)
-	- [3.0.0](#anchor-300)
-	- [2.1.0](#anchor-210)
-	- [2.0.2](#anchor-202)
-	- [2.0.0](#anchor-200)
-	- [1.4.0](#anchor-140)
-	- [1.3.0](#anchor-130)
+	- [V4.0.1](#v401)
+	- [V4.0.0](#v400)
+	- [V3.1.0](#v310)
+	- [V3.0.1](#v301)
+	- [V3.0.0](#v300)
+	- [V2.1.0](#v210)
+	- [V2.0.2](#v202)
+	- [V2.0.0](#v200)
+	- [V1.4.0](#v140)
+	- [V1.3.0](#v130)
 - [Contributors](#contributors)
 - [TODOs, Whishlist](#todos-whishlist)
 - [License](#license)
@@ -239,8 +240,7 @@ const res2 = fObj2.evaluate({ x: Math.PI });
 
 ### Using strings
 
-You can also pass strings as values or variable values (not only numbers): It is then in your responsibility to
-provide a function that can make sense of the string:
+You can also pass strings as values or variable values (not only numbers): It is then in your responsibility to provide a function that can make sense of the string:
 
 E.g. you can create a function that concats 2 values:
 
@@ -258,6 +258,18 @@ returns the length of the longer of two strings, and calculates the remaining le
 const fObj = new Formula('20 - longer([var1], "Bar")');
 let result = fObj.evaluate({ var1: 'FooBar', longer: (s1, s2) => s1.length > s2.length ? s1.length : s2.length });
 // --> 14
+```
+
+You can use both double (`"`) and single (`'`) quotes as strings:
+
+```javascript
+const fObj = new Formula('concat([var1], "Bar", \'Baz\')');
+```
+
+And you can escape quotes within strings
+
+```javascript
+const fObj = new Formula('concat([var1], "Bar\"Be\"que")');
 ```
 
 ### Using logical operators
@@ -456,7 +468,12 @@ let res = fObj.evaluate({ a: 10, x: 0, y: -2, z: 0 }); // -20: y is selected as 
 
 ## Changelog
 
-### 4.0.0
+### V4.0.1
+
+- [Change] Tokenizer refactoring: Using true Regex pattern matching instead single-char matching.
+           This makes the tokenizing part much more readable.
+
+### V4.0.0
 
 This is a major release with significant architectural improvements and some breaking changes. See [Breaking Changes in v4.0](#breaking-changes-in-v40) for migration guide.
 
@@ -477,15 +494,15 @@ This is a major release with significant architectural improvements and some bre
 - [Feature] `ifElse()` function for conditional evaluation added
 - [Feature] `first()` function selects the first true-ish value from multiple arguments
 
-### 3.1.0
+### V3.1.0
 
 - [Feature] Adding Logical Operators `<`, `>`, `<=`, `>=`, `=`, `!=`
 
-### 3.0.1
+### V3.0.1
 
 - [Bugfix] Fixing `main` entry in `package.json`: The 3.0.0 build could not be used as ES 6 module import with the non-existing main entry.
 
-### 3.0.0
+### V3.0.0
 
 This is a long-wanted "migrate to typescript and modernize build infrastrucure" release. 
 It introduces some *few* breaking changes, which hopefully are simple to adapt in existing code, or does not affect end users at all (I hope).
@@ -497,17 +514,17 @@ It introduces some *few* breaking changes, which hopefully are simple to adapt i
 - [Change]: Migrating source code to TypeScript. This should not affect end-users.
 - [Feature]: Variables and functions now both support object paths (e.g. `obj.fn(3*[obj.value])`)
 
-### 2.1.0
+### V2.1.0
 
 - [Breaking]: Blacklisting internal functions: You cannot use internal functions as formula function anymore.
 - [Feature]: Supporting object paths as variable values (e.g. `3*[obj1.property1.innerProperty]`), thanks to [SamStonehouse](https://github.com/SamStonehouse)
 - [Change]: Updated build infrastructure: upped versions of build tools
 
-### 2.0.2
+### V2.0.2
 
 -   Fixing Issue #22: If the formula started with a single negate variable (e.g. `-z*t`), the parser got confused.
 
-### 2.0.0
+### V2.0.0
 
 This release is a complete re-vamp, see below. it **should** be completely backward compatible to the 1.x versions, but I did not test all
 edge cases.
@@ -519,12 +536,12 @@ edge cases.
 -   Switched bundler to webpack
 -   fixed some parser bugs
 
-### 1.4.0
+### V1.4.0
 
 -   Adding support for named variables (`2x + [var1]`)
 -   switched testing to chromium runner instead of PhantomJS
 
-### 1.3.0
+### V1.3.0
 
 -   modernized library: The source is now ES6 code, and transpiled in a dist ES5+ library.
 -   Make sure you include dist/fparser.js if you are using it as a browser library.
@@ -540,7 +557,7 @@ Thanks to all the additional contributors:
 
 ## TODOs, Whishlist
 
-* [ ] support for double- and single quote strings (now: only double quotes)
+* [x] ~~support for double- and single quote strings (now: only double quotes)~~ **Done in V4.0**
 * [ ] Implement standard logic functions:
 	* [x] `first(...args)`: the first trueish (> 0) arg is returned as value. If none are trueish, the last element is returned.
 	* [x] `ifElse(predicate, trueValue, falseValue)`: returns the trueValue if the predicate is trueish (> 0), else the falseValue is returned

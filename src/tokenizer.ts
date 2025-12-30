@@ -28,6 +28,21 @@ export class Tokenizer {
     private input: string;
     private position: number;
 
+    // Regex patterns for token matching
+    private static readonly PATTERNS = {
+        WHITESPACE: /^\s+/,
+        NUMBER: /^-?\d+(\.\d+)?/,
+        IDENTIFIER: /^[a-zA-Z_][a-zA-Z0-9_.]*/,
+        BRACKETED_IDENTIFIER: /^\[([^\]]*)\]/,  // Match anything between brackets, validate later
+        STRING_DOUBLE: /^"((?:[^"\\]|\\.)*)"/,
+        STRING_SINGLE: /^'((?:[^'\\]|\\.)*)'/,
+        LOGICAL_OPERATOR: /^(<=|>=|!=|<|>|=)/,
+        OPERATOR: /^[+\-*/^]/,
+        LEFT_PAREN: /^\(/,
+        RIGHT_PAREN: /^\)/,
+        COMMA: /^,/
+    };
+
     constructor() {
         this.input = '';
         this.position = 0;
@@ -75,13 +90,15 @@ export class Tokenizer {
     }
 
     private skipWhitespace(): void {
-        while (this.position < this.input.length && /\s/.test(this.input[this.position])) {
-            this.position++;
+        const remaining = this.input.slice(this.position);
+        const match = remaining.match(Tokenizer.PATTERNS.WHITESPACE);
+        if (match) {
+            this.position += match[0].length;
         }
     }
 
-    private peek(offset: number = 0): string {
-        return this.input[this.position + offset] || '';
+    private remaining(): string {
+        return this.input.slice(this.position);
     }
 
     /**
@@ -90,15 +107,19 @@ export class Tokenizer {
      */
     private readNumber(tokens: Token[]): Token | null {
         const start = this.position;
-        let raw = '';
+        const remaining = this.remaining();
 
-        // Check for negative sign
-        if (this.peek() === '-') {
-            // Include '-' as part of the number only if:
-            // 1. It's at the start (no previous token)
-            // 2. Previous token is an operator (not a number or variable or closing paren)
-            // 3. Previous token is a comma
-            // 4. Previous token is a left parenthesis
+        // Try to match a number (with optional negative sign)
+        const match = remaining.match(Tokenizer.PATTERNS.NUMBER);
+        if (!match) {
+            return null;
+        }
+
+        const raw = match[0];
+
+        // If the number starts with '-', check if it's actually a negative number
+        // or if the '-' should be treated as a separate operator
+        if (raw.startsWith('-')) {
             const prevToken = tokens.length > 0 ? tokens[tokens.length - 1] : null;
             const canBeNegative =
                 !prevToken ||
@@ -107,40 +128,13 @@ export class Tokenizer {
                 prevToken.type === TokenType.COMMA ||
                 prevToken.type === TokenType.LEFT_PAREN;
 
-            if (canBeNegative && /\d/.test(this.peek(1))) {
-                raw += this.peek();
-                this.position++;
-            } else {
-                return null; // Not a number, it's a minus operator
-            }
-        }
-
-        // Read digits before decimal point
-        if (!/\d/.test(this.peek())) {
-            // If we consumed a '-' but there's no digit, backtrack
-            if (raw === '-') {
-                this.position = start;
+            if (!canBeNegative) {
+                // The '-' is an operator, not part of the number
                 return null;
             }
-            return null;
         }
 
-        while (/\d/.test(this.peek())) {
-            raw += this.peek();
-            this.position++;
-        }
-
-        // Read decimal point and digits after
-        if (this.peek() === '.') {
-            raw += this.peek();
-            this.position++;
-
-            while (/\d/.test(this.peek())) {
-                raw += this.peek();
-                this.position++;
-            }
-        }
-
+        this.position += raw.length;
         const value = parseFloat(raw);
 
         return {
@@ -148,7 +142,7 @@ export class Tokenizer {
             value: value,
             raw: raw,
             position: start,
-            length: this.position - start
+            length: raw.length
         };
     }
 
@@ -158,67 +152,69 @@ export class Tokenizer {
      */
     private readIdentifier(): Token | null {
         const start = this.position;
-        let raw = '';
-        let value = '';
-        let isBracketed = false;
+        const remaining = this.remaining();
 
-        // Check for bracketed variable [varname]
-        if (this.peek() === '[') {
-            isBracketed = true;
-            raw += this.peek();
-            this.position++;
+        // Try bracketed identifier first: [varname]
+        let match = remaining.match(Tokenizer.PATTERNS.BRACKETED_IDENTIFIER);
+        if (match) {
+            const raw = match[0];
+            const value = match[1]; // captured group without brackets
 
-            // Read until closing bracket
-            while (this.position < this.input.length && this.peek() !== ']') {
-                if (!/[a-zA-Z0-9_.]/.test(this.peek())) {
-                    throw new Error(
-                        `Invalid character '${this.peek()}' in bracketed variable at position ${this.position}`
-                    );
-                }
-                value += this.peek();
-                raw += this.peek();
-                this.position++;
-            }
-
-            if (this.peek() !== ']') {
-                throw new Error(`Unclosed bracket for variable at position ${start}`);
-            }
-
-            raw += this.peek();
-            this.position++; // consume ']'
-        } else {
-            // Regular identifier
-            if (!/[a-zA-Z_]/.test(this.peek())) {
-                return null;
-            }
-
-            while (/[a-zA-Z0-9_.]/.test(this.peek())) {
-                value += this.peek();
-                raw += this.peek();
-                this.position++;
-            }
-        }
-
-        if (value === '') {
-            if (isBracketed) {
+            if (value === '') {
                 throw new Error(`Empty bracketed variable at position ${start}`);
             }
-            return null;
+
+            // Validate that the content only contains valid identifier characters
+            if (!/^[a-zA-Z0-9_.]+$/.test(value)) {
+                // Find the first invalid character
+                const invalidCharMatch = value.match(/[^a-zA-Z0-9_.]/);
+                const invalidChar = invalidCharMatch ? invalidCharMatch[0] : value[0];
+                const invalidCharPos = start + 1 + value.indexOf(invalidChar);
+                throw new Error(
+                    `Invalid character '${invalidChar}' in bracketed variable at position ${invalidCharPos}`
+                );
+            }
+
+            this.position += raw.length;
+
+            // Look ahead to determine if this is a function call
+            const savedPos = this.position;
+            this.skipWhitespace();
+            const isFunction = this.position < this.input.length && this.input[this.position] === '(';
+            this.position = savedPos; // restore position
+
+            return {
+                type: isFunction ? TokenType.FUNCTION : TokenType.VARIABLE,
+                value: value,
+                raw: raw,
+                position: start,
+                length: raw.length
+            };
         }
 
-        // Look ahead to determine if this is a function call
-        let savedPos = this.position;
-        this.skipWhitespace();
-        const isFunction = this.peek() === '(';
-        this.position = savedPos; // restore position (whitespace will be skipped in main loop)
+        // Try regular identifier: myVar, x, PI
+        match = remaining.match(Tokenizer.PATTERNS.IDENTIFIER);
+        if (match) {
+            const raw = match[0];
+            const value = raw;
+            this.position += raw.length;
 
-        return {
-            type: isFunction ? TokenType.FUNCTION : TokenType.VARIABLE,
-            value: value,
-            raw: raw,
-            position: start,
-            length: this.position - start
-        };
+            // Look ahead to determine if this is a function call
+            const savedPos = this.position;
+            this.skipWhitespace();
+            const isFunction = this.position < this.input.length && this.input[this.position] === '(';
+            this.position = savedPos; // restore position
+
+            return {
+                type: isFunction ? TokenType.FUNCTION : TokenType.VARIABLE,
+                value: value,
+                raw: raw,
+                position: start,
+                length: raw.length
+            };
+        }
+
+        return null;
     }
 
     /**
@@ -227,70 +223,73 @@ export class Tokenizer {
      */
     private readString(): Token | null {
         const start = this.position;
-        const quote = this.peek();
+        const remaining = this.remaining();
 
-        if (quote !== '"' && quote !== "'") {
-            return null;
+        // Try double-quoted string
+        let match = remaining.match(Tokenizer.PATTERNS.STRING_DOUBLE);
+        if (match) {
+            const raw = match[0];
+            const capturedValue = match[1]; // content between quotes
+            // Process escape sequences: \\ -> \, \" -> "
+            const value = capturedValue.replace(/\\(.)/g, '$1');
+            this.position += raw.length;
+
+            return {
+                type: TokenType.STRING,
+                value: value,
+                raw: raw,
+                position: start,
+                length: raw.length
+            };
         }
 
-        let raw = quote;
-        let value = '';
-        this.position++; // consume opening quote
+        // Try single-quoted string
+        match = remaining.match(Tokenizer.PATTERNS.STRING_SINGLE);
+        if (match) {
+            const raw = match[0];
+            const capturedValue = match[1]; // content between quotes
+            // Process escape sequences: \\ -> \, \' -> '
+            const value = capturedValue.replace(/\\(.)/g, '$1');
+            this.position += raw.length;
 
-        while (this.position < this.input.length) {
-            const char = this.peek();
-
-            if (char === '\\' && (this.peek(1) === quote || this.peek(1) === '\\')) {
-                // Escaped quote or backslash
-                const escapedChar = this.peek(1);
-                raw += char + escapedChar;
-                value += escapedChar;
-                this.position += 2;
-            } else if (char === quote) {
-                // Closing quote
-                raw += char;
-                this.position++;
-                break;
-            } else {
-                raw += char;
-                value += char;
-                this.position++;
-            }
+            return {
+                type: TokenType.STRING,
+                value: value,
+                raw: raw,
+                position: start,
+                length: raw.length
+            };
         }
 
-        if (!raw.endsWith(quote)) {
+        // Check for unterminated string
+        if (remaining.startsWith('"') || remaining.startsWith("'")) {
             throw new Error(`Unterminated string at position ${start}`);
         }
 
-        return {
-            type: TokenType.STRING,
-            value: value,
-            raw: raw,
-            position: start,
-            length: this.position - start
-        };
+        return null;
     }
 
     /**
      * Read a simple operator: +, -, *, /, ^
      */
     private readOperator(): Token | null {
-        const char = this.peek();
-        const operatorPattern = /[+\-*/^]/;
+        const start = this.position;
+        const remaining = this.remaining();
 
-        if (!operatorPattern.test(char)) {
+        const match = remaining.match(Tokenizer.PATTERNS.OPERATOR);
+        if (!match) {
             return null;
         }
 
-        const start = this.position;
-        this.position++;
+        const raw = match[0];
+        this.position += raw.length;
 
         return {
             type: TokenType.OPERATOR,
-            value: char,
-            raw: char,
+            value: raw,
+            raw: raw,
             position: start,
-            length: 1
+            length: raw.length
         };
     }
 
@@ -299,72 +298,62 @@ export class Tokenizer {
      */
     private readLogicalOperator(): Token | null {
         const start = this.position;
-        const char = this.peek();
-        const nextChar = this.peek(1);
+        const remaining = this.remaining();
 
-        // Two-character logical operators
-        if (
-            (char === '<' && nextChar === '=') ||
-            (char === '>' && nextChar === '=') ||
-            (char === '!' && nextChar === '=')
-        ) {
-            const raw = char + nextChar;
-            this.position += 2;
-            return {
-                type: TokenType.LOGICAL_OPERATOR,
-                value: raw,
-                raw: raw,
-                position: start,
-                length: 2
-            };
-        }
-
-        // Single-character logical operators
-        if (char === '<' || char === '>' || char === '=') {
-            this.position++;
-            return {
-                type: TokenType.LOGICAL_OPERATOR,
-                value: char,
-                raw: char,
-                position: start,
-                length: 1
-            };
-        }
-
-        // '!' by itself is not valid (only != is valid)
-        if (char === '!') {
+        // Check for invalid '!' operator
+        if (remaining.startsWith('!') && !remaining.startsWith('!=')) {
             throw new Error(`Invalid operator '!' at position ${start}. Did you mean '!='?`);
         }
 
-        return null;
+        const match = remaining.match(Tokenizer.PATTERNS.LOGICAL_OPERATOR);
+        if (!match) {
+            return null;
+        }
+
+        const raw = match[0];
+        this.position += raw.length;
+
+        return {
+            type: TokenType.LOGICAL_OPERATOR,
+            value: raw,
+            raw: raw,
+            position: start,
+            length: raw.length
+        };
     }
 
     /**
      * Read parentheses
      */
     private readParenthesis(): Token | null {
-        const char = this.peek();
         const start = this.position;
+        const remaining = this.remaining();
 
-        if (char === '(') {
-            this.position++;
+        // Try left parenthesis
+        let match = remaining.match(Tokenizer.PATTERNS.LEFT_PAREN);
+        if (match) {
+            const raw = match[0];
+            this.position += raw.length;
             return {
                 type: TokenType.LEFT_PAREN,
-                value: '(',
-                raw: '(',
+                value: raw,
+                raw: raw,
                 position: start,
-                length: 1
+                length: raw.length
             };
         }
 
-        if (char === ')') {
-            this.position++;
+        // Try right parenthesis
+        match = remaining.match(Tokenizer.PATTERNS.RIGHT_PAREN);
+        if (match) {
+            const raw = match[0];
+            this.position += raw.length;
             return {
                 type: TokenType.RIGHT_PAREN,
-                value: ')',
-                raw: ')',
+                value: raw,
+                raw: raw,
                 position: start,
-                length: 1
+                length: raw.length
             };
         }
 
@@ -375,28 +364,31 @@ export class Tokenizer {
      * Read comma separator
      */
     private readComma(): Token | null {
-        const char = this.peek();
         const start = this.position;
+        const remaining = this.remaining();
 
-        if (char === ',') {
-            this.position++;
-            return {
-                type: TokenType.COMMA,
-                value: ',',
-                raw: ',',
-                position: start,
-                length: 1
-            };
+        const match = remaining.match(Tokenizer.PATTERNS.COMMA);
+        if (!match) {
+            return null;
         }
 
-        return null;
+        const raw = match[0];
+        this.position += raw.length;
+
+        return {
+            type: TokenType.COMMA,
+            value: raw,
+            raw: raw,
+            position: start,
+            length: raw.length
+        };
     }
 
     /**
      * Throw an error for unexpected characters
      */
     private throwUnexpectedChar(): never {
-        const char = this.peek();
+        const char = this.input[this.position] || 'EOF';
         throw new Error(`Unexpected character '${char}' at position ${this.position}`);
     }
 }

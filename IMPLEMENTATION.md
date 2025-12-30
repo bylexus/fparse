@@ -475,19 +475,29 @@ parse(str: string): Expression {
 - [x] Add comprehensive tokenizer unit tests
 - [x] Export tokenizer from main `fparser.ts` module
 
-**Status:** Complete and tested. All 184 tests passing (including 62 new tokenizer tests).
+**Status:** Complete and tested. All 251 tests passing (including 62 new tokenizer tests).
 
 **What was implemented:**
-- Full `Tokenizer` class with context-aware tokenization
+- **True regex-based tokenizer**: Uses regex patterns to match **whole tokens at once** instead of character-by-character iteration
+- Regex patterns defined for all token types: `NUMBER`, `IDENTIFIER`, `BRACKETED_IDENTIFIER`, `STRING_DOUBLE`, `STRING_SINGLE`, `LOGICAL_OPERATOR`, `OPERATOR`, `LEFT_PAREN`, `RIGHT_PAREN`, `COMMA`, `WHITESPACE`
+- Each `read*()` method uses `remaining.match(PATTERN)` to match entire tokens in a single operation
 - Enhanced `Token` interface with `type`, `value`, `raw`, `position`, and `length` fields
-- Smart negative number detection (distinguishes `5-3` from `4*-5`)
+- Smart negative number detection with context-awareness (distinguishes `5-3` from `4*-5`)
 - Support for all token types: NUMBER, OPERATOR, LOGICAL_OPERATOR, VARIABLE, FUNCTION, LEFT_PAREN, RIGHT_PAREN, COMMA, STRING, EOF
-- Backward compatibility: bracketed variables `[myVar]` still work
+- Backward compatibility: bracketed variables `[myVar]` still work (with validation)
 - Escape sequence support in strings (`\"`, `\'`, `\\`)
+- Function vs. variable distinction using lookahead for `(` after identifier
 - Comprehensive test suite in `spec/specs/tokenizerSpec.js`
 
+**Key Implementation Details:**
+- `skipWhitespace()`: Uses `/^\s+/` to skip all whitespace at once
+- `readNumber()`: Uses `/^-?\d+(\.\d+)?/` to match entire numbers (with context-aware negative sign handling)
+- `readIdentifier()`: Uses `/^[a-zA-Z_][a-zA-Z0-9_.]*/` for regular identifiers and `/^\[([^\]]*)\]/` for bracketed identifiers
+- `readString()`: Uses `/^"((?:[^"\\]|\\.)*)"/ and /^'((?:[^'\\]|\\.)*)'/ to match complete strings with escape sequences
+- All other token types use similar pattern-based matching
+
 **Files created:**
-- `src/tokenizer.ts` - Complete tokenizer implementation
+- `src/tokenizer.ts` - Complete regex-based tokenizer implementation
 - `spec/specs/tokenizerSpec.js` - 62 comprehensive tests
 
 **Files modified:**
