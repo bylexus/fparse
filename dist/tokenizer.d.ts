@@ -33,6 +33,7 @@ export declare class Tokenizer {
     /**
      * Read a number token. Includes the minus sign if it's unambiguously part of the number.
      * Handles negative numbers when preceded by operators, commas, left parenthesis, or at start.
+     * Supports scientific notation (e.g., 1.23e5, 1.23E+5, 1.23e-5).
      */
     private readNumber;
     /**

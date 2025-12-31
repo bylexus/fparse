@@ -44,6 +44,101 @@ describe('Tokenizer', function () {
             const tokens = tokenizer.tokenize('0.5');
             expect(tokens[0].value).toBe(0.5);
         });
+
+        it('should tokenize scientific notation with lowercase e', function () {
+            const tokens = tokenizer.tokenize('1.23e5');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(123000);
+            expect(tokens[0].raw).toBe('1.23e5');
+        });
+
+        it('should tokenize scientific notation with uppercase E', function () {
+            const tokens = tokenizer.tokenize('1.23E5');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(123000);
+            expect(tokens[0].raw).toBe('1.23E5');
+        });
+
+        it('should tokenize scientific notation with explicit positive exponent', function () {
+            const tokens = tokenizer.tokenize('1.23e+5');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(123000);
+            expect(tokens[0].raw).toBe('1.23e+5');
+        });
+
+        it('should tokenize scientific notation with negative exponent', function () {
+            const tokens = tokenizer.tokenize('1.23e-5');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(0.0000123);
+            expect(tokens[0].raw).toBe('1.23e-5');
+        });
+
+        it('should tokenize integer scientific notation', function () {
+            const tokens = tokenizer.tokenize('1e10');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(10000000000);
+            expect(tokens[0].raw).toBe('1e10');
+        });
+
+        it('should tokenize negative scientific notation at start', function () {
+            const tokens = tokenizer.tokenize('-1.23e5');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(-123000);
+            expect(tokens[0].raw).toBe('-1.23e5');
+        });
+
+        it('should tokenize negative scientific notation with negative exponent', function () {
+            const tokens = tokenizer.tokenize('-1.23e-5');
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(-0.0000123);
+            expect(tokens[0].raw).toBe('-1.23e-5');
+        });
+
+        it('should handle scientific notation in expressions', function () {
+            const tokens = tokenizer.tokenize('2*1.5e3+4');
+            expect(tokens.length).toBe(6); // NUMBER, OPERATOR, NUMBER, OPERATOR, NUMBER, EOF
+            expect(tokens[0].value).toBe(2);
+            expect(tokens[1].value).toBe('*');
+            expect(tokens[2].type).toBe(TokenType.NUMBER);
+            expect(tokens[2].value).toBe(1500);
+            expect(tokens[2].raw).toBe('1.5e3');
+            expect(tokens[3].value).toBe('+');
+            expect(tokens[4].value).toBe(4);
+        });
+
+        it('should handle negative scientific notation after operators', function () {
+            const tokens = tokenizer.tokenize('5*-1.2e3');
+            expect(tokens.length).toBe(4); // NUMBER, OPERATOR, NUMBER, EOF
+            expect(tokens[0].value).toBe(5);
+            expect(tokens[1].value).toBe('*');
+            expect(tokens[2].type).toBe(TokenType.NUMBER);
+            expect(tokens[2].value).toBe(-1200);
+            expect(tokens[2].raw).toBe('-1.2e3');
+        });
+
+        it('should differentiate minus operator from negative scientific notation', function () {
+            const tokens = tokenizer.tokenize('1e5-3');
+            expect(tokens.length).toBe(4); // NUMBER, OPERATOR, NUMBER, EOF
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(100000);
+            expect(tokens[0].raw).toBe('1e5');
+            expect(tokens[1].type).toBe(TokenType.OPERATOR);
+            expect(tokens[1].value).toBe('-');
+            expect(tokens[2].type).toBe(TokenType.NUMBER);
+            expect(tokens[2].value).toBe(3);
+        });
+
+        it('should handle double minus with scientific notation', function () {
+            const tokens = tokenizer.tokenize('5--3e-5');
+            expect(tokens.length).toBe(4); // NUMBER, OPERATOR, NUMBER, EOF
+            expect(tokens[0].type).toBe(TokenType.NUMBER);
+            expect(tokens[0].value).toBe(5);
+            expect(tokens[1].type).toBe(TokenType.OPERATOR);
+            expect(tokens[1].value).toBe('-');
+            expect(tokens[2].type).toBe(TokenType.NUMBER);
+            expect(tokens[2].value).toBe(-0.00003);
+            expect(tokens[2].raw).toBe('-3e-5');
+        });
     });
 
     describe('Operator Tokens', function () {

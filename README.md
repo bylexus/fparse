@@ -34,6 +34,7 @@ For an example application, see https://fparser.alexi.ch/.
 	- [`ifElse`](#ifelse)
 	- [`first`](#first)
 - [Changelog](#changelog)
+	- [V4.2.0](#v420)
 	- [V4.1.0](#v410)
 	- [V4.0.0](#v400)
 	- [V3.1.0](#v310)
@@ -54,6 +55,7 @@ For an example application, see https://fparser.alexi.ch/.
 Parses a mathematical formula from a string. Known expressions:
 
 -   _Numbers_ in the form [-]digits[.digits], e.g. "-133.2945"
+-   _Numbers in scientific notation_: e.g. "1.23e5", "1.5E-10", "-2.5e+3"
 -   _simple operators_: '+','-','\*','/', '^' expanded in correct order
 -   _logical operators_: '<','<=','>','>=', '=', '!=', which evaluate to 1 or 0. Useful for implementing conditional logic
 -   _parentheses_ '(', ')' for grouping (e.g. "5\*(3+2)")
@@ -166,6 +168,10 @@ let results = fObj.evaluate([{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,
 // You can also directly evaluate a value if you only need a one-shot result:
 let result = Formula.calc('2^x', { x: 3 }); // result = 8
 let results = Formula.calc('2^x', [{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
+
+// Scientific notation is supported for large or small numbers:
+let result = Formula.calc('1.5e3 + 2.5e-2'); // result = 1500.025
+let result = Formula.calc('6.022e23 * x', { x: 2 }); // result = 1.2044e24 (Avogadro's number * 2)
 ```
 
 ## More options
@@ -491,6 +497,10 @@ let res = fObj.evaluate({ a: 10, x: 0, y: -2, z: 0 }); // -20: y is selected as 
 
 
 ## Changelog
+
+### V4.2.0
+
+- [Feature] Scientific notation support: Numbers can now be expressed in scientific notation (e.g., `1.23e5`, `1.5E-10`, `-2.5e+3`). Both lowercase `e` and uppercase `E` are supported, with optional explicit `+` or `-` signs in the exponent.
 
 ### V4.1.0
 

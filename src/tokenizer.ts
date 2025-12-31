@@ -31,7 +31,7 @@ export class Tokenizer {
     // Regex patterns for token matching
     private static readonly PATTERNS = {
         WHITESPACE: /^\s+/,
-        NUMBER: /^-?\d+(\.\d+)?/,
+        NUMBER: /^-?\d+(\.\d+)?([eE][+\-]?\d+)?/,
         IDENTIFIER: /^[a-zA-Z_][a-zA-Z0-9_.]*/,
         BRACKETED_IDENTIFIER: /^\[([^\]]*)\]/,  // Match anything between brackets, validate later
         STRING_DOUBLE: /^"((?:[^"\\]|\\.)*)"/,
@@ -104,6 +104,7 @@ export class Tokenizer {
     /**
      * Read a number token. Includes the minus sign if it's unambiguously part of the number.
      * Handles negative numbers when preceded by operators, commas, left parenthesis, or at start.
+     * Supports scientific notation (e.g., 1.23e5, 1.23E+5, 1.23e-5).
      */
     private readNumber(tokens: Token[]): Token | null {
         const start = this.position;
