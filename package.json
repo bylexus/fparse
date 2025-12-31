@@ -1,6 +1,6 @@
 {
     "name": "fparser",
-    "version": "4.1.0",
+    "version": "4.2.0",
     "description": "A Math Formula parser library for JavaScript",
     "main": "./dist/fparser.js",
     "type": "module",
@@ -21,7 +21,7 @@
         "build-dev": "NODE_ENV=development tsc --noEmit && vite build --mode=development && tsc --emitDeclarationOnly --declaration",
         "prepublishOnly": "npm run build",
         "build": "NODE_ENV=production tsc --noEmit && vite build --minify --mode=production && tsc --emitDeclarationOnly --declaration",
-        "build-demopage-image": "docker build --pull -t fparser-demopage .",
+        "build-demopage-image": "docker build --pull -t registry.alexi.ch/fparser .",
         "test": "NODE_ENV=development npm run build-dev && jasmine && karma start karma.conf.cjs",
         "jasmine": "NODE_ENV=development npm run build-dev && jasmine"
     },
